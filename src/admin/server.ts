@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { config } from '../config/env';
 import * as routes from './routes';
+import * as playerRoutes from './player-routes';
 
 export const app = express();
 
@@ -46,6 +47,15 @@ app.get('/api/qr', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Public Player Web App Endpoints
+app.post('/api/player/login', playerRoutes.playerLogin);
+app.get('/api/player/me', playerRoutes.getPlayerMe);
+app.get('/api/player/game', playerRoutes.getPlayerGame);
+app.get('/api/player/my-cards', playerRoutes.getPlayerCards);
+app.post('/api/player/buy-cards', playerRoutes.playerBuyCards);
+app.post('/api/player/deposit', playerRoutes.playerDeposit);
+app.post('/api/player/withdraw', playerRoutes.playerWithdraw);
 
 // Protected routes
 const api = express.Router();

@@ -89,9 +89,26 @@ export class CommandHandler {
                 case 'verificar':
                     await this.handleVerificar(jid, args[1]);
                     break;
+                case 'jugar':
+                case 'panel':
+                case 'app': {
+                    const phone = this.extractPhone(jid);
+                    await waClient.sendText(
+                        jid,
+                        `🎰 *¡BIENVENIDO A BINGOPRO!* 🎲\n\n` +
+                        `Entra a tu Panel de Juego interactivo con 1 solo toque:\n\n` +
+                        `👉 http://localhost:3000/player.html?phone=${phone}\n\n` +
+                        `Ahí podrás ver tu saldo, comprar cartones con 1 clic y ver el sorteo en vivo.`
+                    );
+                    break;
+                }
                 default:
                     if (['hola', 'saludos', 'buenas', 'hi', 'hello'].includes(command)) {
-                        await waClient.sendText(jid, msg.welcomeMessage(pushName));
+                        const phone = this.extractPhone(jid);
+                        await waClient.sendText(
+                            jid,
+                            msg.welcomeMessage(pushName) + `\n\n🎮 *Panel Web:* http://localhost:3000/player.html?phone=${phone}`
+                        );
                     }
                     break;
             }

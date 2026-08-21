@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BingoPro | Panel del Jugador 🎰</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="player.css">
+</head>
+<body>
+    <!-- Login Screen if no phone provided -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="brand">
+                <span class="logo">🎱</span>
+                <h1>BingoPro</h1>
+                <p>Ingresa tu número de teléfono para entrar a tu panel de juego</p>
+            </div>
+            <div class="input-field">
+                <label>Número de WhatsApp / Teléfono</label>
+                <input type="text" id="phone-input" placeholder="Ej: 04121234567" />
+            </div>
+            <button id="btn-login" class="btn btn-gold btn-full">Entrar al Juego 🎲</button>
+        </div>
+    </div>
+
+    <!-- App Main Shell -->
+    <div class="app-shell">
+        <!-- Top Bar / Player Profile Header -->
+        <header class="header">
+            <div class="brand">
+                <span class="logo">🎱</span>
+                <span class="brand-title">BingoPro</span>
+            </div>
+            <div class="user-chip">
+                <div class="user-info">
+                    <span id="player-name" class="name">Cargando...</span>
+                    <span id="player-balance" class="balance">0.00 Bs</span>
+                </div>
+                <button id="btn-deposit-open" class="btn btn-sm btn-gold">+ Recargar</button>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <main class="main-container">
+
+            <!-- Live Game Arena Widget -->
+            <section class="game-arena glass-card">
+                <div class="arena-header">
+                    <div class="round-badge">
+                        <span class="pulse-icon">🔴</span>
+                        <span id="round-title">Ronda #--</span>
+                    </div>
+                    <div id="prize-pool-chip" class="prize-chip">Pote: <strong id="prize-pool-val">0 Bs</strong></div>
+                </div>
+
+                <!-- Ball Drum & Last Drawn Ball -->
+                <div class="ball-display-area">
+                    <div class="main-ball-container">
+                        <div id="main-ball" class="ball ball-gold idle">
+                            <span id="main-ball-letter">B</span>
+                            <span id="main-ball-num">--</span>
+                        </div>
+                    </div>
+                    <div class="ball-history">
+                        <span class="history-label">Últimas extraídas:</span>
+                        <div id="drawn-balls-strip" class="balls-strip">
+                            <span class="empty-hint">Esperando inicio del sorteo...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status & Progress Bar -->
+                <div class="arena-footer">
+                    <div id="game-status-text" class="status-text">Cargando estado...</div>
+                    <div class="progress-bar-wrap">
+                        <div id="game-progress" class="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Purchase Card Store -->
+            <section class="card-store glass-card">
+                <h3>🛒 Comprar Cartones (100 Bs c/u)</h3>
+                <p class="subtitle">Elige cuántos cartones deseas para la próxima ronda:</p>
+                <div class="buy-buttons-grid">
+                    <button class="btn-buy-chip" data-count="1">🎟️ 1 Cartón<br><small>100 Bs</small></button>
+                    <button class="btn-buy-chip" data-count="2">🎟️ 2 Cartones<br><small>200 Bs</small></button>
+                    <button class="btn-buy-chip" data-count="5">🎟️ 5 Cartones<br><small>500 Bs</small></button>
+                    <button class="btn-buy-chip gold" data-count="10">🔥 10 Cartones<br><small>1,000 Bs</small></button>
+                </div>
+            </section>
+
+            <!-- Active Cards Gallery -->
+            <section class="cards-gallery">
+                <div class="gallery-header">
+                    <h3>🎟️ Mis Cartones Activos (<span id="my-card-count">0</span>)</h3>
+                </div>
+                <div id="cards-container" class="cards-grid">
+                    <div class="empty-cards">No tienes cartones en esta ronda. ¡Compra uno para jugar!</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button class="btn-close" id="btn-deposit-close">✕</button>
+            <h2>🏦 Recargar Saldo con Pago Móvil</h2>
+            <div class="pago-movil-info">
+                <p><strong>Banco:</strong> <span id="pm-banco">0102 (Venezuela)</span></p>
+                <p><strong>Teléfono:</strong> <span id="pm-phone">0412-1234567</span></p>
+                <p><strong>Cédula:</strong> <span id="pm-cedula">V-12345678</span></p>
+            </div>
+            <div class="input-field">
+                <label>Monto a Recargar (Bs)</label>
+                <input type="number" id="dep-amount" placeholder="Ej: 500" />
+            </div>
+            <div class="input-field">
+                <label>Número de Referencia (Últimos 6 dígitos)</label>
+                <input type="text" id="dep-ref" placeholder="Ej: 123456" />
+            </div>
+            <button id="btn-submit-dep" class="btn btn-gold btn-full">Reportar Pago 🚀</button>
+        </div>
+    </div>
+
+    <script src="player.js"></script>
+</body>
+</html>
