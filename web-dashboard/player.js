@@ -1,10 +1,11 @@
 /* ═══════════════════════════════════════════════════
-   BINGOPRO 3D — PLAYER ARENA ENGINE
-   Mechanical drum, particle FX, auto-daub, confetti
+   BINGOPRO 3D — AAA CASINO ARENA ENGINE
+   Voice Announcer, Physics Drum, Auto-Daub, Near-Win Detector
    ═══════════════════════════════════════════════════ */
 
 let phone = localStorage.getItem('bp_phone') || '';
 let soundOn = true;
+let voiceOn = true;
 let lastBallNum = null;
 let drawnSet = new Set();
 let prevCardHTML = {};
@@ -13,7 +14,7 @@ let prevCardHTML = {};
 const up = new URLSearchParams(location.search);
 if (up.get('phone')) { phone = up.get('phone'); localStorage.setItem('bp_phone', phone); }
 
-// ── SOUND ENGINE (Web Audio — zero dependencies) ──
+// ── SOUND ENGINE (Web Audio) ──
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let actx = null;
 function snd() { if (!actx) actx = new AudioCtx(); return actx; }
@@ -30,6 +31,7 @@ function playBallPop() {
     o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .2);
   } catch {}
 }
+
 function playDaub() {
   if (!soundOn) return;
   try {
@@ -41,6 +43,20 @@ function playDaub() {
   } catch {}
 }
 
+// ── SPANISH VOICE ANNOUNCER ──
+function speakBall(column, number) {
+  if (!voiceOn || !('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel(); // Stop prior speech
+    const text = `${column}, ${number}`;
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.lang = 'es-ES';
+    msg.rate = 1.0;
+    msg.pitch = 1.1;
+    window.speechSynthesis.speak(msg);
+  } catch {}
+}
+
 // ── PARTICLE / CONFETTI ENGINE ──
 const fxCanvas = document.getElementById('fx-canvas');
 const fxCtx = fxCanvas.getContext('2d');
@@ -49,7 +65,7 @@ let particles = [];
 function resizeFX() { fxCanvas.width = window.innerWidth; fxCanvas.height = window.innerHeight; }
 resizeFX(); window.addEventListener('resize', resizeFX);
 
-function spawnBurst(x, y, color, count = 20) {
+function spawnBurst(x, y, color, count = 25) {
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 2 + Math.random() * 5;
@@ -133,7 +149,7 @@ if (!phone) { loginModal.classList.remove('hidden'); app.classList.add('hidden')
 else { loginModal.classList.add('hidden'); app.classList.remove('hidden'); boot(); }
 
 $id('btn-login').onclick = () => {
-  snd(); // unlock audio
+  snd();
   const v = $id('phone-input').value.trim().replace(/[^0-9]/g, '');
   if (!v) return alert('Ingresa tu número');
   phone = v; localStorage.setItem('bp_phone', phone);
@@ -141,6 +157,12 @@ $id('btn-login').onclick = () => {
 };
 
 $id('btn-sound').onclick = () => { snd(); soundOn = !soundOn; $id('btn-sound').textContent = soundOn ? '🔊' : '🔇'; };
+$id('btn-voice').onclick = () => {
+  voiceOn = !voiceOn;
+  $id('btn-voice').classList.toggle('active', voiceOn);
+  if (voiceOn) speakBall('B', 12);
+};
+
 $id('btn-recargar').onclick = () => $id('dep-modal').classList.remove('hidden');
 $id('dep-close').onclick = () => $id('dep-modal').classList.add('hidden');
 
@@ -160,6 +182,27 @@ $id('dep-submit').onclick = async () => {
     d.success ? (alert('✅ Recarga registrada — será aprobada en breve'), $id('dep-modal').classList.add('hidden')) : alert('Error: ' + d.error);
   } catch { alert('Error de conexión'); }
 };
+
+// ── CHAT SYSTEM ──
+$id('chat-send').onclick = () => sendChatMessage();
+$id('chat-input').onkeypress = (e) => { if (e.key === 'Enter') sendChatMessage(); };
+
+function sendChatMessage() {
+  const input = $id('chat-input');
+  const txt = input.value.trim();
+  if (!txt) return;
+  addChatMessage('Tú', txt);
+  input.value = '';
+}
+
+function addChatMessage(user, text) {
+  const box = $id('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  div.innerHTML = `<span class="uname">${user}:</span> ${text}`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
 
 function boot() {
   fetchProfile();
@@ -262,6 +305,7 @@ function onNewBall(ball) {
   spawnBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, colorMap[ball.column] || '#FFD700', 25);
 
   playBallPop();
+  speakBall(ball.column, ball.number);
 }
 
 function renderHistory(balls) {
@@ -275,7 +319,7 @@ function renderHistory(balls) {
   });
 }
 
-// ── CARDS ──
+// ── CARDS & NEAR-WIN DETECTOR ──
 async function fetchCards() {
   if (!phone) return;
   try {
@@ -296,7 +340,24 @@ function renderCard(card, drawn) {
   const div = document.createElement('div');
   div.className = 'bcard';
 
-  let h = `<div class="bcard-hdr"><span>🎟️ #${card.cardNumber}</span><span>${card.hash}</span></div>`;
+  // Near win calculation
+  let totalMissing = 0;
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const n = card.grid[r][c];
+      const free = (r === 2 && c === 2) || n === 0;
+      if (!free && !dSet.has(n)) totalMissing++;
+    }
+  }
+
+  let nearBadge = '';
+  if (totalMissing === 1) {
+    nearBadge = '<span class="near-win-badge">🔥 ¡FALTA 1 PARA BINGO!</span>';
+  } else if (totalMissing === 2) {
+    nearBadge = '<span class="near-win-badge" style="border-color:#FF9100;color:#FF9100">⚡ ¡FALTAN 2!</span>';
+  }
+
+  let h = `<div class="bcard-hdr"><span>🎟️ #${card.cardNumber} ${nearBadge}</span><span>${card.hash}</span></div>`;
   h += '<table><thead><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr></thead><tbody>';
 
   for (let r = 0; r < 5; r++) {
@@ -353,7 +414,6 @@ function initDrum() {
   const W = cv.width, H = cv.height;
   const cx = W / 2, cy = H / 2, R = 85;
 
-  // Balls inside the drum
   const drumBalls = [];
   for (let i = 0; i < 12; i++) {
     const angle = Math.random() * Math.PI * 2;
@@ -374,11 +434,9 @@ function initDrum() {
     ctx.clearRect(0, 0, W, H);
     rotation += .02;
 
-    // Outer cage glow
     ctx.save();
     ctx.translate(cx, cy);
 
-    // Cage rings
     for (let ring = 0; ring < 3; ring++) {
       ctx.save();
       ctx.rotate(rotation + ring * Math.PI / 3);
@@ -390,7 +448,6 @@ function initDrum() {
       ctx.restore();
     }
 
-    // Wire spokes
     for (let s = 0; s < 12; s++) {
       ctx.save();
       ctx.rotate(rotation + s * Math.PI / 6);
@@ -405,9 +462,7 @@ function initDrum() {
 
     ctx.restore();
 
-    // Physics for balls
     for (const b of drumBalls) {
-      // Gravity + rotation force
       b.vy += .15;
       b.vx += Math.cos(rotation * 3) * .12;
       b.vy += Math.sin(rotation * 3) * .08;
@@ -415,23 +470,19 @@ function initDrum() {
       b.x += b.vx;
       b.y += b.vy;
 
-      // Contain in circle
       const dx = b.x - cx, dy = b.y - cy;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist + b.r > R - 4) {
         const nx = dx / dist, ny = dy / dist;
         b.x = cx + nx * (R - b.r - 4);
         b.y = cy + ny * (R - b.r - 4);
-        // Reflect velocity
         const dot = b.vx * nx + b.vy * ny;
         b.vx -= 2 * dot * nx * .7;
         b.vy -= 2 * dot * ny * .7;
-        // Add some friction
         b.vx *= .85;
         b.vy *= .85;
       }
 
-      // Ball-ball collision
       for (const b2 of drumBalls) {
         if (b2 === b) continue;
         const ddx = b2.x - b.x, ddy = b2.y - b.y;
@@ -444,7 +495,6 @@ function initDrum() {
           b.y -= nny * overlap * .5;
           b2.x += nnx * overlap * .5;
           b2.y += nny * overlap * .5;
-          // Swap velocities partially
           const rel = (b.vx - b2.vx) * nnx + (b.vy - b2.vy) * nny;
           b.vx -= nnx * rel * .5;
           b.vy -= nny * rel * .5;
@@ -453,7 +503,6 @@ function initDrum() {
         }
       }
 
-      // Draw ball with 3D shading
       const grad = ctx.createRadialGradient(b.x - b.r * .3, b.y - b.r * .3, b.r * .1, b.x, b.y, b.r);
       grad.addColorStop(0, `hsl(${b.hue},90%,75%)`);
       grad.addColorStop(.6, `hsl(${b.hue},80%,50%)`);
@@ -463,7 +512,6 @@ function initDrum() {
       ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
       ctx.fill();
 
-      // Highlight
       ctx.fillStyle = 'rgba(255,255,255,.35)';
       ctx.beginPath();
       ctx.ellipse(b.x - b.r * .25, b.y - b.r * .3, b.r * .35, b.r * .2, -.5, 0, Math.PI * 2);

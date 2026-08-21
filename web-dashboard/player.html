@@ -3,38 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BingoPro 3D | Arena en Vivo 🎰</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>BingoPro 3D | Arena Casino en Vivo 🎰</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="player.css">
 </head>
 <body>
-    <!-- Particle & Confetti Overlay -->
+    <!-- FX Canvas -->
     <canvas id="fx-canvas"></canvas>
 
-    <!-- Login -->
+    <!-- Winner Announcement Banner Overlap -->
+    <div id="winner-banner" class="winner-banner hidden">
+        <div class="wb-content">
+            <span class="wb-icon">🏆</span>
+            <div class="wb-text">
+                <h2 id="wb-title">¡BINGO GANADO!</h2>
+                <p id="wb-user">Jugador ... ha ganado 0 Bs</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
     <div id="login-modal" class="modal-overlay">
         <div class="login-box">
             <div class="login-glow"></div>
             <div class="login-logo">🎱</div>
             <h1 class="login-title">BINGO<span>PRO</span></h1>
-            <p class="login-sub">Arena de Bingo 3D en Vivo</p>
+            <p class="login-sub">Casino Bingo 3D en Vivo</p>
             <div class="login-field">
-                <input type="text" id="phone-input" placeholder="Tu número WhatsApp (ej: 04121234567)" autofocus />
+                <input type="text" id="phone-input" placeholder="Tu WhatsApp (ej: 04121234567)" autofocus />
             </div>
             <button id="btn-login" class="btn-neon">ENTRAR A LA ARENA →</button>
         </div>
     </div>
 
-    <!-- App -->
+    <!-- Main Shell -->
     <div id="app" class="app hidden">
         <!-- Header -->
         <header class="hdr">
             <div class="hdr-left">
                 <span class="hdr-logo">🎱</span>
-                <span class="hdr-brand">BINGO<span class="accent">PRO</span></span>
+                <span class="hdr-brand">BINGO<span class="accent">PRO</span> <span class="tag-3d">3D</span></span>
             </div>
             <div class="hdr-right">
-                <button id="btn-sound" class="btn-icon" title="Sonido">🔊</button>
+                <button id="btn-voice" class="btn-icon" title="Voz Cantante">🗣️</button>
+                <button id="btn-sound" class="btn-icon" title="Efectos de Sonido">🔊</button>
                 <div class="hdr-wallet">
                     <span id="hdr-name" class="hdr-uname">...</span>
                     <span id="hdr-bal" class="hdr-balance">0.00 Bs</span>
@@ -48,10 +60,10 @@
             <section class="stage">
                 <div class="stage-top">
                     <div class="live-badge"><span class="dot-live"></span> <span id="round-label">RONDA #--</span></div>
-                    <div class="pot-chip">POTE <strong id="pot-value">0 Bs</strong></div>
+                    <div class="pot-chip">POTE ACUMULADO <strong id="pot-value">0.00 Bs</strong></div>
                 </div>
 
-                <!-- B I N G O Column Headers with glow -->
+                <!-- B I N G O Header Glow Tiles -->
                 <div class="bingo-headers" id="bingo-headers">
                     <div class="bh" data-col="B">B</div>
                     <div class="bh" data-col="I">I</div>
@@ -60,7 +72,7 @@
                     <div class="bh" data-col="O">O</div>
                 </div>
 
-                <!-- 3D Drum + Current Ball -->
+                <!-- 3D Physics Drum + Main Ball -->
                 <div class="drum-row">
                     <canvas id="drum-canvas" width="220" height="220"></canvas>
                     <div class="current-ball-zone">
@@ -71,44 +83,29 @@
                             </div>
                             <div class="cb-shine"></div>
                         </div>
-                        <div id="cb-announce" class="cb-announce"></div>
+                        <div id="cb-announce" class="cb-announce">CANTADOR EN VIVO</div>
                     </div>
                 </div>
 
-                <!-- Status -->
-                <div id="status-text" class="status-bar">ESPERANDO RONDA...</div>
+                <!-- Status & Progress -->
+                <div id="status-text" class="status-bar">ESPERANDO PRÓXIMA RONDA...</div>
                 <div class="prog-wrap"><div id="prog-bar" class="prog-fill"></div></div>
 
-                <!-- PIZARRA 1-75 -->
+                <!-- Master Pizarra 1-75 LEDs -->
                 <div class="pizarra">
-                    <div class="piz-label">PIZARRA OFICIAL</div>
+                    <div class="piz-label">⚡ PIZARRA OFICIAL EN VIVO (1 - 75)</div>
                     <div class="piz-cols">
-                        <div class="piz-col" data-letter="B">
-                            <div class="piz-col-hdr">B</div>
-                            <div class="piz-nums" id="piz-B"></div>
-                        </div>
-                        <div class="piz-col" data-letter="I">
-                            <div class="piz-col-hdr">I</div>
-                            <div class="piz-nums" id="piz-I"></div>
-                        </div>
-                        <div class="piz-col" data-letter="N">
-                            <div class="piz-col-hdr">N</div>
-                            <div class="piz-nums" id="piz-N"></div>
-                        </div>
-                        <div class="piz-col" data-letter="G">
-                            <div class="piz-col-hdr">G</div>
-                            <div class="piz-nums" id="piz-G"></div>
-                        </div>
-                        <div class="piz-col" data-letter="O">
-                            <div class="piz-col-hdr">O</div>
-                            <div class="piz-nums" id="piz-O"></div>
-                        </div>
+                        <div class="piz-col" data-letter="B"><div class="piz-col-hdr">B</div><div class="piz-nums" id="piz-B"></div></div>
+                        <div class="piz-col" data-letter="I"><div class="piz-col-hdr">I</div><div class="piz-nums" id="piz-I"></div></div>
+                        <div class="piz-col" data-letter="N"><div class="piz-col-hdr">N</div><div class="piz-nums" id="piz-N"></div></div>
+                        <div class="piz-col" data-letter="G"><div class="piz-col-hdr">G</div><div class="piz-nums" id="piz-G"></div></div>
+                        <div class="piz-col" data-letter="O"><div class="piz-col-hdr">O</div><div class="piz-nums" id="piz-O"></div></div>
                     </div>
                 </div>
 
-                <!-- Last 8 balls strip -->
+                <!-- History Strip -->
                 <div class="history-strip">
-                    <span class="hs-label">Últimas:</span>
+                    <span class="hs-label">Historial:</span>
                     <div id="history-balls" class="hs-balls"></div>
                 </div>
             </section>
@@ -116,7 +113,7 @@
             <!-- ═══ STORE ═══ -->
             <section class="store glass-box">
                 <div class="store-top">
-                    <h3>🛒 TIENDA DE CARTONES</h3>
+                    <h3>🛒 COMPRAR CARTONES DE BINGO</h3>
                     <span class="price-pill">100 Bs c/u</span>
                 </div>
                 <div class="buy-row">
@@ -127,14 +124,29 @@
                 </div>
             </section>
 
-            <!-- ═══ MY CARDS ═══ -->
+            <!-- ═══ MY CARDS WITH NEAR-WIN DETECTOR ═══ -->
             <section class="my-cards-section">
                 <div class="mc-top">
-                    <h3>🎟️ MIS CARTONES (<span id="card-count">0</span>)</h3>
-                    <span class="autodaub-pill">● AUTO-TACHADO ON</span>
+                    <h3>🎟️ MIS CARTONES ACTIVOS (<span id="card-count">0</span>)</h3>
+                    <span class="autodaub-pill">🟢 Voz & Auto-Tachado Activo</span>
                 </div>
                 <div id="cards-zone" class="cards-zone">
-                    <div class="no-cards">Compra cartones arriba para comenzar a jugar 🎲</div>
+                    <div class="no-cards">Compra cartones arriba para jugar en la arena 🎲</div>
+                </div>
+            </section>
+
+            <!-- ═══ LIVE COMMUNITY CHAT WIDGET ═══ -->
+            <section class="chat-section glass-box">
+                <div class="chat-header">
+                    <h3>💬 CHAT DE LA COMUNIDAD EN VIVO</h3>
+                    <span class="online-users">🟢 14 Jugadores</span>
+                </div>
+                <div id="chat-messages" class="chat-messages">
+                    <div class="chat-msg system">🤖 <i>Bot: ¡Bienvenidos a BingoPro Arena 3D!</i></div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" id="chat-input" placeholder="Escribe un mensaje o emoji..." />
+                    <button id="chat-send" class="btn-chat-send">Enviar</button>
                 </div>
             </section>
         </div>
@@ -144,15 +156,15 @@
     <div id="dep-modal" class="modal-overlay hidden">
         <div class="dep-box">
             <button id="dep-close" class="close-x">✕</button>
-            <h2>🏦 PAGO MÓVIL</h2>
+            <h2>🏦 RECARGAR PAGO MÓVIL</h2>
             <div class="pm-info">
                 <p>📱 <strong>Banco:</strong> <span id="pm-banco">0102</span></p>
-                <p>📞 <strong>Tel:</strong> <span id="pm-tel">0412-1234567</span></p>
+                <p>📞 <strong>Teléfono:</strong> <span id="pm-tel">0412-1234567</span></p>
                 <p>🪪 <strong>Cédula:</strong> <span id="pm-ced">V-12345678</span></p>
             </div>
-            <input type="number" id="dep-amt" class="dep-input" placeholder="Monto (Bs)" />
-            <input type="text" id="dep-ref" class="dep-input" placeholder="Nro Referencia" />
-            <button id="dep-submit" class="btn-neon">REPORTAR PAGO →</button>
+            <input type="number" id="dep-amt" class="dep-input" placeholder="Monto en Bs" />
+            <input type="text" id="dep-ref" class="dep-input" placeholder="Últimos 6 dígitos referencia" />
+            <button id="dep-submit" class="btn-neon">REPORTAR PAGO MÓVIL →</button>
         </div>
     </div>
 
