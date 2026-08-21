@@ -1,394 +1,476 @@
-let currentPhone = localStorage.getItem('bingopro_phone') || '';
-let soundEnabled = true;
-let drawnNumbersSet = new Set();
-let lastDrawnNumber = null;
+/* ═══════════════════════════════════════════════════
+   BINGOPRO 3D — PLAYER ARENA ENGINE
+   Mechanical drum, particle FX, auto-daub, confetti
+   ═══════════════════════════════════════════════════ */
 
-// Sound Engine using Web Audio API (Zero external audio file dependency!)
-class SoundEngine {
-    constructor() {
-        this.ctx = null;
-    }
+let phone = localStorage.getItem('bp_phone') || '';
+let soundOn = true;
+let lastBallNum = null;
+let drawnSet = new Set();
+let prevCardHTML = {};
 
-    init() {
-        if (!this.ctx) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-    }
+// ── URL param phone ──
+const up = new URLSearchParams(location.search);
+if (up.get('phone')) { phone = up.get('phone'); localStorage.setItem('bp_phone', phone); }
 
-    playBallDraw() {
-        if (!soundEnabled || !this.ctx) return;
-        try {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(440, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.15);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.15);
-        } catch {}
-    }
+// ── SOUND ENGINE (Web Audio — zero dependencies) ──
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx = null;
+function snd() { if (!actx) actx = new AudioCtx(); return actx; }
 
-    playDaub() {
-        if (!soundEnabled || !this.ctx) return;
-        try {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(523.25, this.ctx.currentTime); // C5
-            osc.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.08); // E5
-            gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.2);
-        } catch {}
-    }
-
-    playWinFanfare() {
-        if (!soundEnabled || !this.ctx) return;
-        try {
-            const notes = [523.25, 659.25, 783.99, 1046.50]; // C, E, G, C
-            notes.forEach((freq, idx) => {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.1);
-                gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.1);
-                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + idx * 0.1 + 0.3);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(this.ctx.currentTime + idx * 0.1);
-                osc.stop(this.ctx.currentTime + idx * 0.1 + 0.3);
-            });
-        } catch {}
-    }
+function playBallPop() {
+  if (!soundOn) return;
+  try {
+    const c = snd(), o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(660, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1320, c.currentTime + .08);
+    o.frequency.exponentialRampToValueAtTime(880, c.currentTime + .15);
+    g.gain.setValueAtTime(.25, c.currentTime);
+    g.gain.linearRampToValueAtTime(0, c.currentTime + .2);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .2);
+  } catch {}
+}
+function playDaub() {
+  if (!soundOn) return;
+  try {
+    const c = snd(), o = c.createOscillator(), g = c.createGain();
+    o.type = 'triangle'; o.frequency.setValueAtTime(1046, c.currentTime);
+    g.gain.setValueAtTime(.12, c.currentTime);
+    g.gain.linearRampToValueAtTime(0, c.currentTime + .1);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .1);
+  } catch {}
 }
 
-const audio = new SoundEngine();
+// ── PARTICLE / CONFETTI ENGINE ──
+const fxCanvas = document.getElementById('fx-canvas');
+const fxCtx = fxCanvas.getContext('2d');
+let particles = [];
 
-// DOM Elements
-const loginModal = document.getElementById('login-modal');
-const phoneInput = document.getElementById('phone-input');
-const btnLogin = document.getElementById('btn-login');
+function resizeFX() { fxCanvas.width = window.innerWidth; fxCanvas.height = window.innerHeight; }
+resizeFX(); window.addEventListener('resize', resizeFX);
 
-const playerNameEl = document.getElementById('player-name');
-const playerBalanceEl = document.getElementById('player-balance');
-const btnSound = document.getElementById('btn-sound');
-
-const roundTitleEl = document.getElementById('round-title');
-const prizePoolValEl = document.getElementById('prize-pool-val');
-
-const ballSphere = document.getElementById('ball-3d-sphere');
-const ballLetterEl = document.getElementById('ball-letter');
-const ballNumberEl = document.getElementById('ball-number');
-const pizarraGrid = document.getElementById('pizarra-grid');
-
-const gameStatusText = document.getElementById('game-status-text');
-const gameProgress = document.getElementById('game-progress');
-
-const cardsContainer = document.getElementById('cards-container');
-const myCardCount = document.getElementById('my-card-count');
-
-const depositModal = document.getElementById('deposit-modal');
-const btnDepositOpen = document.getElementById('btn-deposit-open');
-const btnDepositClose = document.getElementById('btn-deposit-close');
-const btnSubmitDep = document.getElementById('btn-submit-dep');
-
-// Check URL param for phone
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('phone')) {
-    currentPhone = urlParams.get('phone');
-    localStorage.setItem('bingopro_phone', currentPhone);
+function spawnBurst(x, y, color, count = 20) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2,
+      life: 1,
+      decay: .015 + Math.random() * .02,
+      size: 2 + Math.random() * 4,
+      color
+    });
+  }
 }
 
-// Build Pizarra 1-75 LED Grid
+function spawnConfetti(count = 120) {
+  const colors = ['#FFD700','#FF1744','#00E5FF','#00FF6A','#D500F9','#FF9100','#FFFFFF'];
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * fxCanvas.width,
+      y: -10 - Math.random() * 100,
+      vx: (Math.random() - .5) * 4,
+      vy: 2 + Math.random() * 4,
+      life: 1,
+      decay: .003 + Math.random() * .005,
+      size: 4 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360,
+      rotV: (Math.random() - .5) * 10
+    });
+  }
+}
+
+function animateFX() {
+  fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+  particles = particles.filter(p => p.life > 0);
+  for (const p of particles) {
+    p.x += p.vx; p.y += p.vy; p.vy += .12; p.life -= p.decay;
+    if (p.rot !== undefined) p.rot += p.rotV;
+    fxCtx.save();
+    fxCtx.globalAlpha = p.life;
+    fxCtx.fillStyle = p.color;
+    if (p.rot !== undefined) {
+      fxCtx.translate(p.x, p.y);
+      fxCtx.rotate(p.rot * Math.PI / 180);
+      fxCtx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+    } else {
+      fxCtx.beginPath(); fxCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2); fxCtx.fill();
+    }
+    fxCtx.restore();
+  }
+  requestAnimationFrame(animateFX);
+}
+animateFX();
+
+// ── DOM REFS ──
+const $id = id => document.getElementById(id);
+const loginModal = $id('login-modal');
+const app = $id('app');
+
+// ── BUILD PIZARRA ──
 function buildPizarra() {
-    pizarraGrid.innerHTML = '';
-    for (let i = 1; i <= 75; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'piz-cell';
-        cell.id = `piz-${i}`;
-        cell.textContent = i;
-        pizarraGrid.appendChild(cell);
+  const cols = { B: [1,15], I: [16,30], N: [31,45], G: [46,60], O: [61,75] };
+  for (const [letter, [lo, hi]] of Object.entries(cols)) {
+    const container = $id(`piz-${letter}`);
+    if (!container) continue;
+    container.innerHTML = '';
+    for (let n = lo; n <= hi; n++) {
+      const d = document.createElement('div');
+      d.className = 'piz-cell';
+      d.id = `pc-${n}`;
+      d.textContent = n;
+      container.appendChild(d);
     }
+  }
 }
 buildPizarra();
 
-// Init App
-if (!currentPhone) {
-    loginModal.classList.remove('hidden');
-} else {
-    loginModal.classList.add('hidden');
-    initApp();
-}
+// ── INIT ──
+if (!phone) { loginModal.classList.remove('hidden'); app.classList.add('hidden'); }
+else { loginModal.classList.add('hidden'); app.classList.remove('hidden'); boot(); }
 
-btnLogin.addEventListener('click', () => {
-    audio.init();
-    const val = phoneInput.value.trim();
-    if (!val) return alert('Ingresa tu número');
-    currentPhone = val.replace(/[^0-9]/g, '');
-    localStorage.setItem('bingopro_phone', currentPhone);
-    loginModal.classList.add('hidden');
-    initApp();
+$id('btn-login').onclick = () => {
+  snd(); // unlock audio
+  const v = $id('phone-input').value.trim().replace(/[^0-9]/g, '');
+  if (!v) return alert('Ingresa tu número');
+  phone = v; localStorage.setItem('bp_phone', phone);
+  loginModal.classList.add('hidden'); app.classList.remove('hidden'); boot();
+};
+
+$id('btn-sound').onclick = () => { snd(); soundOn = !soundOn; $id('btn-sound').textContent = soundOn ? '🔊' : '🔇'; };
+$id('btn-recargar').onclick = () => $id('dep-modal').classList.remove('hidden');
+$id('dep-close').onclick = () => $id('dep-modal').classList.add('hidden');
+
+document.querySelectorAll('.buy-btn').forEach(b => {
+  b.onclick = () => { snd(); buyCards(parseInt(b.dataset.n)); };
 });
 
-btnSound.addEventListener('click', () => {
-    audio.init();
-    soundEnabled = !soundEnabled;
-    btnSound.textContent = soundEnabled ? '🔊' : '🔇';
-});
-
-btnDepositOpen.addEventListener('click', () => depositModal.classList.remove('hidden'));
-btnDepositClose.addEventListener('click', () => depositModal.classList.add('hidden'));
-
-document.querySelectorAll('.btn-buy-chip').forEach(btn => {
-    btn.addEventListener('click', async () => {
-        audio.init();
-        const count = parseInt(btn.getAttribute('data-count'));
-        await buyCards(count);
+$id('dep-submit').onclick = async () => {
+  const amt = $id('dep-amt').value, ref = $id('dep-ref').value;
+  if (!amt || !ref) return alert('Completa ambos campos');
+  try {
+    const r = await fetch('/api/player/deposit', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, amount: amt, referenceCode: ref })
     });
-});
+    const d = await r.json();
+    d.success ? (alert('✅ Recarga registrada — será aprobada en breve'), $id('dep-modal').classList.add('hidden')) : alert('Error: ' + d.error);
+  } catch { alert('Error de conexión'); }
+};
 
-btnSubmitDep.addEventListener('click', async () => {
-    const amount = document.getElementById('dep-amount').value;
-    const ref = document.getElementById('dep-ref').value;
-    if (!amount || !ref) return alert('Ingresa el monto y la referencia');
-
-    try {
-        const res = await fetch('/api/player/deposit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: currentPhone, amount, referenceCode: ref })
-        });
-        const data = await res.json();
-        if (data.success) {
-            alert('✅ Recarga registrada. Será aprobada en breve.');
-            depositModal.classList.add('hidden');
-        } else {
-            alert('Error: ' + data.error);
-        }
-    } catch { alert('Error de conexión'); }
-});
-
-function initApp() {
-    fetchProfile();
-    pollGame();
-    setInterval(pollGame, 2000);
-    setInterval(fetchProfile, 4000);
-    initDrumCanvas();
+function boot() {
+  fetchProfile();
+  poll();
+  setInterval(poll, 2000);
+  setInterval(fetchProfile, 4000);
+  initDrum();
 }
 
+// ── PROFILE ──
 async function fetchProfile() {
-    if (!currentPhone) return;
-    try {
-        const res = await fetch(`/api/player/me?phone=${currentPhone}`);
-        const data = await res.json();
-        if (data.name) {
-            playerNameEl.textContent = data.name;
-            playerBalanceEl.textContent = `${data.balance.toFixed(2)} Bs`;
-            if (data.pagoMovil) {
-                document.getElementById('pm-banco').textContent = data.pagoMovil.banco;
-                document.getElementById('pm-phone').textContent = data.pagoMovil.telefono;
-                document.getElementById('pm-cedula').textContent = data.pagoMovil.cedula;
-            }
-        }
-    } catch {}
+  if (!phone) return;
+  try {
+    const r = await (await fetch(`/api/player/me?phone=${phone}`)).json();
+    if (r.name) {
+      $id('hdr-name').textContent = r.name;
+      $id('hdr-bal').textContent = r.balance.toFixed(2) + ' Bs';
+      if (r.pagoMovil) {
+        $id('pm-banco').textContent = r.pagoMovil.banco;
+        $id('pm-tel').textContent = r.pagoMovil.telefono;
+        $id('pm-ced').textContent = r.pagoMovil.cedula;
+      }
+    }
+  } catch {}
 }
 
-async function pollGame() {
-    try {
-        const res = await fetch('/api/player/game');
-        const data = await res.json();
-
-        if (!data.hasActiveGame) {
-            roundTitleEl.textContent = 'RONDA #--';
-            gameStatusText.textContent = 'ESPERANDO PRÓXIMA RONDA...';
-            gameProgress.style.width = '0%';
-            return;
-        }
-
-        roundTitleEl.textContent = `RONDA #${data.roundNumber}`;
-        prizePoolValEl.textContent = `${data.prizePool.toFixed(2)} Bs`;
-
-        if (data.status === 'SELLING') {
-            gameStatusText.textContent = '🛒 VENTAS ABIERTAS — ¡COMPRA TUS CARTONES!';
-            gameProgress.style.width = '25%';
-        } else if (data.status === 'DRAWING') {
-            gameStatusText.textContent = `🔴 SORTEO EN VIVO (${data.drawnBalls.length}/75 BOLILLAS)`;
-            gameProgress.style.width = `${Math.min(100, (data.drawnBalls.length / 75) * 100)}%`;
-        } else if (data.status === 'FINISHED') {
-            gameStatusText.textContent = '🏁 RONDA FINALIZADA';
-            gameProgress.style.width = '100%';
-        }
-
-        // Update Pizarra Grid
-        drawnNumbersSet = new Set(data.drawnBalls.map(b => b.number));
-        for (let i = 1; i <= 75; i++) {
-            const cell = document.getElementById(`piz-${i}`);
-            if (cell) {
-                if (drawnNumbersSet.has(i)) {
-                    cell.classList.add('lit');
-                } else {
-                    cell.classList.remove('lit');
-                }
-            }
-        }
-
-        // Active 3D Drop Ball Update
-        if (data.drawnBalls.length > 0) {
-            const last = data.drawnBalls[data.drawnBalls.length - 1];
-            if (lastDrawnNumber !== last.number) {
-                lastDrawnNumber = last.number;
-                ballLetterEl.textContent = last.column;
-                ballNumberEl.textContent = last.number;
-
-                // Color class by column
-                ballSphere.className = `ball-3d ball-${last.column.toLowerCase()} drop-anim`;
-                setTimeout(() => ballSphere.classList.remove('drop-anim'), 600);
-
-                audio.playBallDraw();
-            }
-        }
-
-        fetchMyCards();
-    } catch {}
-}
-
-async function fetchMyCards() {
-    if (!currentPhone) return;
-    try {
-        const res = await fetch(`/api/player/my-cards?phone=${currentPhone}`);
-        const data = await res.json();
-
-        myCardCount.textContent = data.cards ? data.cards.length : 0;
-
-        if (!data.cards || data.cards.length === 0) {
-            cardsContainer.innerHTML = '<div class="empty-cards-notice">No tienes cartones en esta ronda. ¡Compra uno arriba para jugar!</div>';
-            return;
-        }
-
-        cardsContainer.innerHTML = '';
-        data.cards.forEach(card => {
-            const cardEl = renderBingoCard(card, data.drawnNumbers || []);
-            cardsContainer.appendChild(cardEl);
-        });
-    } catch {}
-}
-
-function renderBingoCard(card, drawnNumbers) {
-    const drawnSet = new Set(drawnNumbers);
-    const div = document.createElement('div');
-    div.className = 'cyber-card-grid';
-
-    let html = `
-        <div class="card-top-info">
-            <span>🎟️ CARTÓN #${card.cardNumber}</span>
-            <span>ID: ${card.hash}</span>
-        </div>
-        <table class="bingo-table">
-            <thead>
-                <tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>
-            </thead>
-            <tbody>
-    `;
-
-    for (let r = 0; r < 5; r++) {
-        html += '<tr>';
-        for (let c = 0; c < 5; c++) {
-            const num = card.grid[r][c];
-            const isFree = (r === 2 && c === 2) || num === 0;
-            const isDaubed = isFree || drawnSet.has(num);
-
-            if (isFree) {
-                html += '<td class="free">LIBRE</td>';
-            } else {
-                html += `<td class="${isDaubed ? 'daubed' : ''}">${num}</td>`;
-            }
-        }
-        html += '</tr>';
+// ── POLL GAME ──
+async function poll() {
+  try {
+    const d = await (await fetch('/api/player/game')).json();
+    if (!d.hasActiveGame) {
+      $id('round-label').textContent = 'RONDA #--';
+      $id('status-text').textContent = 'ESPERANDO PRÓXIMA RONDA…';
+      $id('prog-bar').style.width = '0%';
+      return;
     }
 
-    html += '</tbody></table>';
-    div.innerHTML = html;
-    return div;
+    $id('round-label').textContent = `RONDA #${d.roundNumber}`;
+    $id('pot-value').textContent = d.prizePool.toFixed(2) + ' Bs';
+
+    const statusMap = {
+      WAITING: '⏳ PREPARANDO RONDA…',
+      SELLING: '🛒 ¡VENTAS ABIERTAS — COMPRA AHORA!',
+      DRAWING: `🔴 SORTEO EN VIVO — ${d.drawnBalls.length}/75`,
+      PAUSED: '⏸️ RONDA PAUSADA',
+      FINISHED: '🏁 RONDA FINALIZADA'
+    };
+    $id('status-text').textContent = statusMap[d.status] || d.status;
+    $id('prog-bar').style.width = d.status === 'DRAWING'
+      ? Math.min(100, (d.drawnBalls.length / 75) * 100) + '%'
+      : d.status === 'SELLING' ? '20%' : d.status === 'FINISHED' ? '100%' : '0%';
+
+    // Drawn set
+    const newDrawn = new Set(d.drawnBalls.map(b => b.number));
+    drawnSet = newDrawn;
+
+    // Update pizarra
+    for (let i = 1; i <= 75; i++) {
+      const el = $id(`pc-${i}`);
+      if (el) el.classList.toggle('lit', drawnSet.has(i));
+    }
+
+    // New ball?
+    if (d.drawnBalls.length > 0) {
+      const last = d.drawnBalls[d.drawnBalls.length - 1];
+      if (lastBallNum !== last.number) {
+        lastBallNum = last.number;
+        onNewBall(last);
+      }
+    }
+
+    // History strip
+    renderHistory(d.drawnBalls.slice(-8).reverse());
+
+    // Cards
+    fetchCards();
+  } catch {}
 }
 
+function onNewBall(ball) {
+  // Update sphere
+  const sphere = $id('cur-ball');
+  sphere.className = `cur-ball ball-${ball.column.toLowerCase()} drop-in`;
+  $id('cb-col').textContent = ball.column;
+  $id('cb-num').textContent = ball.number;
+  $id('cb-announce').textContent = `${ball.column} - ${ball.number}`;
+  setTimeout(() => sphere.classList.remove('drop-in'), 650);
+
+  // Glow correct BINGO header
+  document.querySelectorAll('.bh').forEach(h => {
+    h.className = 'bh';
+    if (h.dataset.col === ball.column) {
+      h.classList.add('glow-' + ball.column.toLowerCase());
+    }
+  });
+
+  // Particle burst near ball
+  const rect = sphere.getBoundingClientRect();
+  const colorMap = { B: '#FFD700', I: '#00E5FF', N: '#00FF6A', G: '#D500F9', O: '#FF1744' };
+  spawnBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, colorMap[ball.column] || '#FFD700', 25);
+
+  playBallPop();
+}
+
+function renderHistory(balls) {
+  const container = $id('history-balls');
+  container.innerHTML = '';
+  balls.forEach(b => {
+    const d = document.createElement('div');
+    d.className = `hs-ball col-${b.column.toLowerCase()}`;
+    d.textContent = b.number;
+    container.appendChild(d);
+  });
+}
+
+// ── CARDS ──
+async function fetchCards() {
+  if (!phone) return;
+  try {
+    const d = await (await fetch(`/api/player/my-cards?phone=${phone}`)).json();
+    $id('card-count').textContent = d.cards ? d.cards.length : 0;
+    if (!d.cards || !d.cards.length) {
+      $id('cards-zone').innerHTML = '<div class="no-cards">Compra cartones arriba para jugar 🎲</div>';
+      return;
+    }
+    const zone = $id('cards-zone');
+    zone.innerHTML = '';
+    d.cards.forEach(c => zone.appendChild(renderCard(c, d.drawnNumbers || [])));
+  } catch {}
+}
+
+function renderCard(card, drawn) {
+  const dSet = new Set(drawn);
+  const div = document.createElement('div');
+  div.className = 'bcard';
+
+  let h = `<div class="bcard-hdr"><span>🎟️ #${card.cardNumber}</span><span>${card.hash}</span></div>`;
+  h += '<table><thead><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr></thead><tbody>';
+
+  for (let r = 0; r < 5; r++) {
+    h += '<tr>';
+    for (let c = 0; c < 5; c++) {
+      const n = card.grid[r][c];
+      const free = (r === 2 && c === 2) || n === 0;
+      const hit = free || dSet.has(n);
+      const key = `${card.id}-${r}-${c}`;
+      const wasHit = prevCardHTML[key];
+      const isNew = hit && !wasHit;
+      prevCardHTML[key] = hit;
+
+      if (free) {
+        h += '<td class="free">★</td>';
+      } else if (hit) {
+        h += `<td class="daubed ${isNew ? 'daubed-new' : ''}">${n}</td>`;
+        if (isNew) playDaub();
+      } else {
+        h += `<td>${n}</td>`;
+      }
+    }
+    h += '</tr>';
+  }
+  h += '</tbody></table>';
+  div.innerHTML = h;
+  return div;
+}
+
+// ── BUY CARDS ──
 async function buyCards(count) {
-    if (!currentPhone) return alert('Identifícate primero');
-    try {
-        const res = await fetch('/api/player/buy-cards', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: currentPhone, count })
-        });
-        const data = await res.json();
-        if (data.success) {
-            audio.playDaub();
-            alert(`🎉 ¡Compraste ${data.count} cartón(es) con éxito!`);
-            fetchProfile();
-            fetchMyCards();
-        } else {
-            alert('Error: ' + data.error);
-        }
-    } catch { alert('Error al realizar la compra.'); }
+  if (!phone) return alert('Identifícate primero');
+  try {
+    const r = await fetch('/api/player/buy-cards', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, count })
+    });
+    const d = await r.json();
+    if (d.success) {
+      spawnConfetti(80);
+      alert(`🎉 ¡${d.count} cartón(es) comprados!`);
+      fetchProfile(); fetchCards();
+    } else {
+      alert('❌ ' + d.error);
+    }
+  } catch { alert('Error de conexión'); }
 }
 
-// 3D Canvas Rotating Drum Animation
-function initDrumCanvas() {
-    const canvas = document.getElementById('drum-3d-canvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let angle = 0;
+// ── 3D MECHANICAL DRUM (Canvas) ──
+function initDrum() {
+  const cv = $id('drum-canvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const cx = W / 2, cy = H / 2, R = 85;
 
-    function drawDrum() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Balls inside the drum
+  const drumBalls = [];
+  for (let i = 0; i < 12; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.random() * (R - 14);
+    drumBalls.push({
+      x: cx + Math.cos(angle) * dist,
+      y: cy + Math.sin(angle) * dist,
+      vx: (Math.random() - .5) * 3,
+      vy: (Math.random() - .5) * 3,
+      r: 8 + Math.random() * 4,
+      hue: Math.floor(Math.random() * 360)
+    });
+  }
 
-        // Center
-        const cx = canvas.width / 2;
-        const cy = canvas.height / 2;
-        const radius = 65;
+  let rotation = 0;
 
-        // Outer Cage Glow
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(angle);
+  function tick() {
+    ctx.clearRect(0, 0, W, H);
+    rotation += .02;
 
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        ctx.stroke();
+    // Outer cage glow
+    ctx.save();
+    ctx.translate(cx, cy);
 
-        // Inner Spokes
-        for (let i = 0; i < 8; i++) {
-            ctx.rotate(Math.PI / 4);
-            ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(radius, 0);
-            ctx.stroke();
-        }
-
-        // Bouncing Balls inside cage
-        for (let b = 0; b < 6; b++) {
-            const bx = Math.cos(angle * 2 + b) * (radius - 20);
-            const by = Math.sin(angle * 3 + b) * (radius - 20);
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.arc(bx, by, 7, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        ctx.restore();
-        angle += 0.03;
-        requestAnimationFrame(drawDrum);
+    // Cage rings
+    for (let ring = 0; ring < 3; ring++) {
+      ctx.save();
+      ctx.rotate(rotation + ring * Math.PI / 3);
+      ctx.strokeStyle = `rgba(255,215,0,${.12 + ring * .05})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, R, R * .65, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
     }
 
-    drawDrum();
+    // Wire spokes
+    for (let s = 0; s < 12; s++) {
+      ctx.save();
+      ctx.rotate(rotation + s * Math.PI / 6);
+      ctx.strokeStyle = 'rgba(0,229,255,.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(R, 0);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.restore();
+
+    // Physics for balls
+    for (const b of drumBalls) {
+      // Gravity + rotation force
+      b.vy += .15;
+      b.vx += Math.cos(rotation * 3) * .12;
+      b.vy += Math.sin(rotation * 3) * .08;
+
+      b.x += b.vx;
+      b.y += b.vy;
+
+      // Contain in circle
+      const dx = b.x - cx, dy = b.y - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist + b.r > R - 4) {
+        const nx = dx / dist, ny = dy / dist;
+        b.x = cx + nx * (R - b.r - 4);
+        b.y = cy + ny * (R - b.r - 4);
+        // Reflect velocity
+        const dot = b.vx * nx + b.vy * ny;
+        b.vx -= 2 * dot * nx * .7;
+        b.vy -= 2 * dot * ny * .7;
+        // Add some friction
+        b.vx *= .85;
+        b.vy *= .85;
+      }
+
+      // Ball-ball collision
+      for (const b2 of drumBalls) {
+        if (b2 === b) continue;
+        const ddx = b2.x - b.x, ddy = b2.y - b.y;
+        const d2 = Math.sqrt(ddx * ddx + ddy * ddy);
+        const minD = b.r + b2.r;
+        if (d2 < minD && d2 > 0) {
+          const overlap = minD - d2;
+          const nnx = ddx / d2, nny = ddy / d2;
+          b.x -= nnx * overlap * .5;
+          b.y -= nny * overlap * .5;
+          b2.x += nnx * overlap * .5;
+          b2.y += nny * overlap * .5;
+          // Swap velocities partially
+          const rel = (b.vx - b2.vx) * nnx + (b.vy - b2.vy) * nny;
+          b.vx -= nnx * rel * .5;
+          b.vy -= nny * rel * .5;
+          b2.vx += nnx * rel * .5;
+          b2.vy += nny * rel * .5;
+        }
+      }
+
+      // Draw ball with 3D shading
+      const grad = ctx.createRadialGradient(b.x - b.r * .3, b.y - b.r * .3, b.r * .1, b.x, b.y, b.r);
+      grad.addColorStop(0, `hsl(${b.hue},90%,75%)`);
+      grad.addColorStop(.6, `hsl(${b.hue},80%,50%)`);
+      grad.addColorStop(1, `hsl(${b.hue},70%,25%)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Highlight
+      ctx.fillStyle = 'rgba(255,255,255,.35)';
+      ctx.beginPath();
+      ctx.ellipse(b.x - b.r * .25, b.y - b.r * .3, b.r * .35, b.r * .2, -.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    requestAnimationFrame(tick);
+  }
+  tick();
 }

@@ -3,146 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BingoPro 3D | Arena de Juego Futurista 🎰</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>BingoPro 3D | Arena en Vivo 🎰</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="player.css">
 </head>
 <body>
+    <!-- Particle & Confetti Overlay -->
+    <canvas id="fx-canvas"></canvas>
 
-    <!-- Confetti Canvas for Wins -->
-    <canvas id="confetti-canvas"></canvas>
-
-    <!-- Login Modal -->
+    <!-- Login -->
     <div id="login-modal" class="modal-overlay">
-        <div class="modal-card glass-cyber">
-            <div class="brand">
-                <div class="logo-3d">🎱</div>
-                <h1>BINGOPRO 3D</h1>
-                <p>Ingresa tu WhatsApp para conectar a la arena 3D</p>
+        <div class="login-box">
+            <div class="login-glow"></div>
+            <div class="login-logo">🎱</div>
+            <h1 class="login-title">BINGO<span>PRO</span></h1>
+            <p class="login-sub">Arena de Bingo 3D en Vivo</p>
+            <div class="login-field">
+                <input type="text" id="phone-input" placeholder="Tu número WhatsApp (ej: 04121234567)" autofocus />
             </div>
-            <div class="input-field">
-                <label>Número de WhatsApp / Teléfono</label>
-                <input type="text" id="phone-input" placeholder="Ej: 04121234567" autofocus />
-            </div>
-            <button id="btn-login" class="btn btn-cyber btn-full">INGRESAR A LA ARENA 🚀</button>
+            <button id="btn-login" class="btn-neon">ENTRAR A LA ARENA →</button>
         </div>
     </div>
 
-    <!-- App Shell -->
-    <div class="app-shell">
-
-        <!-- Futuristic Top Navigation Bar -->
-        <header class="cyber-header">
-            <div class="brand">
-                <span class="logo-sphere">🎱</span>
-                <span class="brand-title">BINGO<span class="gold-text">PRO</span> <span class="badge-3d">3D</span></span>
+    <!-- App -->
+    <div id="app" class="app hidden">
+        <!-- Header -->
+        <header class="hdr">
+            <div class="hdr-left">
+                <span class="hdr-logo">🎱</span>
+                <span class="hdr-brand">BINGO<span class="accent">PRO</span></span>
             </div>
-
-            <div class="header-controls">
-                <button id="btn-sound" class="btn-sound" title="Sonido">🔊</button>
-                <div class="user-chip">
-                    <div class="user-info">
-                        <span id="player-name" class="name">Cargando...</span>
-                        <span id="player-balance" class="balance">0.00 Bs</span>
-                    </div>
-                    <button id="btn-deposit-open" class="btn btn-cyber-sm">+ RECARGAR</button>
+            <div class="hdr-right">
+                <button id="btn-sound" class="btn-icon" title="Sonido">🔊</button>
+                <div class="hdr-wallet">
+                    <span id="hdr-name" class="hdr-uname">...</span>
+                    <span id="hdr-bal" class="hdr-balance">0.00 Bs</span>
                 </div>
+                <button id="btn-recargar" class="btn-gold-sm">+ RECARGAR</button>
             </div>
         </header>
 
-        <!-- Main Gaming Arena -->
-        <main class="main-container">
-
-            <!-- 3D BALL DRUM & LIVE STAGE -->
-            <section class="stage-3d glass-cyber">
-                <div class="stage-header">
-                    <div class="live-indicator">
-                        <span class="pulse-red"></span>
-                        <span id="round-title">RONDA #--</span>
-                    </div>
-                    <div class="pot-badge">POTE TOTAL: <strong id="prize-pool-val">0.00 Bs</strong></div>
+        <div class="arena-scroll">
+            <!-- ═══ LIVE STAGE ═══ -->
+            <section class="stage">
+                <div class="stage-top">
+                    <div class="live-badge"><span class="dot-live"></span> <span id="round-label">RONDA #--</span></div>
+                    <div class="pot-chip">POTE <strong id="pot-value">0 Bs</strong></div>
                 </div>
 
-                <!-- 3D Ball Container + Mechanical Drum Canvas -->
-                <div class="drum-canvas-wrapper">
-                    <canvas id="drum-3d-canvas" width="280" height="180"></canvas>
-                    
-                    <!-- 3D Active Ball Drop Zone -->
-                    <div class="ball-drop-zone">
-                        <div id="ball-3d-sphere" class="ball-3d ball-b idle">
-                            <div class="ball-inner">
-                                <span id="ball-letter">B</span>
-                                <span id="ball-number">--</span>
+                <!-- B I N G O Column Headers with glow -->
+                <div class="bingo-headers" id="bingo-headers">
+                    <div class="bh" data-col="B">B</div>
+                    <div class="bh" data-col="I">I</div>
+                    <div class="bh" data-col="N">N</div>
+                    <div class="bh" data-col="G">G</div>
+                    <div class="bh" data-col="O">O</div>
+                </div>
+
+                <!-- 3D Drum + Current Ball -->
+                <div class="drum-row">
+                    <canvas id="drum-canvas" width="220" height="220"></canvas>
+                    <div class="current-ball-zone">
+                        <div id="cur-ball" class="cur-ball idle">
+                            <div class="cb-inner">
+                                <div id="cb-col" class="cb-col">?</div>
+                                <div id="cb-num" class="cb-num">--</div>
                             </div>
-                            <div class="ball-shine"></div>
+                            <div class="cb-shine"></div>
+                        </div>
+                        <div id="cb-announce" class="cb-announce"></div>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div id="status-text" class="status-bar">ESPERANDO RONDA...</div>
+                <div class="prog-wrap"><div id="prog-bar" class="prog-fill"></div></div>
+
+                <!-- PIZARRA 1-75 -->
+                <div class="pizarra">
+                    <div class="piz-label">PIZARRA OFICIAL</div>
+                    <div class="piz-cols">
+                        <div class="piz-col" data-letter="B">
+                            <div class="piz-col-hdr">B</div>
+                            <div class="piz-nums" id="piz-B"></div>
+                        </div>
+                        <div class="piz-col" data-letter="I">
+                            <div class="piz-col-hdr">I</div>
+                            <div class="piz-nums" id="piz-I"></div>
+                        </div>
+                        <div class="piz-col" data-letter="N">
+                            <div class="piz-col-hdr">N</div>
+                            <div class="piz-nums" id="piz-N"></div>
+                        </div>
+                        <div class="piz-col" data-letter="G">
+                            <div class="piz-col-hdr">G</div>
+                            <div class="piz-nums" id="piz-G"></div>
+                        </div>
+                        <div class="piz-col" data-letter="O">
+                            <div class="piz-col-hdr">O</div>
+                            <div class="piz-nums" id="piz-O"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Status Banner & Countdown -->
-                <div class="status-banner">
-                    <div id="game-status-text" class="cyber-status">ESPERANDO PRÓXIMA RONDA...</div>
-                    <div class="cyber-progress-wrap">
-                        <div id="game-progress" class="cyber-progress" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <!-- Master Pizarra 1-75 LED Board -->
-                <div class="pizarra-container">
-                    <div class="pizarra-title">⚡ PIZARRA DE BOLILLAS OFICIAL (1 - 75)</div>
-                    <div id="pizarra-grid" class="pizarra-grid">
-                        <!-- Generated 1 to 75 cells dynamically by JS -->
-                    </div>
+                <!-- Last 8 balls strip -->
+                <div class="history-strip">
+                    <span class="hs-label">Últimas:</span>
+                    <div id="history-balls" class="hs-balls"></div>
                 </div>
             </section>
 
-            <!-- 1-CLICK CARD STORE -->
-            <section class="card-store glass-cyber">
-                <div class="store-header">
-                    <h3>🛒 COMPRAR CARTONES DE BINGO</h3>
-                    <span class="price-tag">100 Bs / Cartón</span>
+            <!-- ═══ STORE ═══ -->
+            <section class="store glass-box">
+                <div class="store-top">
+                    <h3>🛒 TIENDA DE CARTONES</h3>
+                    <span class="price-pill">100 Bs c/u</span>
                 </div>
-                <div class="buy-grid">
-                    <button class="btn-buy-chip" data-count="1">🎟️ 1 CARTÓN<br><small>100 Bs</small></button>
-                    <button class="btn-buy-chip" data-count="2">🎟️ 2 CARTONES<br><small>200 Bs</small></button>
-                    <button class="btn-buy-chip" data-count="5">🎟️ 5 CARTONES<br><small>500 Bs</small></button>
-                    <button class="btn-buy-chip gold-glow" data-count="10">🔥 10 CARTONES<br><small>1,000 Bs</small></button>
-                </div>
-            </section>
-
-            <!-- ACTIVE PLAYER CARDS ARENA WITH AUTO-DAUBING -->
-            <section class="cards-section">
-                <div class="section-title">
-                    <h3>🎟️ MIS CARTONES ACTIVOS (<span id="my-card-count">0</span>)</h3>
-                    <span class="auto-daub-status">🟢 Auto-Tachado Inteligente Activado</span>
-                </div>
-                <div id="cards-container" class="cards-grid">
-                    <div class="empty-cards-notice">No tienes cartones en esta ronda. Compras unos arriba para jugar en 3D.</div>
+                <div class="buy-row">
+                    <button class="buy-btn" data-n="1"><span class="buy-qty">1</span><span class="buy-lbl">Cartón</span></button>
+                    <button class="buy-btn" data-n="2"><span class="buy-qty">2</span><span class="buy-lbl">Cartones</span></button>
+                    <button class="buy-btn" data-n="5"><span class="buy-qty">5</span><span class="buy-lbl">Cartones</span></button>
+                    <button class="buy-btn featured" data-n="10"><span class="buy-qty">10</span><span class="buy-lbl">🔥 Pack</span></button>
                 </div>
             </section>
 
-        </main>
+            <!-- ═══ MY CARDS ═══ -->
+            <section class="my-cards-section">
+                <div class="mc-top">
+                    <h3>🎟️ MIS CARTONES (<span id="card-count">0</span>)</h3>
+                    <span class="autodaub-pill">● AUTO-TACHADO ON</span>
+                </div>
+                <div id="cards-zone" class="cards-zone">
+                    <div class="no-cards">Compra cartones arriba para comenzar a jugar 🎲</div>
+                </div>
+            </section>
+        </div>
     </div>
 
     <!-- Deposit Modal -->
-    <div id="deposit-modal" class="modal-overlay hidden">
-        <div class="modal-card glass-cyber">
-            <button class="btn-close" id="btn-deposit-close">✕</button>
-            <h2>🏦 RECARGAR SALDO PAGO MÓVIL</h2>
-            <div class="pago-movil-box">
-                <p><strong>Banco:</strong> <span id="pm-banco">0102 (Venezuela)</span></p>
-                <p><strong>Teléfono:</strong> <span id="pm-phone">0412-1234567</span></p>
-                <p><strong>Cédula:</strong> <span id="pm-cedula">V-12345678</span></p>
+    <div id="dep-modal" class="modal-overlay hidden">
+        <div class="dep-box">
+            <button id="dep-close" class="close-x">✕</button>
+            <h2>🏦 PAGO MÓVIL</h2>
+            <div class="pm-info">
+                <p>📱 <strong>Banco:</strong> <span id="pm-banco">0102</span></p>
+                <p>📞 <strong>Tel:</strong> <span id="pm-tel">0412-1234567</span></p>
+                <p>🪪 <strong>Cédula:</strong> <span id="pm-ced">V-12345678</span></p>
             </div>
-            <div class="input-field">
-                <label>Monto a Recargar (Bs)</label>
-                <input type="number" id="dep-amount" placeholder="Ej: 500" />
-            </div>
-            <div class="input-field">
-                <label>Número de Referencia (Últimos 6 dígitos)</label>
-                <input type="text" id="dep-ref" placeholder="Ej: 123456" />
-            </div>
-            <button id="btn-submit-dep" class="btn btn-cyber btn-full">REPORTAR PAGO MÓVIL 🚀</button>
+            <input type="number" id="dep-amt" class="dep-input" placeholder="Monto (Bs)" />
+            <input type="text" id="dep-ref" class="dep-input" placeholder="Nro Referencia" />
+            <button id="dep-submit" class="btn-neon">REPORTAR PAGO →</button>
         </div>
     </div>
 
