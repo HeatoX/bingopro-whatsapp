@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BingoPro 3D | Arena Casino en Vivo 🎰</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>BingoPro 3D | Arena Casino VIP 🎰</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="player.css">
 </head>
 <body>
-    <!-- FX Canvas -->
+    <!-- Particle & Confetti Canvas -->
     <canvas id="fx-canvas"></canvas>
 
-    <!-- Winner Announcement Banner Overlap -->
+    <!-- Winner Banner -->
     <div id="winner-banner" class="winner-banner hidden">
         <div class="wb-content">
             <span class="wb-icon">🏆</span>
@@ -27,128 +27,148 @@
         <div class="login-box">
             <div class="login-glow"></div>
             <div class="login-logo">🎱</div>
-            <h1 class="login-title">BINGO<span>PRO</span></h1>
-            <p class="login-sub">Casino Bingo 3D en Vivo</p>
+            <h1 class="login-title">BINGO<span>PRO</span> <span class="tag-vip">VIP 3D</span></h1>
+            <p class="login-sub">Arena Casino en Vivo las 24 Horas</p>
             <div class="login-field">
-                <input type="text" id="phone-input" placeholder="Tu WhatsApp (ej: 04121234567)" autofocus />
+                <input type="text" id="phone-input" placeholder="Tu número WhatsApp (ej: 04121234567)" autofocus />
             </div>
-            <button id="btn-login" class="btn-neon">ENTRAR A LA ARENA →</button>
+            <button id="btn-login" class="btn-neon">ENTRAR A LA ARENA VIP →</button>
         </div>
     </div>
 
-    <!-- Main Shell -->
+    <!-- App Shell -->
     <div id="app" class="app hidden">
-        <!-- Header -->
+        <!-- Top Navigation Bar -->
         <header class="hdr">
             <div class="hdr-left">
                 <span class="hdr-logo">🎱</span>
-                <span class="hdr-brand">BINGO<span class="accent">PRO</span> <span class="tag-3d">3D</span></span>
+                <span class="hdr-brand">BINGO<span class="accent">PRO</span> <span class="badge-vip">3D CASINO</span></span>
             </div>
             <div class="hdr-right">
-                <button id="btn-voice" class="btn-icon" title="Voz Cantante">🗣️</button>
+                <button id="btn-voice" class="btn-icon active" title="Voz Cantante en Español">🗣️</button>
                 <button id="btn-sound" class="btn-icon" title="Efectos de Sonido">🔊</button>
                 <div class="hdr-wallet">
-                    <span id="hdr-name" class="hdr-uname">...</span>
+                    <span id="hdr-name" class="hdr-uname">Cargando...</span>
                     <span id="hdr-bal" class="hdr-balance">0.00 Bs</span>
                 </div>
                 <button id="btn-recargar" class="btn-gold-sm">+ RECARGAR</button>
             </div>
         </header>
 
-        <div class="arena-scroll">
-            <!-- ═══ LIVE STAGE ═══ -->
-            <section class="stage">
-                <div class="stage-top">
-                    <div class="live-badge"><span class="dot-live"></span> <span id="round-label">RONDA #--</span></div>
-                    <div class="pot-chip">POTE ACUMULADO <strong id="pot-value">0.00 Bs</strong></div>
-                </div>
+        <!-- Main Multi-Column Layout Grid -->
+        <div class="arena-layout">
+            
+            <!-- LEFT COLUMN: 3D Drum Stage & Master Pizarra -->
+            <aside class="col-left">
+                <section class="stage-card">
+                    <div class="stage-top">
+                        <div class="live-badge"><span class="dot-live"></span> <span id="round-label">RONDA #--</span></div>
+                        <div class="pot-chip">POTE <strong id="pot-value">0.00 Bs</strong></div>
+                    </div>
 
-                <!-- B I N G O Header Glow Tiles -->
-                <div class="bingo-headers" id="bingo-headers">
-                    <div class="bh" data-col="B">B</div>
-                    <div class="bh" data-col="I">I</div>
-                    <div class="bh" data-col="N">N</div>
-                    <div class="bh" data-col="G">G</div>
-                    <div class="bh" data-col="O">O</div>
-                </div>
+                    <!-- B I N G O Header Indicators -->
+                    <div class="bingo-headers" id="bingo-headers">
+                        <div class="bh" data-col="B">B</div>
+                        <div class="bh" data-col="I">I</div>
+                        <div class="bh" data-col="N">N</div>
+                        <div class="bh" data-col="G">G</div>
+                        <div class="bh" data-col="O">O</div>
+                    </div>
 
-                <!-- 3D Physics Drum + Main Ball -->
-                <div class="drum-row">
-                    <canvas id="drum-canvas" width="220" height="220"></canvas>
-                    <div class="current-ball-zone">
-                        <div id="cur-ball" class="cur-ball idle">
-                            <div class="cb-inner">
-                                <div id="cb-col" class="cb-col">?</div>
-                                <div id="cb-num" class="cb-num">--</div>
-                            </div>
-                            <div class="cb-shine"></div>
+                    <!-- 3D Physics Drum & Active Ball -->
+                    <div class="drum-container">
+                        <div class="drum-frame">
+                            <canvas id="drum-canvas" width="200" height="200"></canvas>
                         </div>
-                        <div id="cb-announce" class="cb-announce">CANTADOR EN VIVO</div>
+                        <div class="active-ball-box">
+                            <div id="cur-ball" class="cur-ball idle">
+                                <div class="cb-inner">
+                                    <div id="cb-col" class="cb-col">?</div>
+                                    <div id="cb-num" class="cb-num">--</div>
+                                </div>
+                                <div class="cb-shine"></div>
+                            </div>
+                            <div id="cb-announce" class="cb-announce">CANTADOR EN VIVO</div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Status & Progress -->
-                <div id="status-text" class="status-bar">ESPERANDO PRÓXIMA RONDA...</div>
-                <div class="prog-wrap"><div id="prog-bar" class="prog-fill"></div></div>
+                    <!-- Game Status & Progress -->
+                    <div id="status-text" class="status-bar">ESPERANDO RONDA...</div>
+                    <div class="prog-wrap"><div id="prog-bar" class="prog-fill"></div></div>
 
-                <!-- Master Pizarra 1-75 LEDs -->
-                <div class="pizarra">
-                    <div class="piz-label">⚡ PIZARRA OFICIAL EN VIVO (1 - 75)</div>
-                    <div class="piz-cols">
-                        <div class="piz-col" data-letter="B"><div class="piz-col-hdr">B</div><div class="piz-nums" id="piz-B"></div></div>
-                        <div class="piz-col" data-letter="I"><div class="piz-col-hdr">I</div><div class="piz-nums" id="piz-I"></div></div>
-                        <div class="piz-col" data-letter="N"><div class="piz-col-hdr">N</div><div class="piz-nums" id="piz-N"></div></div>
-                        <div class="piz-col" data-letter="G"><div class="piz-col-hdr">G</div><div class="piz-nums" id="piz-G"></div></div>
-                        <div class="piz-col" data-letter="O"><div class="piz-col-hdr">O</div><div class="piz-nums" id="piz-O"></div></div>
+                    <!-- History Strip -->
+                    <div class="history-strip">
+                        <span class="hs-label">Últimas:</span>
+                        <div id="history-balls" class="hs-balls"></div>
                     </div>
-                </div>
 
-                <!-- History Strip -->
-                <div class="history-strip">
-                    <span class="hs-label">Historial:</span>
-                    <div id="history-balls" class="hs-balls"></div>
-                </div>
-            </section>
+                    <!-- High-Contrast Pizarra 1-75 -->
+                    <div class="pizarra">
+                        <div class="piz-label">⚡ PIZARRA OFICIAL 1-75</div>
+                        <div class="piz-cols">
+                            <div class="piz-col" data-letter="B"><div class="piz-col-hdr">B</div><div class="piz-nums" id="piz-B"></div></div>
+                            <div class="piz-col" data-letter="I"><div class="piz-col-hdr">I</div><div class="piz-nums" id="piz-I"></div></div>
+                            <div class="piz-col" data-letter="N"><div class="piz-col-hdr">N</div><div class="piz-nums" id="piz-N"></div></div>
+                            <div class="piz-col" data-letter="G"><div class="piz-col-hdr">G</div><div class="piz-nums" id="piz-G"></div></div>
+                            <div class="piz-col" data-letter="O"><div class="piz-col-hdr">O</div><div class="piz-nums" id="piz-O"></div></div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
 
-            <!-- ═══ STORE ═══ -->
-            <section class="store glass-box">
-                <div class="store-top">
-                    <h3>🛒 COMPRAR CARTONES DE BINGO</h3>
-                    <span class="price-pill">100 Bs c/u</span>
-                </div>
-                <div class="buy-row">
-                    <button class="buy-btn" data-n="1"><span class="buy-qty">1</span><span class="buy-lbl">Cartón</span></button>
-                    <button class="buy-btn" data-n="2"><span class="buy-qty">2</span><span class="buy-lbl">Cartones</span></button>
-                    <button class="buy-btn" data-n="5"><span class="buy-qty">5</span><span class="buy-lbl">Cartones</span></button>
-                    <button class="buy-btn featured" data-n="10"><span class="buy-qty">10</span><span class="buy-lbl">🔥 Pack</span></button>
-                </div>
-            </section>
+            <!-- CENTER COLUMN: Active Cards Arena -->
+            <main class="col-center">
+                <section class="store-card">
+                    <div class="store-top">
+                        <h3>🛒 TIENDA DE CARTONES</h3>
+                        <span class="price-pill">100 Bs c/u</span>
+                    </div>
+                    <div class="buy-grid">
+                        <button class="buy-btn" data-n="1"><span class="buy-qty">1</span><span class="buy-lbl">Cartón</span></button>
+                        <button class="buy-btn" data-n="2"><span class="buy-qty">2</span><span class="buy-lbl">Cartones</span></button>
+                        <button class="buy-btn" data-n="5"><span class="buy-qty">5</span><span class="buy-lbl">Cartones</span></button>
+                        <button class="buy-btn featured" data-n="10"><span class="buy-qty">10</span><span class="buy-lbl">🔥 Pack</span></button>
+                    </div>
+                </section>
 
-            <!-- ═══ MY CARDS WITH NEAR-WIN DETECTOR ═══ -->
-            <section class="my-cards-section">
-                <div class="mc-top">
-                    <h3>🎟️ MIS CARTONES ACTIVOS (<span id="card-count">0</span>)</h3>
-                    <span class="autodaub-pill">🟢 Voz & Auto-Tachado Activo</span>
-                </div>
-                <div id="cards-zone" class="cards-zone">
-                    <div class="no-cards">Compra cartones arriba para jugar en la arena 🎲</div>
-                </div>
-            </section>
+                <section class="cards-section">
+                    <div class="mc-top">
+                        <h3>🎟️ MIS CARTONES ACTIVOS (<span id="card-count">0</span>)</h3>
+                        <span class="autodaub-pill">🟢 Auto-Tachado Inteligente Activado</span>
+                    </div>
+                    <div id="cards-zone" class="cards-grid">
+                        <div class="no-cards">Compra cartones arriba para comenzar a jugar 🎲</div>
+                    </div>
+                </section>
+            </main>
 
-            <!-- ═══ LIVE COMMUNITY CHAT WIDGET ═══ -->
-            <section class="chat-section glass-box">
-                <div class="chat-header">
-                    <h3>💬 CHAT DE LA COMUNIDAD EN VIVO</h3>
-                    <span class="online-users">🟢 14 Jugadores</span>
-                </div>
-                <div id="chat-messages" class="chat-messages">
-                    <div class="chat-msg system">🤖 <i>Bot: ¡Bienvenidos a BingoPro Arena 3D!</i></div>
-                </div>
-                <div class="chat-input-row">
-                    <input type="text" id="chat-input" placeholder="Escribe un mensaje o emoji..." />
-                    <button id="chat-send" class="btn-chat-send">Enviar</button>
-                </div>
-            </section>
+            <!-- RIGHT COLUMN: Live Chat & Community Leaderboard -->
+            <aside class="col-right">
+                <section class="chat-card">
+                    <div class="chat-header">
+                        <h3>💬 COMUNIDAD EN VIVO</h3>
+                        <span class="online-users">🟢 18 Jugadores</span>
+                    </div>
+                    <div id="chat-messages" class="chat-messages">
+                        <div class="chat-msg system">🤖 <i>Bot: ¡Bienvenidos al Casino BingoPro 3D!</i></div>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." />
+                        <button id="chat-send" class="btn-chat-send">Enviar</button>
+                    </div>
+                </section>
+
+                <section class="rules-card">
+                    <h4>🏆 PREMIOS POR RONDA</h4>
+                    <ul class="rules-list">
+                        <li><span>1 Línea Horiz:</span> <strong>10% del Pote</strong></li>
+                        <li><span>2 Líneas Horiz:</span> <strong>15% del Pote</strong></li>
+                        <li><span>Full House Bingo:</span> <strong>60% del Pote</strong></li>
+                        <li><span>Comisión Casa:</span> <strong>15%</strong></li>
+                    </ul>
+                </section>
+            </aside>
+
         </div>
     </div>
 
