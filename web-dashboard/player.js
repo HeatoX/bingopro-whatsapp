@@ -214,10 +214,19 @@ buildPizarra();
 function startGamePolling() { if (pollTimer) return; poll(); pollTimer = setInterval(poll, 2000); }
 function stopGamePolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 
+let lastRoundNum = null;
+let announcedWinners = new Set();
+
 async function poll() {
   try {
     const d = await (await fetch('/api/player/game')).json();
     if (!d.hasActiveGame) { $id('room-label').textContent = 'RONDA #--'; $id('status-text').textContent = 'ESPERANDO RONDA…'; $id('prog-bar').style.width = '0%'; return; }
+    
+    if (lastRoundNum !== d.roundNumber) {
+      lastRoundNum = d.roundNumber;
+      announcedWinners.clear();
+    }
+
     $id('room-label').textContent = `RONDA #${d.roundNumber}`;
     $id('pot-value').textContent = `Bs ${d.prizePool.toFixed(2)}`;
     const smap = { WAITING: '⏳ PREPARANDO…', SELLING: '🛒 ¡VENTAS ABIERTAS!', DRAWING: `🔴 EN VIVO — ${d.drawnBalls.length}/75`, PAUSED: '⏸️ PAUSADA', FINISHED: '🏁 FINALIZADA' };
@@ -227,9 +236,19 @@ async function poll() {
     for (let i = 1; i <= 75; i++) { const el = $id(`pc-${i}`); if (el) el.classList.toggle('lit', drawnSet.has(i)); }
     if (d.drawnBalls.length > 0) { const last = d.drawnBalls[d.drawnBalls.length - 1]; if (lastBallNum !== last.number) { lastBallNum = last.number; onNewBall(last); } }
     renderHistory(d.drawnBalls.slice(-8).reverse());
-    if (d.winnerFullCardUserId) showBanner('🏆 ¡BINGO COMPLETO!', `¡Ganador en Ronda #${d.roundNumber}!`);
-    else if (d.winner2LinesUserId) showBanner('✌️ ¡2 LÍNEAS!', 'Premios otorgados');
-    else if (d.winner1LineUserId) showBanner('🎉 ¡1 LÍNEA!', `¡Ganador en Ronda #${d.roundNumber}!`);
+
+    // Winner detection (triggers banner ONLY ONCE so it auto-hides cleanly after 6s)
+    const winType = d.winnerFullCardUserId ? 'full' : d.winner2LinesUserId ? '2line' : d.winner1LineUserId ? '1line' : null;
+    if (winType) {
+      const winKey = `${d.roundNumber}-${winType}`;
+      if (!announcedWinners.has(winKey)) {
+        announcedWinners.add(winKey);
+        if (d.winnerFullCardUserId) showBanner('🏆 ¡BINGO COMPLETO!', `¡Ganador en Ronda #${d.roundNumber}!`);
+        else if (d.winner2LinesUserId) showBanner('✌️ ¡2 LÍNEAS!', 'Premios otorgados');
+        else if (d.winner1LineUserId) showBanner('🎉 ¡1 LÍNEA!', `¡Ganador en Ronda #${d.roundNumber}!`);
+      }
+    }
+
     fetchCards();
   } catch {}
 }
@@ -260,13 +279,30 @@ function showBanner(title, msg) {
   bannerT = setTimeout(() => b.classList.add('hidden'), 6000);
 }
 
-// ═══ CARDS + NEAR-WIN ═══
+// ═══ CARDS + AUTO-SORTING (BEST CARDS FIRST) ═══
+function getMissingCount(card, dSet) {
+  let miss = 0;
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const n = card.grid[r][c];
+      const free = (r === 2 && c === 2) || n === 0;
+      if (!free && !dSet.has(n)) miss++;
+    }
+  }
+  return miss;
+}
+
 async function fetchCards() {
   if (!phone) return;
   try {
     const d = await (await fetch(`/api/player/my-cards?phone=${phone}`)).json();
     $id('card-count').textContent = d.cards ? d.cards.length : 0;
     if (!d.cards || !d.cards.length) { $id('cards-zone').innerHTML = '<div class="no-cards">Compra cartones para jugar 🎲</div>'; return; }
+    
+    const dSet = new Set(d.drawnNumbers || []);
+    // DYNAMIC AUTO-SORTING: Cards closest to BINGO automatically rank FIRST!
+    d.cards.sort((a, b) => getMissingCount(a, dSet) - getMissingCount(b, dSet));
+
     const z = $id('cards-zone'); z.innerHTML = '';
     d.cards.forEach(c => z.appendChild(renderCard(c, d.drawnNumbers || [])));
   } catch {}
