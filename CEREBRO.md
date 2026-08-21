@@ -1,12 +1,12 @@
-# 🧠 CEREBRO BINGOPRO — Documentación Maestra & Memoria de Sistema
+# 🧠 CEREBRO BINGOPRO ROYAL — Documentación Maestra & Memoria de Sistema
 
-Este archivo contiene el **Cerebro Operativo** completo de **BingoPro**, sirviendo como guía de conocimiento, reglas de negocio, arquitectura de código y referencia para desarrolladores e inteligencia artificial.
+Este archivo contiene el **Cerebro Operativo** completo de **BingoPro Royal**, sirviendo como guía de conocimiento, reglas de negocio, arquitectura de código y referencia para desarrolladores e inteligencia artificial.
 
 ---
 
 ## 📌 1. Visión General del Proyecto
 
-BingoPro es una plataforma profesional de Bingo online en tiempo real, 100% automatizada a través de WhatsApp y acompañada de un **Sistema Web Multi-Pantalla estilo Casino Las Vegas (SPA)** y un **Panel de Administración Web** con contabilidad financiera de doble entrada (*Double-Entry Ledger*).
+BingoPro Royal es una plataforma profesional de Bingo online en tiempo real, 100% automatizada a través de WhatsApp y acompañada de un **Sistema Web Multi-Pantalla estilo Casino Las Vegas / Apuestas Royal (SPA)** y un **Panel de Administración Web** con contabilidad financiera de doble entrada (*Double-Entry Ledger*).
 
 ### 💰 Parámetros Económicos (Reglas Activas)
 - **Precio por Cartón (Sala Clásica):** `100.00 Bs`
@@ -28,13 +28,13 @@ BingoPro es una plataforma profesional de Bingo online en tiempo real, 100% auto
 - **Panel Administrativo:** `http://localhost:3000`
   - **Usuario:** `admin`
   - **Contraseña:** `Heatox.227`
-- **Plataforma Web Jugador (Casino Las Vegas SPA):** `http://localhost:3000/player.html`
+- **Plataforma Web Jugador (Casino Royal SPA):** `http://localhost:3000/player.html`
 - **Vinculador de WhatsApp (QR Code):** `http://localhost:3000/qr.html`
 - **Repositorio GitHub Oficial:** `https://github.com/HeatoX/bingopro-whatsapp`
 
 ---
 
-## 🎰 3. Plataforma Web del Jugador — Casino Las Vegas (player.html)
+## 🎰 3. Plataforma Web del Jugador — Casino Royal SPA (player.html)
 
 El portal del jugador está diseñado como una **Single Page Application (SPA)** de nivel casino internacional con navegación fluida entre 4 secciones principales:
 
@@ -48,25 +48,27 @@ graph LR
     C --> A
 ```
 
-### 🌟 Secciones de la Plataforma:
+### 🌟 Secciones y Características de Última Generación:
 
 1. **🔑 Registro / Login:** Formulario estilo cristal (*Glassmorphism*) con número de WhatsApp y nombre.
-2. **🏠 Lobby Principal:**
+2. **🏠 Lobby Principal (Estilo Apuestas Royal):**
+   - **Píldora Verde Neón de Balance:** En la barra superior mostrando avatar, nombre y saldo actual (`Bienvenido, Juan / Balance: Bs 100.00`).
+   - **Banners Héroe Promocionales:** *Viernes de Fortuna* (Jackpot de Bs 436,870.00) y *La Última Bola de la Semana* (Jackpot de Bs 4,339,037.19).
+   - **Reloj de Cuenta Regresiva desde Afuera:** Temporizador fluorescente en vivo en la tarjeta de sala mostrando cuándo abre ventas o empieza la partida (`PRÓXIMO JUEGO: 00:45`).
    - **Salas de Bingo:** Bronce (50 Bs), Clásica En Vivo 🔴 (100 Bs), VIP Gold (250 Bs) y Diamante (500 Bs).
-   - **Ticker Horizontal de Ganadores:** Ticker animado con últimos premios otorgados.
-   - **Banner de Reglas & Premios:** Desglose porcentual de los pozos.
 3. **👤 Mi Perfil & Cartera:**
    - Avatar personalizado con iniciales.
-   - Saldo disponible en Bs con animación.
-   - Botones de Recargar (Pago Móvil) y Retirar.
-   - Estadísticas del jugador: partidas jugadas, cartones comprados y premios ganados.
+   - Saldo disponible en Bs con animación de contador.
+   - Botón de Recargar Pago Móvil.
 4. **🎮 Sala de Juego en Vivo (Arena 3D):**
-   - **🎰 Bombo Mecánico 3D con Física:** Jaula metálica giratoria con 18 bolillas numeradas rebotando en 3D, eje de bronce y reflejos de cristal.
-   - **🗣️ Cantador de Voz en Español (`speechSynthesis`):** Pronuncia las bolillas cantadas (*"B-12"*, *"N-35"*).
-   - **🔥 Detector "Near-Win" (1TG / 2TG):** Alerta en vivo cuando a un cartón le falta 1 o 2 números para el Bingo (`🔥 ¡FALTA 1!`).
-   - **⚡ Pizarra LED Maestra 1-75:** 5 columnas B-I-N-G-O con colores temáticos e iluminación neón.
-   - **🎟️ Auto-Tachado Inteligente:** Tachado en verde neón con sonido sintético.
-   - **💬 Chat de la Comunidad:** Chat en tiempo real para interacción entre jugadores.
+   - **⚡ Ordenamiento Automático Dinámico (Best Cards First):** Los cartones que más números han pegado (más cercanos a ganar o en `🔥 ¡FALTA 1!`) se posicionan de **PRIMEROS** arriba en la parrilla automáticamente.
+   - **👑 Cartel Gigante Flotante de ¡BINGO! con Nombre del Ganador:** Al cantar victoria, aparece un banner pantalla completa anunciando al jugador ganador y su premio exacto en Bs con confeti animado.
+   - **🔄 Limpieza Automática de Cartones:** Al finalizar la ronda o iniciar una nueva partida, los cartones viejos se limpian automáticamente para permitir comprar los de la nueva ronda.
+   - **⏱️ Reloj de Cuenta Regresiva en la Sala:** Temporizador en vivo sobre el bombo que muestra el tiempo restante de ventas o el progreso de bolillas cantadas (`12/75 EN VIVO`).
+   - **🛒 Píldoras de Selección de Cartones:** Botones para comprar `1`, `2`, `🔥 6 (Paga 4)`, `12`, `24`, `48` cartones en 1 clic.
+   - **🎰 Bombo Mecánico 3D con Física:** Jaula giratoria transparente con 18 bolillas numeradas rebotando en 3D con gravedad.
+   - **🗣️ Cantador de Voz en Español (`speechSynthesis`).**
+   - **💬 Sala de Chat en Vivo.**
 
 ---
 
@@ -113,4 +115,4 @@ El proyecto está configurado para desplegarse de manera continua en la nube a t
    - **Environment Variable:** `ADMIN_PASSWORD` = `Heatox.227`
 
 ---
-*BingoPro — Diseñado y construido con arquitectura de alta disponibilidad, seguridad financiera y experiencia Casino Las Vegas 3D.*
+*BingoPro Royal — Diseñado y construido con arquitectura de alta disponibilidad, seguridad financiera y experiencia Casino 3D de clase mundial.*
