@@ -3,108 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BingoPro 3D | Arena Casino VIP 🎰</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>BingoPro Casino 3D | La Arena del Bingo en Vivo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="player.css">
 </head>
 <body>
-    <!-- Particle & Confetti Canvas -->
     <canvas id="fx-canvas"></canvas>
 
-    <!-- Winner Banner -->
-    <div id="winner-banner" class="winner-banner hidden">
-        <div class="wb-content">
-            <span class="wb-icon">🏆</span>
-            <div class="wb-text">
-                <h2 id="wb-title">¡BINGO GANADO!</h2>
-                <p id="wb-user">Jugador ... ha ganado 0 Bs</p>
+    <!-- ═══ LOGIN SCREEN ═══ -->
+    <div id="screen-login" class="screen">
+        <div class="login-wrap">
+            <div class="login-card">
+                <div class="login-glow"></div>
+                <div class="login-logo-big">🎱</div>
+                <h1 class="login-h1">BINGO<span class="gold">PRO</span></h1>
+                <p class="login-tag">Casino 3D en Vivo — 24/7</p>
+                <input type="text" id="login-phone" class="input-glass" placeholder="Tu WhatsApp (ej: 04121234567)" />
+                <input type="text" id="login-name" class="input-glass" placeholder="Tu nombre (ej: María)" />
+                <button id="btn-register" class="btn-gold">CREAR CUENTA & ENTRAR →</button>
+                <p class="login-foot">Al entrar aceptas las reglas del casino</p>
             </div>
         </div>
     </div>
 
-    <!-- Login Modal -->
-    <div id="login-modal" class="modal-overlay">
-        <div class="login-box">
-            <div class="login-glow"></div>
-            <div class="login-logo">🎱</div>
-            <h1 class="login-title">BINGO<span>PRO</span> <span class="tag-vip">VIP 3D</span></h1>
-            <p class="login-sub">Arena Casino en Vivo las 24 Horas</p>
-            <div class="login-field">
-                <input type="text" id="phone-input" placeholder="Tu número WhatsApp (ej: 04121234567)" autofocus />
+    <!-- ═══ MAIN APP SHELL ═══ -->
+    <div id="app-shell" class="app-shell hidden">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="tb-left">
+                <span class="tb-logo">🎱</span>
+                <span class="tb-brand">BINGO<span class="gold">PRO</span></span>
             </div>
-            <button id="btn-login" class="btn-neon">ENTRAR A LA ARENA VIP →</button>
-        </div>
-    </div>
-
-    <!-- App Shell -->
-    <div id="app" class="app hidden">
-        <!-- Top Navigation Bar -->
-        <header class="hdr">
-            <div class="hdr-left">
-                <span class="hdr-logo">🎱</span>
-                <span class="hdr-brand">BINGO<span class="accent">PRO</span> <span class="badge-vip">3D CASINO</span></span>
-            </div>
-            <div class="hdr-right">
-                <button id="btn-voice" class="btn-icon active" title="Voz Cantante en Español">🗣️</button>
-                <button id="btn-sound" class="btn-icon" title="Efectos de Sonido">🔊</button>
-                <div class="hdr-wallet">
-                    <span id="hdr-name" class="hdr-uname">Cargando...</span>
-                    <span id="hdr-bal" class="hdr-balance">0.00 Bs</span>
+            <div class="tb-right">
+                <div class="tb-wallet" id="nav-profile-btn">
+                    <div class="tb-avatar" id="tb-avatar">?</div>
+                    <div class="tb-info">
+                        <span id="tb-name" class="tb-uname">...</span>
+                        <span id="tb-bal" class="tb-balance">0.00 Bs</span>
+                    </div>
                 </div>
-                <button id="btn-recargar" class="btn-gold-sm">+ RECARGAR</button>
+                <button id="btn-topbar-deposit" class="btn-gold-sm">+ RECARGAR</button>
             </div>
         </header>
 
-        <!-- Main Multi-Column Layout Grid -->
-        <div class="arena-layout">
-            
-            <!-- LEFT COLUMN: 3D Drum Stage & Master Pizarra -->
-            <aside class="col-left">
-                <section class="stage-card">
-                    <div class="stage-top">
-                        <div class="live-badge"><span class="dot-live"></span> <span id="round-label">RONDA #--</span></div>
-                        <div class="pot-chip">POTE <strong id="pot-value">0.00 Bs</strong></div>
-                    </div>
+        <!-- ═══ SCREEN: LOBBY ═══ -->
+        <div id="screen-lobby" class="screen-inner">
+            <div class="lobby-hero">
+                <div class="hero-particles"></div>
+                <h2 class="hero-title">BIENVENIDO AL CASINO</h2>
+                <p class="hero-sub">Elige una sala y comienza a ganar</p>
+            </div>
 
-                    <!-- B I N G O Header Indicators -->
-                    <div class="bingo-headers" id="bingo-headers">
-                        <div class="bh" data-col="B">B</div>
-                        <div class="bh" data-col="I">I</div>
-                        <div class="bh" data-col="N">N</div>
-                        <div class="bh" data-col="G">G</div>
-                        <div class="bh" data-col="O">O</div>
+            <div class="lobby-body">
+                <h3 class="section-title">🎰 SALAS DE BINGO DISPONIBLES</h3>
+                <div class="rooms-grid">
+                    <!-- Bronze -->
+                    <div class="room-card room-bronze" data-room="bronze" data-price="50">
+                        <div class="rc-badge">🥉</div>
+                        <div class="rc-name">Sala Bronce</div>
+                        <div class="rc-price">50 Bs<span>/cartón</span></div>
+                        <div class="rc-pot">Pote ~500 Bs</div>
+                        <div class="rc-status coming">PRÓXIMAMENTE</div>
                     </div>
+                    <!-- Classic -->
+                    <div class="room-card room-classic" data-room="classic" data-price="100">
+                        <div class="rc-badge">🥈</div>
+                        <div class="rc-ribbon">EN VIVO 🔴</div>
+                        <div class="rc-name">Sala Clásica</div>
+                        <div class="rc-price">100 Bs<span>/cartón</span></div>
+                        <div class="rc-pot">Pote <strong id="lobby-pot">0</strong> Bs</div>
+                        <div class="rc-players">👥 <span id="lobby-players">0</span> jugadores</div>
+                        <button class="btn-enter-room">ENTRAR A LA SALA →</button>
+                    </div>
+                    <!-- VIP -->
+                    <div class="room-card room-vip" data-room="vip" data-price="250">
+                        <div class="rc-badge">🥇</div>
+                        <div class="rc-name">Sala VIP Gold</div>
+                        <div class="rc-price">250 Bs<span>/cartón</span></div>
+                        <div class="rc-pot">Pote ~2,500 Bs</div>
+                        <div class="rc-status coming">PRÓXIMAMENTE</div>
+                    </div>
+                    <!-- Diamond -->
+                    <div class="room-card room-diamond" data-room="diamond" data-price="500">
+                        <div class="rc-badge">💎</div>
+                        <div class="rc-name">Sala Diamante</div>
+                        <div class="rc-price">500 Bs<span>/cartón</span></div>
+                        <div class="rc-pot">Pote ~5,000 Bs</div>
+                        <div class="rc-status coming">PRÓXIMAMENTE</div>
+                    </div>
+                </div>
 
-                    <!-- 3D Physics Drum & Active Ball -->
-                    <div class="drum-container">
-                        <div class="drum-frame">
-                            <canvas id="drum-canvas" width="200" height="200"></canvas>
+                <!-- Recent Winners Ticker -->
+                <div class="winners-ticker">
+                    <span class="wt-label">🏆 Últimos Ganadores:</span>
+                    <div class="wt-scroll">
+                        <span class="wt-item">🎉 Carlos M. ganó 600 Bs (Bingo)</span>
+                        <span class="wt-item">⭐ Ana R. ganó 150 Bs (2 Líneas)</span>
+                        <span class="wt-item">🎊 José L. ganó 100 Bs (1 Línea)</span>
+                    </div>
+                </div>
+
+                <!-- Prize Rules -->
+                <div class="rules-banner">
+                    <h4>🏆 DISTRIBUCIÓN DE PREMIOS</h4>
+                    <div class="rules-cols">
+                        <div class="rule-item"><span class="ri-pct">10%</span><span class="ri-lbl">1 Línea</span></div>
+                        <div class="rule-item"><span class="ri-pct">15%</span><span class="ri-lbl">2 Líneas</span></div>
+                        <div class="rule-item"><span class="ri-pct gold">60%</span><span class="ri-lbl">Bingo Full</span></div>
+                        <div class="rule-item"><span class="ri-pct dim">15%</span><span class="ri-lbl">Casa</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SCREEN: PROFILE ═══ -->
+        <div id="screen-profile" class="screen-inner hidden">
+            <div class="prof-header">
+                <button class="btn-back" data-to="lobby">← Lobby</button>
+                <h3>MI PERFIL</h3>
+            </div>
+            <div class="prof-body">
+                <div class="prof-avatar-big" id="prof-avatar">?</div>
+                <h2 id="prof-name" class="prof-name">Jugador</h2>
+                <p id="prof-phone" class="prof-phone">0412...</p>
+
+                <div class="balance-card">
+                    <span class="bc-label">SALDO DISPONIBLE</span>
+                    <span id="prof-balance" class="bc-amount">0.00 Bs</span>
+                    <div class="bc-btns">
+                        <button class="btn-gold" id="prof-deposit-btn">+ RECARGAR</button>
+                        <button class="btn-outline" id="prof-withdraw-btn">RETIRAR</button>
+                    </div>
+                </div>
+
+                <div class="prof-stats">
+                    <div class="ps-item"><span class="ps-val" id="ps-games">0</span><span class="ps-lbl">Partidas</span></div>
+                    <div class="ps-item"><span class="ps-val" id="ps-cards">0</span><span class="ps-lbl">Cartones</span></div>
+                    <div class="ps-item"><span class="ps-val" id="ps-wins">0</span><span class="ps-lbl">Premios</span></div>
+                </div>
+
+                <button class="btn-logout" id="btn-logout">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <!-- ═══ SCREEN: GAME ROOM ═══ -->
+        <div id="screen-room" class="screen-inner hidden">
+            <div class="room-topbar">
+                <button class="btn-back" data-to="lobby">← Lobby</button>
+                <div class="live-badge"><span class="dot-live"></span> <span id="room-label">RONDA #--</span></div>
+                <div class="pot-chip">POTE <strong id="pot-value">0 Bs</strong></div>
+                <div class="room-controls">
+                    <button id="btn-voice" class="btn-icon active" title="Voz">🗣️</button>
+                    <button id="btn-sound" class="btn-icon" title="Sonido">🔊</button>
+                </div>
+            </div>
+
+            <div class="room-layout">
+                <!-- LEFT: Epic Drum Stage -->
+                <aside class="rl-left">
+                    <div class="drum-stage">
+                        <!-- BINGO Letter Indicators -->
+                        <div class="bingo-hdrs" id="bingo-headers">
+                            <div class="bh" data-col="B">B</div>
+                            <div class="bh" data-col="I">I</div>
+                            <div class="bh" data-col="N">N</div>
+                            <div class="bh" data-col="G">G</div>
+                            <div class="bh" data-col="O">O</div>
                         </div>
-                        <div class="active-ball-box">
-                            <div id="cur-ball" class="cur-ball idle">
-                                <div class="cb-inner">
-                                    <div id="cb-col" class="cb-col">?</div>
-                                    <div id="cb-num" class="cb-num">--</div>
+
+                        <!-- Epic Drum Canvas -->
+                        <div class="drum-wrapper">
+                            <canvas id="drum-canvas" width="280" height="280"></canvas>
+                            <div class="drum-glow"></div>
+                        </div>
+
+                        <!-- Active Ball Display -->
+                        <div class="ball-display">
+                            <div id="cur-ball" class="big-ball idle">
+                                <div class="bb-ring"></div>
+                                <div class="bb-face">
+                                    <span id="cb-col" class="bb-col">?</span>
+                                    <span id="cb-num" class="bb-num">--</span>
                                 </div>
-                                <div class="cb-shine"></div>
+                                <div class="bb-shine"></div>
                             </div>
-                            <div id="cb-announce" class="cb-announce">CANTADOR EN VIVO</div>
+                            <div id="cb-announce" class="ball-announce">CANTADOR EN VIVO</div>
+                        </div>
+
+                        <!-- Status -->
+                        <div id="status-text" class="status-bar">ESPERANDO RONDA...</div>
+                        <div class="prog-wrap"><div id="prog-bar" class="prog-fill"></div></div>
+
+                        <!-- History -->
+                        <div class="history-strip">
+                            <span class="hs-label">Últimas:</span>
+                            <div id="history-balls" class="hs-balls"></div>
                         </div>
                     </div>
 
-                    <!-- Game Status & Progress -->
-                    <div id="status-text" class="status-bar">ESPERANDO RONDA...</div>
-                    <div class="prog-wrap"><div id="prog-bar" class="prog-fill"></div></div>
-
-                    <!-- History Strip -->
-                    <div class="history-strip">
-                        <span class="hs-label">Últimas:</span>
-                        <div id="history-balls" class="hs-balls"></div>
-                    </div>
-
-                    <!-- High-Contrast Pizarra 1-75 -->
+                    <!-- Pizarra -->
                     <div class="pizarra">
-                        <div class="piz-label">⚡ PIZARRA OFICIAL 1-75</div>
+                        <div class="piz-label">⚡ PIZARRA 1-75</div>
                         <div class="piz-cols">
                             <div class="piz-col" data-letter="B"><div class="piz-col-hdr">B</div><div class="piz-nums" id="piz-B"></div></div>
                             <div class="piz-col" data-letter="I"><div class="piz-col-hdr">I</div><div class="piz-nums" id="piz-I"></div></div>
@@ -113,63 +212,50 @@
                             <div class="piz-col" data-letter="O"><div class="piz-col-hdr">O</div><div class="piz-nums" id="piz-O"></div></div>
                         </div>
                     </div>
-                </section>
-            </aside>
+                </aside>
 
-            <!-- CENTER COLUMN: Active Cards Arena -->
-            <main class="col-center">
-                <section class="store-card">
-                    <div class="store-top">
-                        <h3>🛒 TIENDA DE CARTONES</h3>
-                        <span class="price-pill">100 Bs c/u</span>
+                <!-- CENTER: Cards -->
+                <main class="rl-center">
+                    <div class="store-bar">
+                        <h3>🛒 COMPRAR CARTONES</h3>
+                        <div class="buy-btns">
+                            <button class="buy-btn" data-n="1">1</button>
+                            <button class="buy-btn" data-n="2">2</button>
+                            <button class="buy-btn" data-n="5">5</button>
+                            <button class="buy-btn featured" data-n="10">🔥 10</button>
+                        </div>
                     </div>
-                    <div class="buy-grid">
-                        <button class="buy-btn" data-n="1"><span class="buy-qty">1</span><span class="buy-lbl">Cartón</span></button>
-                        <button class="buy-btn" data-n="2"><span class="buy-qty">2</span><span class="buy-lbl">Cartones</span></button>
-                        <button class="buy-btn" data-n="5"><span class="buy-qty">5</span><span class="buy-lbl">Cartones</span></button>
-                        <button class="buy-btn featured" data-n="10"><span class="buy-qty">10</span><span class="buy-lbl">🔥 Pack</span></button>
-                    </div>
-                </section>
-
-                <section class="cards-section">
-                    <div class="mc-top">
-                        <h3>🎟️ MIS CARTONES ACTIVOS (<span id="card-count">0</span>)</h3>
-                        <span class="autodaub-pill">🟢 Auto-Tachado Inteligente Activado</span>
+                    <div class="cards-header">
+                        <h3>🎟️ MIS CARTONES (<span id="card-count">0</span>)</h3>
+                        <span class="autodaub-on">🟢 Auto-Tachado</span>
                     </div>
                     <div id="cards-zone" class="cards-grid">
-                        <div class="no-cards">Compra cartones arriba para comenzar a jugar 🎲</div>
+                        <div class="no-cards">Compra cartones arriba para jugar 🎲</div>
                     </div>
-                </section>
-            </main>
+                </main>
 
-            <!-- RIGHT COLUMN: Live Chat & Community Leaderboard -->
-            <aside class="col-right">
-                <section class="chat-card">
-                    <div class="chat-header">
-                        <h3>💬 COMUNIDAD EN VIVO</h3>
-                        <span class="online-users">🟢 18 Jugadores</span>
+                <!-- RIGHT: Chat -->
+                <aside class="rl-right">
+                    <div class="chat-box">
+                        <div class="chat-hdr"><h4>💬 CHAT EN VIVO</h4><span class="online-dot">🟢 18</span></div>
+                        <div id="chat-messages" class="chat-msgs">
+                            <div class="chat-msg sys">🤖 ¡Bienvenidos al Casino BingoPro!</div>
+                        </div>
+                        <div class="chat-input-row">
+                            <input type="text" id="chat-input" placeholder="Escribe..." />
+                            <button id="chat-send" class="btn-send">→</button>
+                        </div>
                     </div>
-                    <div id="chat-messages" class="chat-messages">
-                        <div class="chat-msg system">🤖 <i>Bot: ¡Bienvenidos al Casino BingoPro 3D!</i></div>
-                    </div>
-                    <div class="chat-input-row">
-                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." />
-                        <button id="chat-send" class="btn-chat-send">Enviar</button>
-                    </div>
-                </section>
-
-                <section class="rules-card">
-                    <h4>🏆 PREMIOS POR RONDA</h4>
-                    <ul class="rules-list">
-                        <li><span>1 Línea Horiz:</span> <strong>10% del Pote</strong></li>
-                        <li><span>2 Líneas Horiz:</span> <strong>15% del Pote</strong></li>
-                        <li><span>Full House Bingo:</span> <strong>60% del Pote</strong></li>
-                        <li><span>Comisión Casa:</span> <strong>15%</strong></li>
-                    </ul>
-                </section>
-            </aside>
-
+                </aside>
+            </div>
         </div>
+
+        <!-- Bottom Nav (Mobile) -->
+        <nav class="bottom-nav">
+            <button class="bn-item active" data-screen="lobby"><span class="bn-icon">🏠</span><span class="bn-lbl">Lobby</span></button>
+            <button class="bn-item" data-screen="room"><span class="bn-icon">🎮</span><span class="bn-lbl">Jugar</span></button>
+            <button class="bn-item" data-screen="profile"><span class="bn-icon">👤</span><span class="bn-lbl">Perfil</span></button>
+        </nav>
     </div>
 
     <!-- Deposit Modal -->
@@ -182,9 +268,20 @@
                 <p>📞 <strong>Teléfono:</strong> <span id="pm-tel">0412-1234567</span></p>
                 <p>🪪 <strong>Cédula:</strong> <span id="pm-ced">V-12345678</span></p>
             </div>
-            <input type="number" id="dep-amt" class="dep-input" placeholder="Monto en Bs" />
-            <input type="text" id="dep-ref" class="dep-input" placeholder="Últimos 6 dígitos referencia" />
-            <button id="dep-submit" class="btn-neon">REPORTAR PAGO MÓVIL →</button>
+            <input type="number" id="dep-amt" class="input-glass" placeholder="Monto en Bs" />
+            <input type="text" id="dep-ref" class="input-glass" placeholder="Últimos 6 dígitos referencia" />
+            <button id="dep-submit" class="btn-gold">REPORTAR PAGO →</button>
+        </div>
+    </div>
+
+    <!-- Winner Banner -->
+    <div id="winner-banner" class="winner-banner hidden">
+        <div class="wb-content">
+            <span class="wb-icon">🏆</span>
+            <div class="wb-text">
+                <h2 id="wb-title">¡BINGO!</h2>
+                <p id="wb-user">...</p>
+            </div>
         </div>
     </div>
 
