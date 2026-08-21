@@ -1,0 +1,9 @@
+node_modules/
+dist/
+logs/
+wa-session/
+.env
+*.log
+*.db
+*.db-journal
+web-dashboard/qr-code.png

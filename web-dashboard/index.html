@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BingoPro | Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-container">
+        <div class="login-card glass-panel">
+            <div class="login-header">
+                <div class="logo">🎱</div>
+                <h1>BingoPro</h1>
+                <p>Panel de Administración</p>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" required placeholder="admin">
+                </div>
+                <div class="input-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Ingresar al Sistema</button>
+                <div id="login-error" class="error-msg"></div>
+            </form>
+        </div>
+        <div class="animated-bg"></div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="app-container" class="app-layout hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="sidebar-brand">
+                <span class="logo">🎱</span>
+                <h2>BingoPro</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#users" class="nav-item" data-page="users">
+                    <span class="icon">👥</span>
+                    <span>Usuarios</span>
+                </a>
+                <a href="#games" class="nav-item" data-page="games">
+                    <span class="icon">🎮</span>
+                    <span>Partidas</span>
+                </a>
+                <a href="#deposits" class="nav-item" data-page="deposits">
+                    <span class="icon">💰</span>
+                    <span>Depósitos</span>
+                    <span id="badge-deposits" class="badge hidden">0</span>
+                </a>
+                <a href="#withdrawals" class="nav-item" data-page="withdrawals">
+                    <span class="icon">💸</span>
+                    <span>Retiros</span>
+                    <span id="badge-withdrawals" class="badge hidden">0</span>
+                </a>
+                <a href="#finance" class="nav-item" data-page="finance">
+                    <span class="icon">📈</span>
+                    <span>Finanzas</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="btn-logout" class="btn btn-text">
+                    <span class="icon">🚪</span>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar glass-panel">
+                <div class="page-title">
+                    <h1 id="current-page-title">Dashboard</h1>
+                </div>
+                <div class="topbar-actions">
+                    <div id="live-indicator" class="live-status hidden">
+                        <span class="pulse-dot"></span>
+                        <span>Partida Activa</span>
+                    </div>
+                    <div class="admin-profile">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=FFD700&color=000" alt="Admin" class="avatar">
+                        <span>Administrador</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+                <!-- Pages -->
+                <div id="page-dashboard" class="page active">
+                    <div class="stats-grid">
+                        <div class="stat-card glass-panel gradient-border">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-info">
+                                <h3>Total Jugadores</h3>
+                                <p id="stat-users" class="stat-value">--</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel gradient-border">
+                            <div class="stat-icon">🎮</div>
+                            <div class="stat-info">
+                                <h3>Estado Actual</h3>
+                                <p id="stat-game-status" class="stat-value text-amber">--</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel gradient-border">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-info">
+                                <h3>Ingresos Casa</h3>
+                                <p id="stat-revenue" class="stat-value text-green">Bs 0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-widgets">
+                        <!-- More widgets can go here -->
+                        <div class="widget glass-panel">
+                            <h3>Partida Actual</h3>
+                            <div id="active-game-details" class="empty-state">No hay partida activa</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic pages will be rendered here by app.js -->
+                <div id="page-users" class="page hidden">
+                    <div class="glass-panel table-container">
+                        <div class="table-header">
+                            <h2>Gestión de Usuarios</h2>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Teléfono</th>
+                                    <th>Nombre</th>
+                                    <th>Balance</th>
+                                    <th>Registro</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-users"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="page-games" class="page hidden">
+                    <div class="glass-panel table-container">
+                        <div class="table-header">
+                            <h2>Historial de Partidas</h2>
+                            <div class="actions">
+                                <button id="btn-pause-game" class="btn btn-warning hidden">Pausar Actual</button>
+                                <button id="btn-resume-game" class="btn btn-success hidden">Reanudar</button>
+                            </div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ronda #</th>
+                                    <th>Estado</th>
+                                    <th>Cartones</th>
+                                    <th>Pool Premios</th>
+                                    <th>Ganancia Casa</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-games"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="page-deposits" class="page hidden">
+                    <div class="glass-panel table-container">
+                        <div class="table-header">
+                            <h2>Depósitos Pendientes</h2>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Referencia</th>
+                                    <th>Monto</th>
+                                    <th>Banco</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-deposits"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="page-withdrawals" class="page hidden">
+                    <div class="glass-panel table-container">
+                        <div class="table-header">
+                            <h2>Retiros Pendientes</h2>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Monto</th>
+                                    <th>Banco / Cédula</th>
+                                    <th>Teléfono</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-withdrawals"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="page-finance" class="page hidden">
+                    <div class="stats-grid">
+                        <div class="stat-card glass-panel">
+                            <h3>Total Depósitos Aprobados</h3>
+                            <p id="fin-deposits" class="stat-value text-blue">Bs 0.00</p>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <h3>Total Retiros Procesados</h3>
+                            <p id="fin-withdrawals" class="stat-value text-red">Bs 0.00</p>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <h3>Ganancia Neta Casa</h3>
+                            <p id="fin-revenue" class="stat-value text-green">Bs 0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
