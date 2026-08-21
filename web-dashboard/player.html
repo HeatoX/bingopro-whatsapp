@@ -103,7 +103,12 @@
                     <div class="room-card room-live" id="btn-enter-classic">
                         <div class="rc-top-bar">
                             <span class="rc-title-badge">🎤 BINGO 75 EN VIVO</span>
-                            <span class="rc-live-pill">🔴 EN VIVO</span>
+                            <div class="rc-live-pill">🔴 EN VIVO</div>
+                        </div>
+                        <div class="countdown-box" id="lobby-countdown">
+                            <span class="cd-label">PRÓXIMO JUEGO</span>
+                            <span class="cd-timer" id="lobby-timer">--:--</span>
+                            <span class="cd-status" id="lobby-status">Cargando...</span>
                         </div>
                         <div class="rc-jackpot-strip">
                             <span class="rjs-lbl">Jackpot Acumulado</span>
@@ -233,6 +238,10 @@
                     <div class="drum-stage-box">
                         <div class="stage-status-header">
                             <div class="live-badge"><span class="dot-live"></span> <span id="room-label">RONDA #--</span></div>
+                            <div class="room-countdown-box">
+                                <span class="rcd-timer" id="room-timer">--:--</span>
+                                <span class="rcd-label" id="room-timer-label">CARGANDO</span>
+                            </div>
                             <div id="status-text" class="status-bar-text">ESPERANDO RONDA...</div>
                         </div>
 

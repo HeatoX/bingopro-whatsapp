@@ -263,8 +263,38 @@ async function poll() {
       }
     }
 
+    updateCountdowns(d);
     fetchCards();
   } catch {}
+}
+
+function updateCountdowns(d) {
+  const fmt = s => {
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const lt = $id('lobby-timer'), ls = $id('lobby-status');
+  const rt = $id('room-timer'), rl = $id('room-timer-label');
+  if (!lt || !rt) return;
+
+  if (d.status === 'SELLING' && d.sellingStartedAt) {
+    const elapsed = (Date.now() - new Date(d.sellingStartedAt).getTime()) / 1000;
+    const rem = Math.max(0, Math.floor(d.sellingWindowSeconds - elapsed));
+    lt.textContent = fmt(rem); if (ls) ls.textContent = '🛒 VENTAS ABIERTAS';
+    rt.textContent = fmt(rem); if (rl) rl.textContent = 'VENTAS ABIERTAS';
+  } else if (d.status === 'DRAWING') {
+    const ballsCount = d.drawnBalls ? d.drawnBalls.length : 0;
+    lt.textContent = `${ballsCount}/75`; if (ls) ls.textContent = '🔴 EN VIVO CANTANDO';
+    rt.textContent = `${ballsCount}/75`; if (rl) rl.textContent = 'EN VIVO';
+  } else if (d.scheduledAt) {
+    const rem = Math.max(0, Math.floor((new Date(d.scheduledAt).getTime() - Date.now()) / 1000));
+    lt.textContent = fmt(rem); if (ls) ls.textContent = '⏳ PRÓXIMO JUEGO';
+    rt.textContent = fmt(rem); if (rl) rl.textContent = 'INICIA PRONTO';
+  } else {
+    lt.textContent = '00:00'; if (ls) ls.textContent = '⏳ PREPARANDO';
+    rt.textContent = '00:00'; if (rl) rl.textContent = 'PREPARANDO';
+  }
 }
 
 function onNewBall(ball) {

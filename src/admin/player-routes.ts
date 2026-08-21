@@ -116,6 +116,14 @@ export const getPlayerGame = async (req: Request, res: Response) => {
       prizePool: Number(activeRound.prizePool),
       cardPriceBs: config.cardPriceBs,
       drawnBalls: activeRound.drawnBalls.map(b => ({ number: b.number, column: b.column, sequence: b.sequence })),
+      // Timing data for countdown clocks
+      sellingStartedAt: activeRound.sellingStartedAt?.toISOString() || null,
+      drawingStartedAt: activeRound.drawingStartedAt?.toISOString() || null,
+      scheduledAt: activeRound.scheduledAt?.toISOString() || null,
+      createdAt: activeRound.createdAt.toISOString(),
+      sellingWindowSeconds: config.sellingWindowSeconds,
+      ballDrawIntervalSeconds: config.ballDrawIntervalSeconds,
+      // Winner data
       winner1LineUserId: activeRound.winner1LineUserId,
       winner1LineName,
       winner2LinesUserId: activeRound.winner2LinesUserId,

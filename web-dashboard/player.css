@@ -210,6 +210,24 @@ body {
 .rc-players { font-size: 12px; color: var(--dim); }
 .rc-price-badge { background: rgba(255, 255, 255, 0.08); padding: 4px 10px; border-radius: 8px; font-family: var(--ft); font-size: 12px; font-weight: 800; }
 
+/* Countdown Timer Boxes */
+.countdown-box {
+  background: rgba(0, 0, 0, 0.5); border: 2px solid var(--cyan); border-radius: 14px;
+  padding: 12px; margin-bottom: 12px; text-align: center;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+}
+.cd-label { display: block; font-size: 10px; color: var(--dim); letter-spacing: 2px; font-weight: 700; margin-bottom: 2px; }
+.cd-timer { display: block; font-family: var(--ft); font-size: 36px; font-weight: 900; color: var(--cyan); text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); letter-spacing: 3px; }
+.cd-status { display: block; font-size: 11px; color: var(--gold); font-weight: 700; margin-top: 2px; }
+
+.room-countdown-box {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(0, 229, 255, 0.08); border: 1px solid var(--cyan);
+  border-radius: 10px; padding: 4px 14px;
+}
+.rcd-timer { font-family: var(--ft); font-size: 20px; font-weight: 900; color: var(--cyan); text-shadow: 0 0 12px rgba(0, 229, 255, 0.5); }
+.rcd-label { font-size: 10px; color: var(--dim); font-weight: 700; letter-spacing: 1px; }
+
 .btn-play-now {
   width: 100%; padding: 14px; background: linear-gradient(135deg, var(--green-btn), #00C853);
   color: #000; border: none; border-radius: 12px; font-family: var(--ft); font-size: 13px; font-weight: 900;
