@@ -274,12 +274,35 @@ async function poll() {
       }
     }
 
+    // Winners check & banner
+    if (d.winnerFullCardUserId) {
+      showWinnerBanner('🏆 ¡BINGO CARTÓN LLENO!', `¡Hay un nuevo ganador en la Ronda #${d.roundNumber}!`);
+    } else if (d.winner2LinesUserId) {
+      showWinnerBanner('✌️ ¡DOS LÍNEAS COMPLETADAS!', `¡Premios de 2 Líneas otorgados!`);
+    } else if (d.winner1LineUserId) {
+      showWinnerBanner('🎉 ¡UNA LÍNEA COMPLETA!', `¡Primer ganador de línea en la Ronda #${d.roundNumber}!`);
+    }
+
     // History strip
     renderHistory(d.drawnBalls.slice(-8).reverse());
 
     // Cards
     fetchCards();
   } catch {}
+}
+
+let bannerTimeout = null;
+function showWinnerBanner(title, message) {
+  const banner = $id('winner-banner');
+  if (!banner) return;
+  $id('wb-title').textContent = title;
+  $id('wb-user').textContent = message;
+  banner.classList.remove('hidden');
+
+  if (bannerTimeout) clearTimeout(bannerTimeout);
+  bannerTimeout = setTimeout(() => {
+    banner.classList.add('hidden');
+  }, 6000);
 }
 
 function onNewBall(ball) {

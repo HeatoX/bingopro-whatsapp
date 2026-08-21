@@ -37,6 +37,7 @@ body {
   box-shadow: 0 0 60px rgba(255, 215, 0, 0.9), 0 15px 40px rgba(0, 0, 0, 0.8);
   animation: bannerPop .5s cubic-bezier(.175, .885, .32, 1.275);
 }
+.winner-banner.hidden { display: none !important; }
 @keyframes bannerPop { 0% { transform: translateX(-50%) scale(.3); opacity: 0; } 100% { transform: translateX(-50%) scale(1); opacity: 1; } }
 .wb-content { display: flex; align-items: center; gap: 16px; color: #000; }
 .wb-icon { font-size: 42px; filter: drop-shadow(0 4px 8px rgba(0,0,0,.3)); }
