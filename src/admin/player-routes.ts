@@ -90,6 +90,23 @@ export const getPlayerGame = async (req: Request, res: Response) => {
       });
     }
 
+    let winner1LineName = null;
+    let winner2LinesName = null;
+    let winnerFullCardName = null;
+
+    if (activeRound.winner1LineUserId) {
+      const u = await prisma.user.findUnique({ where: { id: activeRound.winner1LineUserId } });
+      if (u) winner1LineName = u.name;
+    }
+    if (activeRound.winner2LinesUserId) {
+      const u = await prisma.user.findUnique({ where: { id: activeRound.winner2LinesUserId } });
+      if (u) winner2LinesName = u.name;
+    }
+    if (activeRound.winnerFullCardUserId) {
+      const u = await prisma.user.findUnique({ where: { id: activeRound.winnerFullCardUserId } });
+      if (u) winnerFullCardName = u.name;
+    }
+
     res.json({
       hasActiveGame: true,
       roundId: activeRound.id,
@@ -100,8 +117,11 @@ export const getPlayerGame = async (req: Request, res: Response) => {
       cardPriceBs: config.cardPriceBs,
       drawnBalls: activeRound.drawnBalls.map(b => ({ number: b.number, column: b.column, sequence: b.sequence })),
       winner1LineUserId: activeRound.winner1LineUserId,
+      winner1LineName,
       winner2LinesUserId: activeRound.winner2LinesUserId,
-      winnerFullCardUserId: activeRound.winnerFullCardUserId
+      winner2LinesName,
+      winnerFullCardUserId: activeRound.winnerFullCardUserId,
+      winnerFullCardName
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

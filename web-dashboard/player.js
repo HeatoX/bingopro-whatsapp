@@ -222,14 +222,17 @@ async function poll() {
     const d = await (await fetch('/api/player/game')).json();
     if (!d.hasActiveGame) { $id('room-label').textContent = 'RONDA #--'; $id('status-text').textContent = 'ESPERANDO RONDA…'; $id('prog-bar').style.width = '0%'; return; }
     
+    // Reset state on new round transition
     if (lastRoundNum !== d.roundNumber) {
       lastRoundNum = d.roundNumber;
       announcedWinners.clear();
+      prevDaub = {}; // Clear daub history for new round
+      lastBallNum = null;
     }
 
     $id('room-label').textContent = `RONDA #${d.roundNumber}`;
     $id('pot-value').textContent = `Bs ${d.prizePool.toFixed(2)}`;
-    const smap = { WAITING: '⏳ PREPARANDO…', SELLING: '🛒 ¡VENTAS ABIERTAS!', DRAWING: `🔴 EN VIVO — ${d.drawnBalls.length}/75`, PAUSED: '⏸️ PAUSADA', FINISHED: '🏁 FINALIZADA' };
+    const smap = { WAITING: '⏳ PREPARANDO…', SELLING: '🛒 ¡VENTAS ABIERTAS! COMPRA TUS CARTONES', DRAWING: `🔴 EN VIVO — ${d.drawnBalls.length}/75`, PAUSED: '⏸️ PAUSADA', FINISHED: '🏁 FIN DE RONDA' };
     $id('status-text').textContent = smap[d.status] || d.status;
     $id('prog-bar').style.width = d.status === 'DRAWING' ? (d.drawnBalls.length / 75 * 100) + '%' : d.status === 'SELLING' ? '20%' : d.status === 'FINISHED' ? '100%' : '0%';
     drawnSet = new Set(d.drawnBalls.map(b => b.number));
@@ -237,15 +240,26 @@ async function poll() {
     if (d.drawnBalls.length > 0) { const last = d.drawnBalls[d.drawnBalls.length - 1]; if (lastBallNum !== last.number) { lastBallNum = last.number; onNewBall(last); } }
     renderHistory(d.drawnBalls.slice(-8).reverse());
 
-    // Winner detection (triggers banner ONLY ONCE so it auto-hides cleanly after 6s)
+    // Winner detection (triggers GIANT BINGO BANNER with winner name)
     const winType = d.winnerFullCardUserId ? 'full' : d.winner2LinesUserId ? '2line' : d.winner1LineUserId ? '1line' : null;
     if (winType) {
       const winKey = `${d.roundNumber}-${winType}`;
       if (!announcedWinners.has(winKey)) {
         announcedWinners.add(winKey);
-        if (d.winnerFullCardUserId) showBanner('🏆 ¡BINGO COMPLETO!', `¡Ganador en Ronda #${d.roundNumber}!`);
-        else if (d.winner2LinesUserId) showBanner('✌️ ¡2 LÍNEAS!', 'Premios otorgados');
-        else if (d.winner1LineUserId) showBanner('🎉 ¡1 LÍNEA!', `¡Ganador en Ronda #${d.roundNumber}!`);
+        const prize60 = (d.prizePool * 0.6).toFixed(2);
+        const prize15 = (d.prizePool * 0.15).toFixed(2);
+        const prize10 = (d.prizePool * 0.1).toFixed(2);
+
+        if (d.winnerFullCardUserId) {
+          showBanner('👑 ¡BINGO CARTÓN LLENO!', `🎉 Ganador: ${d.winnerFullCardName || 'Jugador'} | Premio: Bs ${prize60}`);
+          confetti(150);
+        } else if (d.winner2LinesUserId) {
+          showBanner('✌️ ¡DOS LÍNEAS COMPLETAS!', `⭐ Ganador: ${d.winner2LinesName || 'Jugador'} | Premio: Bs ${prize15}`);
+          confetti(80);
+        } else if (d.winner1LineUserId) {
+          showBanner('🎉 ¡UNA LÍNEA COMPLETA!', `🎊 Ganador: ${d.winner1LineName || 'Jugador'} | Premio: Bs ${prize10}`);
+          confetti(60);
+        }
       }
     }
 
