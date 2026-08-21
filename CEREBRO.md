@@ -6,10 +6,10 @@ Este archivo contiene el **Cerebro Operativo** completo de **BingoPro**, sirvien
 
 ## 📌 1. Visión General del Proyecto
 
-BingoPro es una plataforma profesional de Bingo online en tiempo real, 100% automatizada a través de WhatsApp y acompañada de una **Arena de Juego Web 3D AAA para Jugadores** y un **Panel de Administración Web** con contabilidad financiera de doble entrada (*Double-Entry Ledger*).
+BingoPro es una plataforma profesional de Bingo online en tiempo real, 100% automatizada a través de WhatsApp y acompañada de un **Sistema Web Multi-Pantalla estilo Casino Las Vegas (SPA)** y un **Panel de Administración Web** con contabilidad financiera de doble entrada (*Double-Entry Ledger*).
 
 ### 💰 Parámetros Económicos (Reglas Activas)
-- **Precio por Cartón:** `100.00 Bs`
+- **Precio por Cartón (Sala Clásica):** `100.00 Bs`
 - **Comisión de la Casa (Rake):** `15%`
 - **Premio 1 Línea Horizontal:** `10%` del pote total
 - **Premio 2 Líneas Horizontales:** `15%` del pote total
@@ -28,37 +28,45 @@ BingoPro es una plataforma profesional de Bingo online en tiempo real, 100% auto
 - **Panel Administrativo:** `http://localhost:3000`
   - **Usuario:** `admin`
   - **Contraseña:** `Heatox.227`
-- **Arena Web 3D del Jugador:** `http://localhost:3000/player.html`
+- **Plataforma Web Jugador (Casino Las Vegas SPA):** `http://localhost:3000/player.html`
 - **Vinculador de WhatsApp (QR Code):** `http://localhost:3000/qr.html`
 - **Repositorio GitHub Oficial:** `https://github.com/HeatoX/bingopro-whatsapp`
 
 ---
 
-## 🎰 3. Arena de Juego 3D para Jugadores (player.html)
+## 🎰 3. Plataforma Web del Jugador — Casino Las Vegas (player.html)
 
-El proyecto cuenta con un portal de juego web de nivel Casino Internacional con las siguientes tecnologías:
+El portal del jugador está diseñado como una **Single Page Application (SPA)** de nivel casino internacional con navegación fluida entre 4 secciones principales:
 
-1. **🎰 Bombo Mecánico 3D con Física:**
-   - Animación Canvas 2D/3D con 12 esferas rebotando en tiempo real con gravedad y colisiones reales.
-   - Animación de caída en zoom (*Drop-In*) con explosión de partículas de colores al salir cada bolilla.
+```mermaid
+graph LR
+    L["🔑 Registro / Login"] --> A["🏠 Lobby Principal<br/>(#lobby)"]
+    A --> B["🎮 Sala de Juego 3D<br/>(#room)"]
+    A --> C["👤 Mi Perfil & Cartera<br/>(#profile)"]
+    A --> D["🏦 Pago Móvil<br/>(Modal)"]
+    B --> A
+    C --> A
+```
 
-2. **🗣️ Cantador de Voz en Español (Voice Announcer):**
-   - El sistema canta las bolillas en español automáticamente (*"B-12"*, *"N-35"*, *"¡Bingo!"*) usando `window.speechSynthesis`.
+### 🌟 Secciones de la Plataforma:
 
-3. **🔥 Detector Inteligente "Near-Win" (1TG / 2TG):**
-   - Identificación automática de cartones a 1 o 2 números de ganar con insignias parpadeantes (`🔥 ¡FALTA 1 PARA BINGO!`).
-
-4. **⚡ Pizarra Maestra Oficial 1-75 (LED Dynamic Matrix):**
-   - Tablero LED de alto contraste organizado por 5 columnas temáticas (**B**=Dorado, **I**=Cyan, **N**=Verde, **G**=Morado, **O**=Rojo) que se iluminan al ser cantadas.
-
-5. **🎟️ Cartones con Auto-Tachado Inteligente:**
-   - Marca automática en verde neón brillante (`#00FF6A`) con efecto de sello (*Stamp-In*) al salir cada bolilla.
-
-6. **🏆 Banner Flotante de Ganadores:**
-   - Cartel animado estilo Casino Vegas que aparece solo cuando hay un ganador y se oculta automáticamente a los 6 segundos.
-
-7. **💬 Chat de la Comunidad en Vivo:**
-   - Chat interactivo en tiempo real integrado en la pantalla de juego.
+1. **🔑 Registro / Login:** Formulario estilo cristal (*Glassmorphism*) con número de WhatsApp y nombre.
+2. **🏠 Lobby Principal:**
+   - **Salas de Bingo:** Bronce (50 Bs), Clásica En Vivo 🔴 (100 Bs), VIP Gold (250 Bs) y Diamante (500 Bs).
+   - **Ticker Horizontal de Ganadores:** Ticker animado con últimos premios otorgados.
+   - **Banner de Reglas & Premios:** Desglose porcentual de los pozos.
+3. **👤 Mi Perfil & Cartera:**
+   - Avatar personalizado con iniciales.
+   - Saldo disponible en Bs con animación.
+   - Botones de Recargar (Pago Móvil) y Retirar.
+   - Estadísticas del jugador: partidas jugadas, cartones comprados y premios ganados.
+4. **🎮 Sala de Juego en Vivo (Arena 3D):**
+   - **🎰 Bombo Mecánico 3D con Física:** Jaula metálica giratoria con 18 bolillas numeradas rebotando en 3D, eje de bronce y reflejos de cristal.
+   - **🗣️ Cantador de Voz en Español (`speechSynthesis`):** Pronuncia las bolillas cantadas (*"B-12"*, *"N-35"*).
+   - **🔥 Detector "Near-Win" (1TG / 2TG):** Alerta en vivo cuando a un cartón le falta 1 o 2 números para el Bingo (`🔥 ¡FALTA 1!`).
+   - **⚡ Pizarra LED Maestra 1-75:** 5 columnas B-I-N-G-O con colores temáticos e iluminación neón.
+   - **🎟️ Auto-Tachado Inteligente:** Tachado en verde neón con sonido sintético.
+   - **💬 Chat de la Comunidad:** Chat en tiempo real para interacción entre jugadores.
 
 ---
 
@@ -84,7 +92,7 @@ Para prevenir cualquier descuadre financiero o saldo negativo:
 | `!saldo` | Muestra el balance disponible en Bs |
 | `!comprar [N]` | Compra de 1 a 50 cartones para la ronda actual |
 | `!cartones` | Envía la imagen PNG de cada cartón del usuario |
-| `!jugar` / `!panel` | Entrega el enlace de 1 toque a la Arena Web 3D |
+| `!jugar` / `!panel` | Entrega el enlace de 1 toque al Casino Web 3D |
 | `!recargar [monto] [ref]` | Registra reporte de pago para aprobación del Admin |
 | `!retirar [monto]` | Registra solicitud de retiro de saldo |
 | `!historial` | Muestra las últimas 10 transacciones |
@@ -105,4 +113,4 @@ El proyecto está configurado para desplegarse de manera continua en la nube a t
    - **Environment Variable:** `ADMIN_PASSWORD` = `Heatox.227`
 
 ---
-*BingoPro — Diseñado y construido con arquitectura de alta disponibilidad, seguridad financiera y experiencia 3D premium.*
+*BingoPro — Diseñado y construido con arquitectura de alta disponibilidad, seguridad financiera y experiencia Casino Las Vegas 3D.*
