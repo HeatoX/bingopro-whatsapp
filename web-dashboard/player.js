@@ -1,17 +1,15 @@
 /* ═══════════════════════════════════════════════════════════════
-   BINGOPRO CASINO 3D — FULL SPA ENGINE
-   Multi-screen: Login → Lobby → Profile → Game Room
-   Epic 3D Drum with physics, Voice, Auto-Daub, Confetti
+   BINGOPRO ROYAL 3D — FULL SPA ENGINE
+   Apuestas Royal Style: Lobby, Promos, Quick Buy Pills, 3D Physics Drum
    ═══════════════════════════════════════════════════════════════ */
 
-// ── STATE ──
 let phone = localStorage.getItem('bp_phone') || '';
 let userName = localStorage.getItem('bp_name') || '';
 let soundOn = true, voiceOn = true;
 let lastBallNum = null;
 let drawnSet = new Set();
 let prevDaub = {};
-let pollTimer = null, profTimer = null;
+let pollTimer = null;
 
 const $id = id => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
@@ -90,8 +88,16 @@ function showScreen(name) {
 // ── NAV EVENTS ──
 $$('.bn-item').forEach(b => b.onclick = () => { snd(); showScreen(b.dataset.screen); });
 $$('.btn-back').forEach(b => b.onclick = () => showScreen(b.dataset.to));
-$$('.btn-enter-room').forEach(b => b.onclick = () => { snd(); showScreen('room'); });
+$$('.btn-change-room').forEach(b => b.onclick = () => showScreen(b.dataset.to));
+const btnClassic = $id('btn-enter-classic');
+if (btnClassic) btnClassic.onclick = () => { snd(); showScreen('room'); };
 $id('nav-profile-btn').onclick = () => showScreen('profile');
+
+// Tab switching inside lobby
+$$('.lt-tab').forEach(t => t.onclick = () => {
+  $$('.lt-tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+});
 
 // ═══ LOGIN / REGISTER ═══
 $id('btn-register').onclick = async () => {
@@ -112,7 +118,7 @@ function enterApp() {
   $id('app-shell').classList.remove('hidden');
   updateTopbar();
   showScreen('lobby');
-  profTimer = setInterval(updateTopbar, 4000);
+  setInterval(updateTopbar, 4000);
 }
 
 // Auto-login
@@ -128,8 +134,8 @@ async function updateTopbar() {
     const d = await (await fetch(`/api/player/me?phone=${phone}`)).json();
     if (d.name) {
       userName = d.name;
-      $id('tb-name').textContent = d.name;
-      $id('tb-bal').textContent = d.balance.toFixed(2) + ' Bs';
+      $id('tb-name').textContent = `Bienvenido, ${d.name}`;
+      $id('tb-bal').textContent = `Bs ${d.balance.toFixed(2)}`;
       $id('tb-avatar').textContent = d.name.charAt(0).toUpperCase();
       if (d.pagoMovil) { $id('pm-banco').textContent = d.pagoMovil.banco; $id('pm-tel').textContent = d.pagoMovil.telefono; $id('pm-ced').textContent = d.pagoMovil.cedula; }
     }
@@ -141,7 +147,7 @@ async function refreshLobby() {
   try {
     const d = await (await fetch('/api/player/game')).json();
     if (d.hasActiveGame) {
-      $id('lobby-pot').textContent = d.prizePool.toFixed(0);
+      $id('lobby-pot').textContent = `Bs ${d.prizePool.toFixed(2)}`;
       $id('lobby-players').textContent = d.totalCards || 0;
     }
   } catch {}
@@ -156,7 +162,7 @@ async function refreshProfile() {
       $id('prof-avatar').textContent = d.name.charAt(0).toUpperCase();
       $id('prof-name').textContent = d.name;
       $id('prof-phone').textContent = d.phone;
-      $id('prof-balance').textContent = d.balance.toFixed(2) + ' Bs';
+      $id('prof-balance').textContent = `Bs ${d.balance.toFixed(2)}`;
     }
   } catch {}
 }
@@ -170,7 +176,7 @@ $id('dep-submit').onclick = async () => {
   if (!amt || !ref) return alert('Completa ambos campos');
   try {
     const d = await (await fetch('/api/player/deposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, amount: amt, referenceCode: ref }) })).json();
-    d.success ? (alert('✅ Recarga registrada'), $id('dep-modal').classList.add('hidden')) : alert('Error: ' + d.error);
+    d.success ? (alert('✅ Recarga registrada — será aprobada en breve'), $id('dep-modal').classList.add('hidden')) : alert('Error: ' + d.error);
   } catch { alert('Error de conexión'); }
 };
 
@@ -179,7 +185,7 @@ $id('btn-sound').onclick = () => { snd(); soundOn = !soundOn; $id('btn-sound').t
 $id('btn-voice').onclick = () => { voiceOn = !voiceOn; $id('btn-voice').classList.toggle('active', voiceOn); };
 
 // ═══ BUY CARDS ═══
-$$('.buy-btn').forEach(b => b.onclick = async () => {
+$$('.buy-pill').forEach(b => b.onclick = async () => {
   snd(); const count = parseInt(b.dataset.n);
   try {
     const d = await (await fetch('/api/player/buy-cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, count }) })).json();
@@ -213,8 +219,8 @@ async function poll() {
     const d = await (await fetch('/api/player/game')).json();
     if (!d.hasActiveGame) { $id('room-label').textContent = 'RONDA #--'; $id('status-text').textContent = 'ESPERANDO RONDA…'; $id('prog-bar').style.width = '0%'; return; }
     $id('room-label').textContent = `RONDA #${d.roundNumber}`;
-    $id('pot-value').textContent = d.prizePool.toFixed(0) + ' Bs';
-    const smap = { WAITING: '⏳ PREPARANDO…', SELLING: '🛒 ¡COMPRA AHORA!', DRAWING: `🔴 EN VIVO — ${d.drawnBalls.length}/75`, PAUSED: '⏸️ PAUSADA', FINISHED: '🏁 FINALIZADA' };
+    $id('pot-value').textContent = `Bs ${d.prizePool.toFixed(2)}`;
+    const smap = { WAITING: '⏳ PREPARANDO…', SELLING: '🛒 ¡VENTAS ABIERTAS!', DRAWING: `🔴 EN VIVO — ${d.drawnBalls.length}/75`, PAUSED: '⏸️ PAUSADA', FINISHED: '🏁 FINALIZADA' };
     $id('status-text').textContent = smap[d.status] || d.status;
     $id('prog-bar').style.width = d.status === 'DRAWING' ? (d.drawnBalls.length / 75 * 100) + '%' : d.status === 'SELLING' ? '20%' : d.status === 'FINISHED' ? '100%' : '0%';
     drawnSet = new Set(d.drawnBalls.map(b => b.number));
@@ -298,16 +304,15 @@ function initDrum() {
   const cv = $id('drum-canvas');
   if (!cv) { drumRunning = false; return; }
   const ctx = cv.getContext('2d');
-  const W = cv.width, H = cv.height, cx = W / 2, cy = H / 2, R = 110;
+  const W = cv.width, H = cv.height, cx = W / 2, cy = H / 2, R = 100;
 
-  // Create 18 balls inside drum with numbers
   const balls = [];
   for (let i = 0; i < 18; i++) {
-    const a = Math.random() * Math.PI * 2, dist = Math.random() * (R - 18);
+    const a = Math.random() * Math.PI * 2, dist = Math.random() * (R - 16);
     balls.push({
       x: cx + Math.cos(a) * dist, y: cy + Math.sin(a) * dist,
       vx: (Math.random() - .5) * 2, vy: (Math.random() - .5) * 2,
-      r: 10 + Math.random() * 3,
+      r: 9 + Math.random() * 3,
       hue: [40, 180, 140, 280, 350, 30, 200, 60, 320, 160][i % 10],
       num: Math.floor(Math.random() * 75) + 1
     });
@@ -319,15 +324,13 @@ function initDrum() {
     ctx.clearRect(0, 0, W, H);
     rot += drumSpeed;
 
-    // ── Outer metallic rim ──
-    const rimGrad = ctx.createRadialGradient(cx, cy, R - 8, cx, cy, R + 6);
-    rimGrad.addColorStop(0, 'rgba(255,215,0,.08)');
-    rimGrad.addColorStop(.5, 'rgba(255,215,0,.2)');
+    const rimGrad = ctx.createRadialGradient(cx, cy, R - 6, cx, cy, R + 6);
+    rimGrad.addColorStop(0, 'rgba(255,215,0,.1)');
+    rimGrad.addColorStop(.5, 'rgba(255,215,0,.25)');
     rimGrad.addColorStop(1, 'rgba(255,215,0,.05)');
     ctx.fillStyle = rimGrad;
     ctx.beginPath(); ctx.arc(cx, cy, R + 6, 0, Math.PI * 2); ctx.fill();
 
-    // ── Glass drum body ──
     const bodyGrad = ctx.createRadialGradient(cx - 20, cy - 30, 10, cx, cy, R);
     bodyGrad.addColorStop(0, 'rgba(30,35,60,.6)');
     bodyGrad.addColorStop(.7, 'rgba(10,12,25,.8)');
@@ -335,7 +338,6 @@ function initDrum() {
     ctx.fillStyle = bodyGrad;
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
 
-    // ── Wire cage rings (3D illusion) ──
     ctx.save(); ctx.translate(cx, cy);
     for (let ring = 0; ring < 4; ring++) {
       ctx.save();
@@ -350,46 +352,27 @@ function initDrum() {
       ctx.restore();
     }
 
-    // ── Metal spokes ──
     for (let s = 0; s < 8; s++) {
       ctx.save();
       ctx.rotate(rot * 1.5 + s * Math.PI / 4);
-      const spokeGrad = ctx.createLinearGradient(0, 0, R - 10, 0);
-      spokeGrad.addColorStop(0, 'rgba(255,215,0,.03)');
-      spokeGrad.addColorStop(.5, 'rgba(255,215,0,.08)');
-      spokeGrad.addColorStop(1, 'rgba(255,215,0,.03)');
-      ctx.strokeStyle = spokeGrad;
+      ctx.strokeStyle = 'rgba(255,215,0,.08)';
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(R - 10, 0); ctx.stroke();
       ctx.restore();
     }
 
-    // ── Center hub (metallic) ──
     const hubGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, 14);
-    hubGrad.addColorStop(0, '#FFD700');
-    hubGrad.addColorStop(.5, '#B8860B');
-    hubGrad.addColorStop(1, 'rgba(100,70,20,.4)');
+    hubGrad.addColorStop(0, '#FFD700'); hubGrad.addColorStop(.5, '#B8860B'); hubGrad.addColorStop(1, 'rgba(100,70,20,.4)');
     ctx.fillStyle = hubGrad;
     ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
-
-    // ── Hub bolt ──
     ctx.fillStyle = '#FFD700';
     ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
-
     ctx.restore();
 
-    // ── BALL PHYSICS ──
     for (const b of balls) {
-      // Gravity + rotation tumbling
-      b.vy += .18;
-      b.vx += Math.cos(rot * 4) * .2;
-      b.vy += Math.sin(rot * 4) * .15;
+      b.vy += .18; b.vx += Math.cos(rot * 4) * .2; b.vy += Math.sin(rot * 4) * .15;
+      b.vx *= .995; b.vy *= .995; b.x += b.vx; b.y += b.vy;
 
-      // Damping
-      b.vx *= .995; b.vy *= .995;
-      b.x += b.vx; b.y += b.vy;
-
-      // Constrain to circle
       const dx = b.x - cx, dy = b.y - cy, dist = Math.sqrt(dx * dx + dy * dy);
       if (dist + b.r > R - 6) {
         const nx = dx / dist, ny = dy / dist;
@@ -399,7 +382,6 @@ function initDrum() {
         b.vx *= .8; b.vy *= .8;
       }
 
-      // Ball-ball collision
       for (const b2 of balls) {
         if (b2 === b) continue;
         const ddx = b2.x - b.x, ddy = b2.y - b.y, d2 = Math.sqrt(ddx * ddx + ddy * ddy), minD = b.r + b2.r;
@@ -413,7 +395,6 @@ function initDrum() {
         }
       }
 
-      // ── Draw 3D ball with number ──
       const g = ctx.createRadialGradient(b.x - b.r * .3, b.y - b.r * .35, b.r * .08, b.x, b.y, b.r);
       g.addColorStop(0, `hsl(${b.hue},85%,80%)`);
       g.addColorStop(.4, `hsl(${b.hue},80%,55%)`);
@@ -422,7 +403,6 @@ function initDrum() {
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
 
-      // White center spot with number
       ctx.fillStyle = 'rgba(255,255,255,.85)';
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r * .55, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = `hsl(${b.hue},60%,25%)`;
@@ -430,21 +410,11 @@ function initDrum() {
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(b.num, b.x, b.y + 1);
 
-      // Specular highlight
       ctx.fillStyle = 'rgba(255,255,255,.4)';
       ctx.beginPath();
       ctx.ellipse(b.x - b.r * .22, b.y - b.r * .35, b.r * .3, b.r * .15, -.4, 0, Math.PI * 2);
       ctx.fill();
     }
-
-    // ── Glass reflection arc ──
-    ctx.save();
-    ctx.globalAlpha = .08;
-    ctx.fillStyle = '#FFF';
-    ctx.beginPath();
-    ctx.ellipse(cx - 25, cy - 40, R * .6, R * .25, -.3, 0, Math.PI);
-    ctx.fill();
-    ctx.restore();
 
     requestAnimationFrame(frame);
   }

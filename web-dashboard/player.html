@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BingoPro Casino 3D | La Arena del Bingo en Vivo</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>BingoPro Royal 3D | El Bingo #1 de Venezuela 🎰</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="player.css">
 </head>
 <body>
@@ -15,154 +15,228 @@
         <div class="login-wrap">
             <div class="login-card">
                 <div class="login-glow"></div>
-                <div class="login-logo-big">🎱</div>
-                <h1 class="login-h1">BINGO<span class="gold">PRO</span></h1>
-                <p class="login-tag">Casino 3D en Vivo — 24/7</p>
-                <input type="text" id="login-phone" class="input-glass" placeholder="Tu WhatsApp (ej: 04121234567)" />
-                <input type="text" id="login-name" class="input-glass" placeholder="Tu nombre (ej: María)" />
-                <button id="btn-register" class="btn-gold">CREAR CUENTA & ENTRAR →</button>
-                <p class="login-foot">Al entrar aceptas las reglas del casino</p>
+                <div class="login-logo-big">👑</div>
+                <h1 class="login-h1">BINGO<span class="gold">ROYAL</span> 3D</h1>
+                <p class="login-tag">La Plataforma de Bingo #1 de Venezuela</p>
+                <input type="text" id="login-phone" class="input-glass" placeholder="Tu Número WhatsApp (ej: 04121234567)" autofocus />
+                <input type="text" id="login-name" class="input-glass" placeholder="Tu Nombre / Apodo" />
+                <button id="btn-register" class="btn-gold-lg">ENTRAR A JUGAR AHORA →</button>
+                <p class="login-foot">🔒 Transacciones Seguras con Pago Móvil Instantáneo</p>
             </div>
         </div>
     </div>
 
     <!-- ═══ MAIN APP SHELL ═══ -->
     <div id="app-shell" class="app-shell hidden">
-        <!-- Top Bar -->
+        <!-- ═══ TOP NAVBAR (Estilo Apuestas Royal Superior) ═══ -->
         <header class="topbar">
             <div class="tb-left">
-                <span class="tb-logo">🎱</span>
-                <span class="tb-brand">BINGO<span class="gold">PRO</span></span>
+                <div class="crown-logo">👑</div>
+                <div class="tb-brand">BINGO<span class="gold">ROYAL</span> <span class="tag-live">EN VIVO</span></div>
             </div>
-            <div class="tb-right">
-                <div class="tb-wallet" id="nav-profile-btn">
-                    <div class="tb-avatar" id="tb-avatar">?</div>
-                    <div class="tb-info">
-                        <span id="tb-name" class="tb-uname">...</span>
-                        <span id="tb-bal" class="tb-balance">0.00 Bs</span>
+            <div class="tb-center">
+                <div class="user-pill" id="nav-profile-btn">
+                    <div class="up-avatar" id="tb-avatar">?</div>
+                    <div class="up-info">
+                        <span id="tb-name" class="up-name">Bienvenido, Jugador</span>
+                        <span class="up-bal-lbl">Balance: <strong id="tb-bal" class="up-bal-val">Bs 0.00</strong></span>
                     </div>
                 </div>
-                <button id="btn-topbar-deposit" class="btn-gold-sm">+ RECARGAR</button>
+            </div>
+            <div class="tb-right">
+                <button id="btn-topbar-deposit" class="btn-deposit-gold">+ RECARGAR</button>
+                <button id="btn-topbar-history" class="btn-icon-tb" title="Historial">📜</button>
+                <button id="btn-voice" class="btn-icon-tb active" title="Voz Cantante">🗣️</button>
+                <button id="btn-sound" class="btn-icon-tb" title="Sonido">🔊</button>
             </div>
         </header>
 
-        <!-- ═══ SCREEN: LOBBY ═══ -->
+        <!-- ═══ SCREEN 1: LOBBY DE SALAS (Estilo Apuestas Royal Lobby) ═══ -->
         <div id="screen-lobby" class="screen-inner">
-            <div class="lobby-hero">
-                <div class="hero-particles"></div>
-                <h2 class="hero-title">BIENVENIDO AL CASINO</h2>
-                <p class="hero-sub">Elige una sala y comienza a ganar</p>
+            <!-- Nav Tabs -->
+            <div class="lobby-tabs-bar">
+                <button class="lt-tab active">🎰 TODAS LAS SALAS</button>
+                <button class="lt-tab">🏆 GRANDES GANADORES</button>
+                <button class="lt-tab">📖 TUTORIAL & REGLAS</button>
+                <button class="lt-tab highlight">🔥 PREVENTA ACTIVA</button>
             </div>
 
-            <div class="lobby-body">
-                <h3 class="section-title">🎰 SALAS DE BINGO DISPONIBLES</h3>
+            <div class="lobby-content">
+                <!-- HERO PROMO CAROUSEL (Banners Promocionales Estilo Royal) -->
+                <div class="hero-promos-grid">
+                    <!-- Banner 1: Viernes de Fortuna -->
+                    <div class="promo-card promo-fortune">
+                        <div class="pc-badge">👑 BINGO ROYAL</div>
+                        <h2 class="pc-title">VIERNES DE FORTUNA</h2>
+                        <div class="pc-timer">⏳ 20H 07M RESTANTES</div>
+                        <div class="pc-jackpot-box">
+                            <span class="pj-lbl">POZO ACUMULADO</span>
+                            <span class="pj-val">Bs 436,870.00</span>
+                        </div>
+                        <div class="pc-promo-tag">🎁 POR CADA 8 CARTONES QUE COMPRES, PAGA SOLO 5</div>
+                        <div class="pc-footer">
+                            <span>👥 815 Jugadores</span>
+                            <span class="pc-price">Cartón: Bs 218.43</span>
+                        </div>
+                    </div>
+
+                    <!-- Banner 2: La Última Bola de la Semana -->
+                    <div class="promo-card promo-jackpot">
+                        <div class="pc-badge red">🔥 GRAN JACKPOT</div>
+                        <h2 class="pc-title">LA ÚLTIMA BOLA DE LA SEMANA</h2>
+                        <p class="pc-sub">Acumula 20 cartones y recibe 2 cartones GRATIS para el Gran Jackpot del Domingo.</p>
+                        <div class="pc-jackpot-box red">
+                            <span class="pj-lbl">JACKPOT TOTAL</span>
+                            <span class="pj-val">Bs 4,339,037.19</span>
+                        </div>
+                        <div class="pc-footer">
+                            <span>🗓️ DOMINGO 9:30 PM</span>
+                            <button class="btn-royal-sm">PARTICIPAR →</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SALAS DE JUEGO GRID (Rooms Grid) -->
+                <h3 class="section-title">🎮 SALAS DE BINGO DISPONIBLES</h3>
                 <div class="rooms-grid">
-                    <!-- Bronze -->
-                    <div class="room-card room-bronze" data-room="bronze" data-price="50">
-                        <div class="rc-badge">🥉</div>
-                        <div class="rc-name">Sala Bronce</div>
-                        <div class="rc-price">50 Bs<span>/cartón</span></div>
-                        <div class="rc-pot">Pote ~500 Bs</div>
-                        <div class="rc-status coming">PRÓXIMAMENTE</div>
+                    <!-- Room 1: Bingo 75 En Vivo (ACTIVA CONECTADA AL BACKEND) -->
+                    <div class="room-card room-live" id="btn-enter-classic">
+                        <div class="rc-top-bar">
+                            <span class="rc-title-badge">🎤 BINGO 75 EN VIVO</span>
+                            <span class="rc-live-pill">🔴 EN VIVO</span>
+                        </div>
+                        <div class="rc-jackpot-strip">
+                            <span class="rjs-lbl">Jackpot Acumulado</span>
+                            <span class="rjs-val">Bs 1,828,392.30</span>
+                        </div>
+                        <div class="rc-main-pozo">
+                            <span class="rmp-lbl">POZO ACTUAL</span>
+                            <span class="rmp-val" id="lobby-pot">Bs 0.00</span>
+                        </div>
+                        <div class="rc-offer-pill">🎁 LLEVA 6 CARTONES Y PAGA SOLO 4</div>
+                        <div class="rc-footer">
+                            <span class="rc-players">👥 <strong id="lobby-players">0</strong> Jugadores</span>
+                            <span class="rc-price-badge">Bs 100.00 c/u</span>
+                        </div>
+                        <button class="btn-play-now">¡ENTRAR A JUGAR AHORA! 🚀</button>
                     </div>
-                    <!-- Classic -->
-                    <div class="room-card room-classic" data-room="classic" data-price="100">
-                        <div class="rc-badge">🥈</div>
-                        <div class="rc-ribbon">EN VIVO 🔴</div>
-                        <div class="rc-name">Sala Clásica</div>
-                        <div class="rc-price">100 Bs<span>/cartón</span></div>
-                        <div class="rc-pot">Pote <strong id="lobby-pot">0</strong> Bs</div>
-                        <div class="rc-players">👥 <span id="lobby-players">0</span> jugadores</div>
-                        <button class="btn-enter-room">ENTRAR A LA SALA →</button>
+
+                    <!-- Room 2: Bingo 90 Neón -->
+                    <div class="room-card room-90">
+                        <div class="rc-top-bar">
+                            <span class="rc-title-badge yellow">🎱 BINGO 90 NEÓN</span>
+                            <span class="rc-timer-pill">⏱️ 01:22</span>
+                        </div>
+                        <div class="rc-jackpot-strip">
+                            <span class="rjs-lbl">Jackpot Acumulado</span>
+                            <span class="rjs-val">Bs 4,214,400.00</span>
+                        </div>
+                        <div class="rc-main-pozo">
+                            <span class="rmp-lbl">POZO ESTIMADO</span>
+                            <span class="rmp-val">Bs 19,826.23</span>
+                        </div>
+                        <div class="rc-offer-pill">🎁 POR CADA 6 CARTONES PAGA SOLO 4</div>
+                        <div class="rc-footer">
+                            <span class="rc-players">👥 55 Jugadores</span>
+                            <span class="rc-price-badge">Bs 53.72 c/u</span>
+                        </div>
+                        <button class="btn-play-now secondary">PRÓXIMAMENTE 🔒</button>
                     </div>
-                    <!-- VIP -->
-                    <div class="room-card room-vip" data-room="vip" data-price="250">
-                        <div class="rc-badge">🥇</div>
-                        <div class="rc-name">Sala VIP Gold</div>
-                        <div class="rc-price">250 Bs<span>/cartón</span></div>
-                        <div class="rc-pot">Pote ~2,500 Bs</div>
-                        <div class="rc-status coming">PRÓXIMAMENTE</div>
-                    </div>
-                    <!-- Diamond -->
-                    <div class="room-card room-diamond" data-room="diamond" data-price="500">
-                        <div class="rc-badge">💎</div>
-                        <div class="rc-name">Sala Diamante</div>
-                        <div class="rc-price">500 Bs<span>/cartón</span></div>
-                        <div class="rc-pot">Pote ~5,000 Bs</div>
-                        <div class="rc-status coming">PRÓXIMAMENTE</div>
+
+                    <!-- Room 3: Bingo 75 Express -->
+                    <div class="room-card room-75-express">
+                        <div class="rc-top-bar">
+                            <span class="rc-title-badge blue">⚡ BINGO 75 EXPRESS</span>
+                            <span class="rc-timer-pill">⏱️ 04:22</span>
+                        </div>
+                        <div class="rc-jackpot-strip">
+                            <span class="rjs-lbl">Jackpot Acumulado</span>
+                            <span class="rjs-val">Bs 964,883.56</span>
+                        </div>
+                        <div class="rc-main-pozo">
+                            <span class="rmp-lbl">POZO ESTIMADO</span>
+                            <span class="rmp-val">Bs 402.94</span>
+                        </div>
+                        <div class="rc-offer-pill">🎁 POR CADA 6 CARTONES PAGA SOLO 4</div>
+                        <div class="rc-footer">
+                            <span class="rc-players">👥 44 Jugadores</span>
+                            <span class="rc-price-badge">Bs 53.72 c/u</span>
+                        </div>
+                        <button class="btn-play-now secondary">PRÓXIMAMENTE 🔒</button>
                     </div>
                 </div>
 
-                <!-- Recent Winners Ticker -->
-                <div class="winners-ticker">
-                    <span class="wt-label">🏆 Últimos Ganadores:</span>
-                    <div class="wt-scroll">
-                        <span class="wt-item">🎉 Carlos M. ganó 600 Bs (Bingo)</span>
-                        <span class="wt-item">⭐ Ana R. ganó 150 Bs (2 Líneas)</span>
-                        <span class="wt-item">🎊 José L. ganó 100 Bs (1 Línea)</span>
-                    </div>
-                </div>
-
-                <!-- Prize Rules -->
-                <div class="rules-banner">
-                    <h4>🏆 DISTRIBUCIÓN DE PREMIOS</h4>
-                    <div class="rules-cols">
-                        <div class="rule-item"><span class="ri-pct">10%</span><span class="ri-lbl">1 Línea</span></div>
-                        <div class="rule-item"><span class="ri-pct">15%</span><span class="ri-lbl">2 Líneas</span></div>
-                        <div class="rule-item"><span class="ri-pct gold">60%</span><span class="ri-lbl">Bingo Full</span></div>
-                        <div class="rule-item"><span class="ri-pct dim">15%</span><span class="ri-lbl">Casa</span></div>
+                <!-- TABLA DE PREMIOS OFICIAL -->
+                <div class="payout-rules-card">
+                    <h4>🏆 REGLAS Y DISTRIBUCIÓN DE PREMIOS</h4>
+                    <div class="payout-grid">
+                        <div class="pg-box"><span class="pg-pct">10%</span><span class="pg-lbl">1 Línea Horizontal</span></div>
+                        <div class="pg-box"><span class="pg-pct">15%</span><span class="pg-lbl">2 Líneas Horizontales</span></div>
+                        <div class="pg-box gold"><span class="pg-pct">60%</span><span class="pg-lbl">Bingo Cartón Lleno</span></div>
+                        <div class="pg-box dim"><span class="pg-pct">15%</span><span class="pg-lbl">Comisión de Casa</span></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ═══ SCREEN: PROFILE ═══ -->
-        <div id="screen-profile" class="screen-inner hidden">
-            <div class="prof-header">
-                <button class="btn-back" data-to="lobby">← Lobby</button>
-                <h3>MI PERFIL</h3>
-            </div>
-            <div class="prof-body">
-                <div class="prof-avatar-big" id="prof-avatar">?</div>
-                <h2 id="prof-name" class="prof-name">Jugador</h2>
-                <p id="prof-phone" class="prof-phone">0412...</p>
-
-                <div class="balance-card">
-                    <span class="bc-label">SALDO DISPONIBLE</span>
-                    <span id="prof-balance" class="bc-amount">0.00 Bs</span>
-                    <div class="bc-btns">
-                        <button class="btn-gold" id="prof-deposit-btn">+ RECARGAR</button>
-                        <button class="btn-outline" id="prof-withdraw-btn">RETIRAR</button>
-                    </div>
-                </div>
-
-                <div class="prof-stats">
-                    <div class="ps-item"><span class="ps-val" id="ps-games">0</span><span class="ps-lbl">Partidas</span></div>
-                    <div class="ps-item"><span class="ps-val" id="ps-cards">0</span><span class="ps-lbl">Cartones</span></div>
-                    <div class="ps-item"><span class="ps-val" id="ps-wins">0</span><span class="ps-lbl">Premios</span></div>
-                </div>
-
-                <button class="btn-logout" id="btn-logout">Cerrar Sesión</button>
-            </div>
-        </div>
-
-        <!-- ═══ SCREEN: GAME ROOM ═══ -->
+        <!-- ═══ SCREEN 2: DENTRO DE LA SALA DE JUEGO (Estilo Apuestas Royal Room) ═══ -->
         <div id="screen-room" class="screen-inner hidden">
-            <div class="room-topbar">
-                <button class="btn-back" data-to="lobby">← Lobby</button>
-                <div class="live-badge"><span class="dot-live"></span> <span id="room-label">RONDA #--</span></div>
-                <div class="pot-chip">POTE <strong id="pot-value">0 Bs</strong></div>
-                <div class="room-controls">
-                    <button id="btn-voice" class="btn-icon active" title="Voz">🗣️</button>
-                    <button id="btn-sound" class="btn-icon" title="Sonido">🔊</button>
+            <!-- Room Top Control Bar -->
+            <div class="room-nav-bar">
+                <button class="btn-change-room" data-to="lobby">← CAMBIAR SALA</button>
+                <div class="room-title-tag">
+                    <h2>BINGO 75 EN VIVO</h2>
+                    <span class="rtt-jackpot">Jackpot Acumulado: <strong>Bs 1,828,392.30</strong></span>
+                </div>
+                <div class="room-live-pozo">
+                    <span class="rlp-lbl">POZO EN VIVO</span>
+                    <span class="rlp-val" id="pot-value">Bs 0.00</span>
                 </div>
             </div>
 
-            <div class="room-layout">
-                <!-- LEFT: Epic Drum Stage -->
-                <aside class="rl-left">
-                    <div class="drum-stage">
-                        <!-- BINGO Letter Indicators -->
+            <!-- Main Game Layout Grid (3 Columnas Estilo Casino Royal) -->
+            <div class="game-room-grid">
+                
+                <!-- LEFT COLUMN: CARTONES DISPONIBLES & MIS CARTONES -->
+                <aside class="gr-col-left">
+                    <div class="cards-panel-header">
+                        <span class="cph-title">🎟️ CARTONES (<span id="card-count">0</span>)</span>
+                        <div class="cph-controls">
+                            <button class="cph-btn" title="Renovar">🔄 Renovar</button>
+                        </div>
+                    </div>
+                    <div id="cards-zone" class="cards-scroll-grid">
+                        <div class="no-cards">Compra cartones a la derecha para comenzar a jugar 🎲</div>
+                    </div>
+                </aside>
+
+                <!-- CENTER COLUMN: BOMBO 3D + CONTROLES DE COMPRA + PIZARRA -->
+                <main class="gr-col-center">
+                    
+                    <!-- Quick Purchase Controls Bar (Pills de Compra Estilo Apuestas Royal) -->
+                    <div class="quick-buy-box">
+                        <div class="qbb-header">
+                            <span class="qbb-title">🛒 COMPRAR CARTONES</span>
+                            <span class="qbb-promo">🎁 LLEVA 6 PAGA 4</span>
+                        </div>
+                        <div class="qbb-pills-row">
+                            <button class="buy-pill" data-n="1">1</button>
+                            <button class="buy-pill" data-n="2">2</button>
+                            <button class="buy-pill featured" data-n="6">🔥 6 (Paga 4)</button>
+                            <button class="buy-pill" data-n="12">12</button>
+                            <button class="buy-pill" data-n="24">24</button>
+                            <button class="buy-pill" data-n="48">48</button>
+                        </div>
+                    </div>
+
+                    <!-- 3D MECHANICAL DRUM STAGE (El Bombo 3D Espectacular) -->
+                    <div class="drum-stage-box">
+                        <div class="stage-status-header">
+                            <div class="live-badge"><span class="dot-live"></span> <span id="room-label">RONDA #--</span></div>
+                            <div id="status-text" class="status-bar-text">ESPERANDO RONDA...</div>
+                        </div>
+
+                        <!-- B I N G O Header Glow Tiles -->
                         <div class="bingo-hdrs" id="bingo-headers">
                             <div class="bh" data-col="B">B</div>
                             <div class="bh" data-col="I">I</div>
@@ -171,39 +245,37 @@
                             <div class="bh" data-col="O">O</div>
                         </div>
 
-                        <!-- Epic Drum Canvas -->
-                        <div class="drum-wrapper">
-                            <canvas id="drum-canvas" width="280" height="280"></canvas>
-                            <div class="drum-glow"></div>
-                        </div>
-
-                        <!-- Active Ball Display -->
-                        <div class="ball-display">
-                            <div id="cur-ball" class="big-ball idle">
-                                <div class="bb-ring"></div>
-                                <div class="bb-face">
-                                    <span id="cb-col" class="bb-col">?</span>
-                                    <span id="cb-num" class="bb-num">--</span>
-                                </div>
-                                <div class="bb-shine"></div>
+                        <!-- 3D Physics Drum + Current Ball -->
+                        <div class="drum-display-row">
+                            <div class="drum-canvas-frame">
+                                <canvas id="drum-canvas" width="240" height="240"></canvas>
+                                <div class="drum-glow-ring"></div>
                             </div>
-                            <div id="cb-announce" class="ball-announce">CANTADOR EN VIVO</div>
+                            <div class="active-ball-container">
+                                <div id="cur-ball" class="big-ball idle">
+                                    <div class="bb-face">
+                                        <span id="cb-col" class="bb-col">?</span>
+                                        <span id="cb-num" class="bb-num">--</span>
+                                    </div>
+                                    <div class="bb-shine"></div>
+                                </div>
+                                <div id="cb-announce" class="ball-announce">CANTADOR EN VIVO</div>
+                            </div>
                         </div>
 
-                        <!-- Status -->
-                        <div id="status-text" class="status-bar">ESPERANDO RONDA...</div>
+                        <!-- Progress Bar -->
                         <div class="prog-wrap"><div id="prog-bar" class="prog-fill"></div></div>
 
-                        <!-- History -->
+                        <!-- History Strip -->
                         <div class="history-strip">
                             <span class="hs-label">Últimas:</span>
                             <div id="history-balls" class="hs-balls"></div>
                         </div>
                     </div>
 
-                    <!-- Pizarra -->
+                    <!-- MASTER PIZARRA 1-75 (LED Dynamic Matrix) -->
                     <div class="pizarra">
-                        <div class="piz-label">⚡ PIZARRA 1-75</div>
+                        <div class="piz-label">⚡ PIZARRA OFICIAL EN VIVO (1 - 75)</div>
                         <div class="piz-cols">
                             <div class="piz-col" data-letter="B"><div class="piz-col-hdr">B</div><div class="piz-nums" id="piz-B"></div></div>
                             <div class="piz-col" data-letter="I"><div class="piz-col-hdr">I</div><div class="piz-nums" id="piz-I"></div></div>
@@ -212,48 +284,57 @@
                             <div class="piz-col" data-letter="O"><div class="piz-col-hdr">O</div><div class="piz-nums" id="piz-O"></div></div>
                         </div>
                     </div>
-                </aside>
-
-                <!-- CENTER: Cards -->
-                <main class="rl-center">
-                    <div class="store-bar">
-                        <h3>🛒 COMPRAR CARTONES</h3>
-                        <div class="buy-btns">
-                            <button class="buy-btn" data-n="1">1</button>
-                            <button class="buy-btn" data-n="2">2</button>
-                            <button class="buy-btn" data-n="5">5</button>
-                            <button class="buy-btn featured" data-n="10">🔥 10</button>
-                        </div>
-                    </div>
-                    <div class="cards-header">
-                        <h3>🎟️ MIS CARTONES (<span id="card-count">0</span>)</h3>
-                        <span class="autodaub-on">🟢 Auto-Tachado</span>
-                    </div>
-                    <div id="cards-zone" class="cards-grid">
-                        <div class="no-cards">Compra cartones arriba para jugar 🎲</div>
-                    </div>
                 </main>
 
-                <!-- RIGHT: Chat -->
-                <aside class="rl-right">
-                    <div class="chat-box">
-                        <div class="chat-hdr"><h4>💬 CHAT EN VIVO</h4><span class="online-dot">🟢 18</span></div>
-                        <div id="chat-messages" class="chat-msgs">
-                            <div class="chat-msg sys">🤖 ¡Bienvenidos al Casino BingoPro!</div>
+                <!-- RIGHT COLUMN: SALA DE CHAT EN VIVO -->
+                <aside class="gr-col-right">
+                    <div class="chat-panel">
+                        <div class="chat-panel-hdr">
+                            <h3>💬 SALA DE CHAT</h3>
+                            <span class="chat-online-count">🟢 55 En Línea</span>
                         </div>
-                        <div class="chat-input-row">
-                            <input type="text" id="chat-input" placeholder="Escribe..." />
-                            <button id="chat-send" class="btn-send">→</button>
+                        <div id="chat-messages" class="chat-msgs-box">
+                            <div class="chat-msg sys">🤖 <i>Bot: ¡Bienvenidos a BingoPro Royal! Suerte a todos.</i></div>
+                            <div class="chat-msg"><span class="uname">yelitza552:</span> ¡Vamos por ese Bingo! 🤞</div>
+                            <div class="chat-msg"><span class="uname">mansur27:</span> Buena suerte a todos 🔥</div>
+                        </div>
+                        <div class="chat-input-bar">
+                            <input type="text" id="chat-input" placeholder="Ingrese su mensaje..." />
+                            <button id="chat-send" class="btn-chat-send">▶</button>
                         </div>
                     </div>
                 </aside>
+
             </div>
         </div>
 
-        <!-- Bottom Nav (Mobile) -->
+        <!-- ═══ SCREEN 3: PERFIL Y CARTERA ═══ -->
+        <div id="screen-profile" class="screen-inner hidden">
+            <div class="prof-header">
+                <button class="btn-back" data-to="lobby">← VOLVER AL LOBBY</button>
+                <h3>MI CUENTA & CARTERA</h3>
+            </div>
+            <div class="prof-body">
+                <div class="prof-avatar-big" id="prof-avatar">?</div>
+                <h2 id="prof-name" class="prof-name">Jugador</h2>
+                <p id="prof-phone" class="prof-phone">0412...</p>
+
+                <div class="balance-card">
+                    <span class="bc-label">BALANCE DISPONIBLE</span>
+                    <span id="prof-balance" class="bc-amount">Bs 0.00</span>
+                    <div class="bc-btns">
+                        <button class="btn-gold-lg" id="prof-deposit-btn">+ RECARGAR PAGO MÓVIL</button>
+                    </div>
+                </div>
+
+                <button class="btn-logout" id="btn-logout">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <!-- Mobile Bottom Navigation Bar -->
         <nav class="bottom-nav">
             <button class="bn-item active" data-screen="lobby"><span class="bn-icon">🏠</span><span class="bn-lbl">Lobby</span></button>
-            <button class="bn-item" data-screen="room"><span class="bn-icon">🎮</span><span class="bn-lbl">Jugar</span></button>
+            <button class="bn-item" data-screen="room"><span class="bn-icon">🎮</span><span class="bn-lbl">Juego</span></button>
             <button class="bn-item" data-screen="profile"><span class="bn-icon">👤</span><span class="bn-lbl">Perfil</span></button>
         </nav>
     </div>
@@ -270,16 +351,16 @@
             </div>
             <input type="number" id="dep-amt" class="input-glass" placeholder="Monto en Bs" />
             <input type="text" id="dep-ref" class="input-glass" placeholder="Últimos 6 dígitos referencia" />
-            <button id="dep-submit" class="btn-gold">REPORTAR PAGO →</button>
+            <button id="dep-submit" class="btn-gold-lg">REPORTAR PAGO →</button>
         </div>
     </div>
 
     <!-- Winner Banner -->
     <div id="winner-banner" class="winner-banner hidden">
         <div class="wb-content">
-            <span class="wb-icon">🏆</span>
+            <span class="wb-icon">👑</span>
             <div class="wb-text">
-                <h2 id="wb-title">¡BINGO!</h2>
+                <h2 id="wb-title">¡BINGO GANADO!</h2>
                 <p id="wb-user">...</p>
             </div>
         </div>
