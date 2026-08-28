@@ -348,6 +348,63 @@
         </nav>
     </div>
 
+    <!-- Buy Confirmation Modal (Casino Royal Luxury Ticket) -->
+    <div id="buy-modal" class="modal-overlay hidden">
+        <div class="buy-confirm-box">
+            <button id="buy-modal-close" class="close-x">✕</button>
+            <div class="bcm-header">
+                <span class="bcm-icon">🎟️</span>
+                <h2>CONFIRMAR COMPRA</h2>
+                <p class="bcm-sub">Revisa los detalles antes de adquirir tus cartones</p>
+            </div>
+            
+            <div class="bcm-ticket-card">
+                <div class="bcm-row">
+                    <span class="bcm-label">Cartones a comprar</span>
+                    <strong id="bcm-count" class="bcm-val">6 Cartones</strong>
+                </div>
+                <div class="bcm-row">
+                    <span class="bcm-label">Precio por unidad</span>
+                    <span id="bcm-unit-price" class="bcm-val">Bs 100.00</span>
+                </div>
+                <div class="bcm-row" id="bcm-promo-row" style="display:none;">
+                    <span class="bcm-label" style="color:var(--green-btn)">🎁 Descuento Promo</span>
+                    <span id="bcm-promo-val" class="bcm-val" style="color:var(--green-btn)">- Bs 0.00</span>
+                </div>
+                <div class="bcm-divider"></div>
+                <div class="bcm-row total-row">
+                    <span class="bcm-label">TOTAL A PAGAR</span>
+                    <strong id="bcm-total" class="bcm-total-val">Bs 600.00</strong>
+                </div>
+            </div>
+
+            <!-- Wallet status breakdown -->
+            <div class="bcm-wallet-box">
+                <div class="bcm-w-item">
+                    <span class="bcm-w-lbl">Tu Saldo Actual</span>
+                    <strong id="bcm-curr-balance" class="bcm-w-val">Bs 0.00</strong>
+                </div>
+                <span class="bcm-w-arrow">➔</span>
+                <div class="bcm-w-item">
+                    <span class="bcm-w-lbl">Saldo Restante</span>
+                    <strong id="bcm-next-balance" class="bcm-w-val green">Bs 0.00</strong>
+                </div>
+            </div>
+
+            <!-- Insufficient funds warning if needed -->
+            <div id="bcm-funds-alert" class="bcm-alert hidden">
+                ⚠️ Saldo insuficiente. Recarga para continuar.
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="bcm-actions">
+                <button id="buy-modal-cancel" class="btn-royal-cancel">❌ CANCELAR</button>
+                <button id="buy-modal-confirm" class="btn-royal-confirm">✅ SÍ, COMPRAR</button>
+                <button id="buy-modal-deposit" class="btn-royal-deposit hidden">💳 RECARGAR SALDO</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Deposit Modal -->
     <div id="dep-modal" class="modal-overlay hidden">
         <div class="dep-box">

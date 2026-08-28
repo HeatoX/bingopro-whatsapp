@@ -184,14 +184,103 @@ $id('dep-submit').onclick = async () => {
 $id('btn-sound').onclick = () => { snd(); soundOn = !soundOn; $id('btn-sound').textContent = soundOn ? '🔊' : '🔇'; };
 $id('btn-voice').onclick = () => { voiceOn = !voiceOn; $id('btn-voice').classList.toggle('active', voiceOn); };
 
-// ═══ BUY CARDS ═══
-$$('.buy-pill').forEach(b => b.onclick = async () => {
-  snd(); const count = parseInt(b.dataset.n);
+// ═══ BUY CONFIRMATION MODAL LOGIC ═══
+let pendingBuyCount = 0;
+let userBalance = 0;
+
+async function openBuyConfirmation(count) {
+  snd();
+  pendingBuyCount = count;
+  if (!phone) return alert('Por favor inicia sesión primero');
+
   try {
-    const d = await (await fetch('/api/player/buy-cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, count }) })).json();
-    if (d.success) { confetti(80); alert(`🎉 ¡${d.count} cartón(es) comprados!`); updateTopbar(); fetchCards(); }
-    else alert('❌ ' + d.error);
-  } catch { alert('Error de conexión'); }
+    const me = await (await fetch(`/api/player/me?phone=${phone}`)).json();
+    userBalance = me.balance || 0;
+  } catch { userBalance = 0; }
+
+  const unitPrice = 100; // Base card price
+  const totalCost = count * unitPrice;
+  const nextBal = userBalance - totalCost;
+  const hasFunds = userBalance >= totalCost;
+
+  $id('bcm-count').textContent = count === 1 ? '1 Cartón' : `${count} Cartones`;
+  $id('bcm-unit-price').textContent = `Bs ${unitPrice.toFixed(2)}`;
+  $id('bcm-total').textContent = `Bs ${totalCost.toFixed(2)}`;
+  $id('bcm-curr-balance').textContent = `Bs ${userBalance.toFixed(2)}`;
+  
+  const nbEl = $id('bcm-next-balance');
+  nbEl.textContent = `Bs ${Math.max(0, nextBal).toFixed(2)}`;
+  nbEl.className = hasFunds ? 'bcm-w-val green' : 'bcm-w-val red';
+
+  const alertBox = $id('bcm-funds-alert');
+  const confirmBtn = $id('buy-modal-confirm');
+  const depositBtn = $id('buy-modal-deposit');
+
+  if (hasFunds) {
+    alertBox.classList.add('hidden');
+    confirmBtn.classList.remove('hidden');
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = '✅ SÍ, COMPRAR';
+    depositBtn.classList.add('hidden');
+  } else {
+    const missing = totalCost - userBalance;
+    alertBox.textContent = `⚠️ Saldo insuficiente (Te faltan Bs ${missing.toFixed(2)}). Recarga para comprar.`;
+    alertBox.classList.remove('hidden');
+    confirmBtn.classList.add('hidden');
+    depositBtn.classList.remove('hidden');
+  }
+
+  $id('buy-modal').classList.remove('hidden');
+}
+
+function closeBuyModal() {
+  $id('buy-modal').classList.add('hidden');
+}
+
+$id('buy-modal-close').onclick = closeBuyModal;
+$id('buy-modal-cancel').onclick = closeBuyModal;
+
+$id('buy-modal-deposit').onclick = () => {
+  closeBuyModal();
+  $id('dep-modal').classList.remove('hidden');
+};
+
+$id('buy-modal-confirm').onclick = async () => {
+  if (!pendingBuyCount) return;
+  const btn = $id('buy-modal-confirm');
+  btn.disabled = true;
+  btn.textContent = '⏳ Procesando compra...';
+
+  try {
+    const d = await (await fetch('/api/player/buy-cards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, count: pendingBuyCount })
+    })).json();
+
+    if (d.success) {
+      closeBuyModal();
+      confetti(120);
+      playPop();
+      updateTopbar();
+      refreshProfile();
+      fetchCards();
+    } else {
+      btn.disabled = false;
+      btn.textContent = '✅ SÍ, COMPRAR';
+      alert('❌ ' + (d.error || 'Error en la compra'));
+    }
+  } catch {
+    btn.disabled = false;
+    btn.textContent = '✅ SÍ, COMPRAR';
+    alert('Error de conexión con el servidor');
+  }
+};
+
+// ═══ BUY CARDS PILL TRIGGERS ═══
+$$('.buy-pill').forEach(b => b.onclick = () => {
+  const count = parseInt(b.dataset.n);
+  openBuyConfirmation(count);
 });
 
 // ═══ CHAT ═══
