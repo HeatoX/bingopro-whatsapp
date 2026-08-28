@@ -25,9 +25,10 @@ export function cardPurchaseConfirm(cardCount: number, totalCost: number, newBal
            `_Tus cartones jugarán en la próxima ronda. Usa !cartones para verlos._`;
 }
 
-export function roundAnnouncement(roundNumber: number, timeToStart: number, currentPlayers: number): string {
+export function roundAnnouncement(roundNumber: number, timeToStartSeconds: number, currentPlayers: number): string {
+    const timeStr = timeToStartSeconds >= 60 ? `${Math.round(timeToStartSeconds / 60)} min` : `${timeToStartSeconds}s`;
     return `🚨 *¡Próxima Ronda #${roundNumber}!* 🚨\n\n` +
-           `⏰ Inicia en: *${timeToStart} minutos*\n` +
+           `⏰ Ventana de compra: *${timeStr}*\n` +
            `👥 Jugadores anotados: *${currentPlayers}*\n\n` +
            `¡No te quedes por fuera! Compra tus cartones con \`!comprar [cantidad]\``;
 }

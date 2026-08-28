@@ -226,13 +226,46 @@ export const getWithdrawals = async (req: Request, res: Response) => {
 export const processWithdrawal = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const withdrawal = await prisma.withdrawalRequest.update({
-      where: { id },
-      data: { status: 'APPROVED', processedAt: new Date() }
+    const reqRecord = await prisma.withdrawalRequest.findUnique({ where: { id } });
+    if (!reqRecord || reqRecord.status !== 'PENDING') {
+      return res.status(400).json({ error: 'Solicitud no encontrada o ya procesada' });
+    }
+
+    const userAccount = await prisma.account.findFirst({
+      where: { userId: reqRecord.userId, type: 'USER_REAL' }
     });
-    res.json({ success: true, withdrawal });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.withdrawalRequest.update({
+        where: { id },
+        data: { status: 'APPROVED', processedAt: new Date() }
+      });
+
+      if (userAccount) {
+        await tx.accountBalance.update({
+          where: { accountId: userAccount.id },
+          data: { lockedBalance: { decrement: reqRecord.amount } }
+        });
+
+        await tx.transaction.create({
+          data: {
+            idempotencyKey: `WITHDRAWAL:${id}`,
+            type: 'WITHDRAWAL',
+            description: `Retiro procesado a ${reqRecord.phoneNumber}`,
+            metadata: JSON.stringify({ userId: reqRecord.userId, amount: reqRecord.amount }),
+            ledgerEntries: {
+              create: [
+                { accountId: userAccount.id, amount: -reqRecord.amount }
+              ]
+            }
+          }
+        });
+      }
+    });
+
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
 

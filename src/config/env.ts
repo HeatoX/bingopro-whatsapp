@@ -32,6 +32,9 @@ export const config = {
 
   jwtSecret: process.env.JWT_SECRET || 'change-this-in-production',
 
+  // App URL (used in WhatsApp messages for player links)
+  appUrl: process.env.APP_URL || 'http://localhost:3000',
+
   // Pago Móvil
   pagoMovilBanco: process.env.PAGO_MOVIL_BANCO || '0102',
   pagoMovilCedula: process.env.PAGO_MOVIL_CEDULA || 'V-12345678',

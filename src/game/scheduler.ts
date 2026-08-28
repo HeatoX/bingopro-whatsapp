@@ -5,8 +5,8 @@ import { logger } from '../utils/logger';
 export class GameScheduler {
   private gameEngine: GameEngine;
   private isRunning = false;
+  private isPaused = false;
   private currentTimeout: NodeJS.Timeout | null = null;
-  private currentDrawInterval: NodeJS.Timeout | null = null;
 
   constructor(gameEngine: GameEngine) {
     this.gameEngine = gameEngine;
@@ -15,6 +15,7 @@ export class GameScheduler {
   async start(): Promise<void> {
     if (this.isRunning) return;
     this.isRunning = true;
+    this.isPaused = false;
 
     logger.info('🎱 Game Scheduler starting (Local Mode)...');
     
@@ -27,7 +28,6 @@ export class GameScheduler {
   async stop(): Promise<void> {
     this.isRunning = false;
     if (this.currentTimeout) clearTimeout(this.currentTimeout);
-    if (this.currentDrawInterval) clearInterval(this.currentDrawInterval);
     logger.info('🎱 Game Scheduler stopped');
   }
 
@@ -69,49 +69,46 @@ export class GameScheduler {
 
       logger.info(`🔒 Selling closed for round ${round.id} — ${closedRound.totalCards} cards, pool: ${closedRound.prizePool} Bs`);
 
-      // 4. Start Ball Drawing Loop
+      // 4. Start Ball Drawing Loop (Sequential Loop - No setInterval Race Conditions)
       await new Promise(r => setTimeout(r, 3000)); // 3s pause before first ball
 
-      this.currentDrawInterval = setInterval(async () => {
-        if (!this.isRunning) {
-          if (this.currentDrawInterval) clearInterval(this.currentDrawInterval);
+      while (this.isRunning) {
+        // Pause check
+        while (this.isPaused && this.isRunning) {
+          await new Promise(r => setTimeout(r, 1000));
+        }
+
+        if (!this.isRunning) break;
+
+        const result = await this.gameEngine.drawBall(round.id);
+
+        if (!result) {
+          // All balls drawn
+          logger.info(`🏁 Round ${round.id} finished (all balls drawn)`);
+          await this.gameEngine.finishRound(round.id);
+          this.scheduleNextRound();
           return;
         }
 
-        try {
-          const result = await this.gameEngine.drawBall(round.id);
+        const { ball, winners, roundFinished } = result;
+        logger.info(`🔴 Ball #${ball.number} (${ball.column}-${ball.number}) drawn — seq ${ball.sequence}/75`);
 
-          if (!result) {
-            // All balls drawn
-            if (this.currentDrawInterval) clearInterval(this.currentDrawInterval);
-            logger.info(`🏁 Round ${round.id} finished (all balls drawn)`);
-            await this.gameEngine.finishRound(round.id);
-            this.scheduleNextRound();
-            return;
+        if (winners) {
+          for (const w of winners) {
+            logger.info(`🏆 Winner! ${w.type} — User: ${w.userId}`);
           }
+        }
 
-          const { ball, winners, roundFinished } = result;
-          logger.info(`🔴 Ball #${ball.number} (${ball.column}-${ball.number}) drawn — seq ${ball.sequence}/75`);
-
-          if (winners) {
-            for (const w of winners) {
-              logger.info(`🏆 Winner! ${w.type} — User: ${w.userId}`);
-            }
-          }
-
-          if (roundFinished) {
-            if (this.currentDrawInterval) clearInterval(this.currentDrawInterval);
-            logger.info(`🏁 Round ${round.id} complete — BINGO!`);
-            await this.gameEngine.finishRound(round.id);
-            this.scheduleNextRound();
-          }
-        } catch (err: any) {
-          logger.error(`Error in draw interval: ${err.message}`);
-          if (this.currentDrawInterval) clearInterval(this.currentDrawInterval);
+        if (roundFinished) {
+          logger.info(`🏁 Round ${round.id} complete — BINGO!`);
           await this.gameEngine.finishRound(round.id);
           this.scheduleNextRound();
+          return;
         }
-      }, config.ballDrawIntervalSeconds * 1000);
+
+        // Wait interval before next ball
+        await new Promise(r => setTimeout(r, config.ballDrawIntervalSeconds * 1000));
+      }
 
     } catch (error: any) {
       logger.error(`Failed in round lifecycle: ${error.message}`);
@@ -120,10 +117,12 @@ export class GameScheduler {
   }
 
   async pauseGame(): Promise<void> {
+    this.isPaused = true;
     logger.info('⏸️ Game scheduler paused');
   }
 
   async resumeGame(): Promise<void> {
+    this.isPaused = false;
     logger.info('▶️ Game scheduler resumed');
   }
 }

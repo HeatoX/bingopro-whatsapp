@@ -88,23 +88,34 @@ export class GameEngine extends EventEmitter {
       include: { user: { include: { accounts: { include: { balance: true } } } } }
     });
 
-    // Refund all card purchases
-    for (const card of cards) {
-      const userAccount = card.user.accounts.find(a => a.type === 'USER_REAL');
-      if (userAccount?.balance) {
-        await prisma.accountBalance.update({
-          where: { accountId: userAccount.id },
-          data: { availableBalance: { increment: card.purchasePrice } }
-        });
+    // Atomic refund: all-or-nothing with ledger entries
+    await prisma.$transaction(async (tx) => {
+      for (const card of cards) {
+        const userAccount = card.user.accounts.find(a => a.type === 'USER_REAL');
+        if (userAccount?.balance) {
+          await tx.accountBalance.update({
+            where: { accountId: userAccount.id },
+            data: { availableBalance: { increment: card.purchasePrice } }
+          });
+          await tx.transaction.create({
+            data: {
+              idempotencyKey: `REFUND:${roundId}:${card.id}`,
+              type: 'REFUND',
+              gameRoundId: roundId,
+              description: `Reembolso ronda cancelada`,
+              metadata: JSON.stringify({ userId: card.userId, amount: card.purchasePrice }),
+              ledgerEntries: { create: [{ accountId: userAccount.id, amount: card.purchasePrice }] }
+            }
+          });
+        }
       }
-    }
-
-    await prisma.gameRound.update({
-      where: { id: roundId },
-      data: { status: 'CANCELLED', finishedAt: new Date() }
+      await tx.gameRound.update({
+        where: { id: roundId },
+        data: { status: 'CANCELLED', finishedAt: new Date() }
+      });
     });
 
-    logger.info(`Round ${roundId} cancelled and ${cards.length} cards refunded`);
+    logger.info(`Round ${roundId} cancelled and ${cards.length} cards refunded (atomic)`);
     this.emit('roundCancelled', { roundId, refundedCards: cards.length });
   }
 
@@ -138,7 +149,8 @@ export class GameEngine extends EventEmitter {
     const winners: { type: string; userId: string }[] = [];
     let roundFinished = false;
 
-    const cards = await prisma.card.findMany({ where: { gameRoundId: roundId, isWinner: false } });
+    // Fetch ALL cards — a card that won 1-line must still compete for 2-lines and full card
+    const cards = await prisma.card.findMany({ where: { gameRoundId: roundId } });
     
     const currentRound = await prisma.gameRound.findUnique({ where: { id: roundId } });
     if (!currentRound) return null;

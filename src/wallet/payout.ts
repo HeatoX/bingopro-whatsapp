@@ -8,8 +8,14 @@ export async function distributePrizes(
   totalPool: number,
   winners: { line1?: string; line2?: string; fullCard?: string }
 ) {
-  const escrowAccount = await prisma.account.findFirst({ where: { type: 'HOUSE_ESCROW' } });
-  const houseRevenueAccount = await prisma.account.findFirst({ where: { type: 'HOUSE_REVENUE' } });
+  const escrowAccount = await prisma.account.findFirst({
+    where: { type: 'HOUSE_ESCROW' },
+    include: { balance: true }
+  });
+  const houseRevenueAccount = await prisma.account.findFirst({
+    where: { type: 'HOUSE_REVENUE' },
+    include: { balance: true }
+  });
 
   if (!escrowAccount || !houseRevenueAccount) {
     throw new Error('System accounts not initialized for payout');
@@ -21,7 +27,7 @@ export async function distributePrizes(
   let line2Amount = (totalPool * config.prize2LinesPercentage) / 100;
   let fullCardAmount = (totalPool * config.prizeFullCardPercentage) / 100;
 
-  // Unclaimed prize roll-over logic
+  // Unclaimed prize roll-over logic into Full Card
   if (!winners.line1) {
     fullCardAmount += line1Amount;
     line1Amount = 0;
@@ -33,65 +39,111 @@ export async function distributePrizes(
 
   const idempotencyKey = generateIdempotencyKey('PAYOUT', gameRoundId);
   const existing = await prisma.transaction.findUnique({ where: { idempotencyKey } });
-  if (existing) return;
-
-  // Update GameRound recorded amounts
-  await prisma.gameRound.update({
-    where: { id: gameRoundId },
-    data: {
-      houseRake: houseAmount,
-      prize1LineAmount: line1Amount,
-      prize2LinesAmount: line2Amount,
-      prizeFullCardAmount: fullCardAmount,
-    }
-  });
-
-  // Credit House
-  await prisma.accountBalance.update({
-    where: { accountId: houseRevenueAccount.id },
-    data: { availableBalance: { increment: houseAmount } }
-  });
-
-  // Payout 1-line winner
-  if (winners.line1 && line1Amount > 0) {
-    await creditWinner(winners.line1, line1Amount, 'WIN_PAYOUT_1LINE', gameRoundId);
+  if (existing) {
+    logger.warn(`Payout for round ${gameRoundId} already executed (idempotency key matched)`);
+    return;
   }
 
-  // Payout 2-lines winner
-  if (winners.line2 && line2Amount > 0) {
-    await creditWinner(winners.line2, line2Amount, 'WIN_PAYOUT_2LINES', gameRoundId);
-  }
-
-  // Payout full-card winner
-  if (winners.fullCard && fullCardAmount > 0) {
-    await creditWinner(winners.fullCard, fullCardAmount, 'WIN_PAYOUT_FULLCARD', gameRoundId);
-  }
-
-  logger.info(`Prizes distributed for round ${gameRoundId}: House=${houseAmount}Bs, FullCard=${fullCardAmount}Bs`);
-}
-
-async function creditWinner(userId: string, amount: number, txType: string, gameRoundId: string) {
-  const userAccount = await prisma.account.findFirst({
-    where: { userId, type: 'USER_REAL' }
-  });
-  if (!userAccount) return;
-
-  await prisma.accountBalance.update({
-    where: { accountId: userAccount.id },
-    data: { availableBalance: { increment: amount } }
-  });
-
-  await prisma.transaction.create({
-    data: {
-      idempotencyKey: generateIdempotencyKey(txType, gameRoundId, userId),
-      type: txType,
-      gameRoundId,
-      metadata: JSON.stringify({ userId, amount }),
-      ledgerEntries: {
-        create: [
-          { accountId: userAccount.id, amount }
-        ]
+  // Execute entire prize distribution in a single atomic transaction
+  await prisma.$transaction(async (tx) => {
+    // 1. Create master payout transaction to seal idempotency
+    await tx.transaction.create({
+      data: {
+        idempotencyKey,
+        type: 'PAYOUT_MASTER',
+        gameRoundId,
+        description: `Distribución de premios ronda ${gameRoundId}`,
+        metadata: JSON.stringify({ totalPool, houseAmount, line1Amount, line2Amount, fullCardAmount, winners }),
       }
+    });
+
+    // 2. Update GameRound recorded amounts
+    await tx.gameRound.update({
+      where: { id: gameRoundId },
+      data: {
+        houseRake: houseAmount,
+        prize1LineAmount: line1Amount,
+        prize2LinesAmount: line2Amount,
+        prizeFullCardAmount: fullCardAmount,
+      }
+    });
+
+    // 3. Process House Rake (Escrow -> House Revenue)
+    if (houseAmount > 0) {
+      await tx.accountBalance.update({
+        where: { accountId: escrowAccount.id },
+        data: { availableBalance: { decrement: houseAmount } }
+      });
+      await tx.accountBalance.update({
+        where: { accountId: houseRevenueAccount.id },
+        data: { availableBalance: { increment: houseAmount } }
+      });
+      await tx.transaction.create({
+        data: {
+          idempotencyKey: generateIdempotencyKey('HOUSE_RAKE', gameRoundId),
+          type: 'HOUSE_RAKE',
+          gameRoundId,
+          description: `Comisión de la casa (${config.housePercentage}%)`,
+          metadata: JSON.stringify({ amount: houseAmount }),
+          ledgerEntries: {
+            create: [
+              { accountId: escrowAccount.id, amount: -houseAmount },
+              { accountId: houseRevenueAccount.id, amount: houseAmount }
+            ]
+          }
+        }
+      });
+    }
+
+    // Helper for winner credit inside transaction
+    const payWinner = async (userId: string, amount: number, txType: string) => {
+      const userAccount = await tx.account.findFirst({
+        where: { userId, type: 'USER_REAL' }
+      });
+      if (!userAccount) return;
+
+      // Decrement Escrow, Increment User
+      await tx.accountBalance.update({
+        where: { accountId: escrowAccount.id },
+        data: { availableBalance: { decrement: amount } }
+      });
+      await tx.accountBalance.update({
+        where: { accountId: userAccount.id },
+        data: { availableBalance: { increment: amount } }
+      });
+
+      await tx.transaction.create({
+        data: {
+          idempotencyKey: generateIdempotencyKey(txType, gameRoundId, userId),
+          type: txType,
+          gameRoundId,
+          description: `Pago de premio ${txType}`,
+          metadata: JSON.stringify({ userId, amount }),
+          ledgerEntries: {
+            create: [
+              { accountId: escrowAccount.id, amount: -amount },
+              { accountId: userAccount.id, amount: amount }
+            ]
+          }
+        }
+      });
+    };
+
+    // 4. Payout 1-line winner
+    if (winners.line1 && line1Amount > 0) {
+      await payWinner(winners.line1, line1Amount, 'WIN_PAYOUT_1LINE');
+    }
+
+    // 5. Payout 2-lines winner
+    if (winners.line2 && line2Amount > 0) {
+      await payWinner(winners.line2, line2Amount, 'WIN_PAYOUT_2LINES');
+    }
+
+    // 6. Payout full-card winner
+    if (winners.fullCard && fullCardAmount > 0) {
+      await payWinner(winners.fullCard, fullCardAmount, 'WIN_PAYOUT_FULLCARD');
     }
   });
+
+  logger.info(`Prizes distributed atomically for round ${gameRoundId}: House=${houseAmount.toFixed(2)}Bs, 1Line=${line1Amount.toFixed(2)}Bs, 2Lines=${line2Amount.toFixed(2)}Bs, FullCard=${fullCardAmount.toFixed(2)}Bs`);
 }

@@ -97,7 +97,7 @@ export class CommandHandler {
                         jid,
                         `🎰 *¡BIENVENIDO A BINGOPRO!* 🎲\n\n` +
                         `Entra a tu Panel de Juego interactivo con 1 solo toque:\n\n` +
-                        `👉 http://localhost:3000/player.html?phone=${phone}\n\n` +
+                        `👉 ${config.appUrl}/player.html?phone=${phone}\n\n` +
                         `Ahí podrás ver tu saldo, comprar cartones con 1 clic y ver el sorteo en vivo.`
                     );
                     break;
@@ -107,7 +107,7 @@ export class CommandHandler {
                         const phone = this.extractPhone(jid);
                         await waClient.sendText(
                             jid,
-                            msg.welcomeMessage(pushName) + `\n\n🎮 *Panel Web:* http://localhost:3000/player.html?phone=${phone}`
+                            msg.welcomeMessage(pushName) + `\n\n🎮 *Panel Web:* ${config.appUrl}/player.html?phone=${phone}`
                         );
                     }
                     break;
@@ -309,27 +309,42 @@ export class CommandHandler {
         }
 
         const user = await this.getOrCreateUser(jid);
-        const balance = await this.getUserBalance(user.id);
+        const userAccount = await prisma.account.findFirst({
+            where: { userId: user.id, type: 'USER_REAL' },
+            include: { balance: true }
+        });
 
-        if (amount > balance) {
-            await waClient.sendText(jid, msg.insufficientFundsMessage(amount, balance));
+        if (!userAccount || !userAccount.balance || userAccount.balance.availableBalance < amount) {
+            const currentBal = userAccount?.balance?.availableBalance || 0;
+            await waClient.sendText(jid, msg.insufficientFundsMessage(amount, currentBal));
             return;
         }
 
         const phone = this.extractPhone(jid);
 
-        await prisma.withdrawalRequest.create({
-            data: {
-                userId: user.id,
-                amount,
-                bankCode: '',
-                phoneNumber: phone,
-                cedulaNumber: '',
-                status: 'PENDING',
-            },
+        // Atomic lock: decrement availableBalance, increment lockedBalance, create request
+        await prisma.$transaction(async (tx) => {
+            await tx.accountBalance.update({
+                where: { accountId: userAccount.id },
+                data: {
+                    availableBalance: { decrement: amount },
+                    lockedBalance: { increment: amount }
+                }
+            });
+
+            await tx.withdrawalRequest.create({
+                data: {
+                    userId: user.id,
+                    amount,
+                    bankCode: '',
+                    phoneNumber: phone,
+                    cedulaNumber: '',
+                    status: 'PENDING',
+                },
+            });
         });
 
-        await waClient.sendText(jid, `✅ *Retiro Registrado*\n\n💸 Monto: *${amount.toFixed(2)} Bs*\n\nTe contactaremos para transferir.`);
+        await waClient.sendText(jid, `✅ *Solicitud de Retiro Registrada*\n\n💸 Monto: *${amount.toFixed(2)} Bs*\n🔒 Saldo retenido temporalmente.\n\nUn administrador procesará tu pago móvil a la brevedad.`);
     }
 
     private async handleHistorial(jid: string): Promise<void> {
