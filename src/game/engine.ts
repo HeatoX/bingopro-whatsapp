@@ -27,6 +27,14 @@ export class GameEngine extends EventEmitter {
         });
       }
     }
+    // Clean up any stale rounds from previous server sessions
+    const cleaned = await prisma.gameRound.updateMany({
+      where: { status: { in: ['WAITING', 'SELLING', 'DRAWING', 'PAUSED'] } },
+      data: { status: 'CANCELLED' }
+    });
+    if (cleaned.count > 0) {
+      logger.info(`🧹 Cleaned up ${cleaned.count} stale rounds from previous sessions`);
+    }
     logger.info('System accounts initialized');
   }
 

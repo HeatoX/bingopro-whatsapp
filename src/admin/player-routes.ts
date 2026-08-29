@@ -98,7 +98,7 @@ export const getPlayerGame = async (req: Request, res: Response) => {
 
     const activeRound = await prisma.gameRound.findFirst({
       where: { status: { in: ['WAITING', 'SELLING', 'DRAWING', 'PAUSED'] } },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { roundNumber: 'desc' },
       include: {
         drawnBalls: { orderBy: { sequence: 'asc' } },
         _count: { select: { cards: true } }
