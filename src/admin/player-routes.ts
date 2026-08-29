@@ -122,13 +122,20 @@ export const getPlayerGame = async (req: Request, res: Response) => {
 
     const onlineCount = getOnlineCount();
 
+    // Query accumulated seed pot from HOUSE_JACKPOT
+    const jackpotAcc = await prisma.account.findFirst({
+      where: { type: 'HOUSE_JACKPOT' },
+      include: { balance: true }
+    });
+    const accumulatedSeed = jackpotAcc?.balance?.availableBalance || 0;
+
     if (!activeRound) {
       return res.json({
         hasActiveGame: false,
         onlineCount,
         activePlayersCount: 0,
         totalCards: 0,
-        prizePool: 0,
+        prizePool: accumulatedSeed,
         nextRoundScheduledAt: GameScheduler.nextRoundAt?.toISOString() || null,
         message: 'Esperando próxima ronda...'
       });

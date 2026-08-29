@@ -333,16 +333,21 @@ async function poll() {
       $id('room-label').textContent = 'RONDA #--';
       $id('status-text').textContent = 'ESPERANDO PRÓXIMA RONDA…';
       $id('prog-bar').style.width = '0%';
-      $id('pot-value').textContent = 'Bs 0.00';
+      $id('pot-value').textContent = `Bs ${(d.prizePool || 0).toFixed(2)}`;
       if ($id('room-active-players')) $id('room-active-players').textContent = '0';
       if ($id('room-total-cards')) $id('room-total-cards').textContent = '0';
-      updateLivePrizes({ prizePool: 0 });
+      updateLivePrizes({ prizePool: d.prizePool || 0 });
       return;
     }
     
     // Update live player & card counters inside game room
     if ($id('room-active-players')) $id('room-active-players').textContent = d.activePlayersCount || 0;
     if ($id('room-total-cards')) $id('room-total-cards').textContent = d.totalCards || 0;
+
+    // Track active winners in global phase variables
+    currentWinner1Line = d.winner1LineUserId || null;
+    currentWinner2Lines = d.winner2LinesUserId || null;
+    currentWinnerFullCard = d.winnerFullCardUserId || null;
 
     // Reset state on new round transition
     if (lastRoundNum !== d.roundNumber) {
@@ -678,18 +683,22 @@ function renderCard(card, drawn, isSpotlight = false) {
   }
 
   // Check minimum missing balls for ANY uncompleted horizontal line (1-to-go Line)
-  let minMissForLine = 5;
+  let minMissForUncompletedLine = 5;
   for (let r = 0; r < 5; r++) {
-    let uncompletedInRow = 0;
+    if (completedRows.includes(r)) continue;
+    let uncomp = 0;
     for (let c = 0; c < 5; c++) {
       const n = card.grid[r][c];
       const free = (r === 2 && c === 2) || n === 0;
-      if (!free && !dS.has(n)) uncompletedInRow++;
+      if (!free && !dS.has(n)) uncomp++;
     }
-    if (uncompletedInRow > 0 && uncompletedInRow < minMissForLine) {
-      minMissForLine = uncompletedInRow;
+    if (uncomp > 0 && uncomp < minMissForUncompletedLine) {
+      minMissForUncompletedLine = uncomp;
     }
   }
+
+  const hasWon1L = !!currentWinner1Line;
+  const hasWon2L = !!currentWinner2Lines;
 
   let excitementClass = '';
   let badge = '';
@@ -700,20 +709,45 @@ function renderCard(card, drawn, isSpotlight = false) {
   } else if (miss === 1) {
     excitementClass = 'near-win-1';
     badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA DE BINGO!</span>';
-  } else if (minMissForLine === 1) {
-    excitementClass = 'near-win-1';
-    badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA DE LÍNEA!</span>';
-  } else if (completedRows.length >= 2) {
-    excitementClass = 'winner-card';
-    badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">✌️ 2 LÍNEAS (Filas ${completedRows.map(x=>x+1).join(' y ')})</span>`;
-  } else if (completedRows.length === 1) {
-    badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">🥇 1 LÍNEA (Fila ${completedRows[0]+1})</span>`;
   } else if (miss === 2) {
     excitementClass = 'near-win-2';
     badge = '<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.15)">⚡ ¡A 2 BOLAS DE BINGO!</span>';
-  } else if (minMissForLine === 2) {
-    excitementClass = 'near-win-2';
-    badge = '<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.15)">⚡ ¡A 2 BOLAS DE LÍNEA!</span>';
+  } else if (!hasWon1L) {
+    // ════ FASE 1: EN JUEGO 1 LÍNEA ════
+    if (completedRows.length >= 1) {
+      excitementClass = 'winner-card';
+      badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">🥇 1 LÍNEA (Fila ${completedRows[0]+1})</span>`;
+    } else if (minMissForUncompletedLine === 1) {
+      excitementClass = 'near-win-1';
+      badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA DE 1 LÍNEA!</span>';
+    } else if (minMissForUncompletedLine === 2) {
+      excitementClass = 'near-win-2';
+      badge = '<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.15)">⚡ ¡A 2 BOLAS DE 1 LÍNEA!</span>';
+    }
+  } else if (!hasWon2L) {
+    // ════ FASE 2: 1 LÍNEA YA OTORGADA -> EN JUEGO 2 LÍNEAS ════
+    if (completedRows.length >= 2) {
+      excitementClass = 'winner-card';
+      badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">✌️ 2 LÍNEAS (Filas ${completedRows.map(x=>x+1).join(' y ')})</span>`;
+    } else if (completedRows.length === 1) {
+      // Tiene 1 línea y busca la 2da línea
+      if (minMissForUncompletedLine === 1) {
+        excitementClass = 'near-win-1';
+        badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA DE 2 LÍNEAS!</span>';
+      } else if (minMissForUncompletedLine === 2) {
+        excitementClass = 'near-win-2';
+        badge = '<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.15)">⚡ ¡A 2 BOLAS DE 2 LÍNEAS!</span>';
+      } else {
+        badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">🥇 1 LÍNEA (Fila ${completedRows[0]+1})</span>`;
+      }
+    }
+  } else {
+    // ════ FASE 3: 2 LÍNEAS YA OTORGADAS -> EN JUEGO BINGO COMPLETO ════
+    if (completedRows.length >= 2) {
+      badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">✌️ ${completedRows.length} LÍNEAS</span>`;
+    } else if (completedRows.length === 1) {
+      badge = `<span class="near-win-badge" style="border-color:rgba(255,255,255,0.2);color:#AAA">🥇 1 LÍNEA</span>`;
+    }
   }
 
   div.className = `bcard ${excitementClass}`;
