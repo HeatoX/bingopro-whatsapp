@@ -415,15 +415,33 @@ body {
 .bcard th:nth-child(5) { background: rgba(255, 23, 68, 0.15); color: var(--red-neon); }
 
 .bcard td {
-  width: 20%; height: 38px; text-align: center; vertical-align: middle;
-  background: #181B40; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px;
-  font-family: var(--ft); font-size: 14px; font-weight: 800; color: rgba(255, 255, 255, 0.9); transition: all .3s;
+  width: 20%; height: 42px; text-align: center; vertical-align: middle;
+  background: #141738; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px;
+  font-family: var(--ft); font-size: 15px; font-weight: 900; color: #FFFFFF; transition: all .25s;
 }
 .bcard td.daubed {
-  background: linear-gradient(135deg, var(--green-neon), #00CC55); color: #000; font-weight: 900;
-  box-shadow: 0 0 12px rgba(0, 255, 106, 0.6); transform: scale(1.05); border-color: var(--green-neon);
+  background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 900;
+  box-shadow: 0 0 14px rgba(0, 230, 118, 0.7); transform: scale(1.04); border-color: #00E676;
 }
-.bcard td.free { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #000; font-size: 9px; font-weight: 900; }
+.bcard td.daubed.win-line-gold {
+  background: linear-gradient(135deg, #FFD700, #FF9100) !important;
+  color: #000 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 22px rgba(255, 215, 0, 0.95), inset 0 0 8px #FFF !important;
+  border: 1.5px solid #FFF !important;
+  animation: winCellGlow 0.9s infinite alternate !important;
+}
+.bcard td.free { background: linear-gradient(135deg, var(--gold), #FFA000); color: #000; font-size: 14px; font-weight: 900; }
+.bcard td.free.win-line-gold {
+  background: linear-gradient(135deg, #FFF, var(--gold)) !important;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 1) !important;
+  border: 1.5px solid #FFF !important;
+}
+
+@keyframes winCellGlow {
+  0% { transform: scale(1); box-shadow: 0 0 12px rgba(255, 215, 0, 0.7); }
+  100% { transform: scale(1.06); box-shadow: 0 0 25px rgba(255, 215, 0, 1); }
+}
 
 /* CENTER COLUMN: QUICK BUY + DRUM + PIZARRA */
 .quick-buy-box {

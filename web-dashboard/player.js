@@ -591,14 +591,31 @@ function renderCard(card, drawn, isSpotlight = false) {
     }
   }
 
+  // Detect completed horizontal rows (Filas 1 a 5)
+  const completedRows = [];
+  for (let r = 0; r < 5; r++) {
+    let rowComplete = true;
+    for (let c = 0; c < 5; c++) {
+      const n = card.grid[r][c];
+      const free = (r === 2 && c === 2) || n === 0;
+      if (!free && !dS.has(n)) { rowComplete = false; break; }
+    }
+    if (rowComplete) completedRows.push(r);
+  }
+
   let excitementClass = '';
   let badge = '';
   if (miss === 0) {
     excitementClass = 'winner-card';
-    badge = '<span class="near-win-badge" style="border-color:#00E676;color:#00E676;background:rgba(0,230,118,0.2)">👑 ¡BINGO!</span>';
+    badge = '<span class="near-win-badge" style="border-color:#00E676;color:#00E676;background:rgba(0,230,118,0.25)">👑 ¡BINGO COMPLETO!</span>';
+  } else if (completedRows.length >= 2) {
+    excitementClass = 'winner-card';
+    badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">✌️ 2 LÍNEAS (Filas ${completedRows.map(x=>x+1).join(' y ')})</span>`;
+  } else if (completedRows.length === 1) {
+    badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">🥇 1 LÍNEA (Fila ${completedRows[0]+1})</span>`;
   } else if (miss === 1) {
     excitementClass = 'near-win-1';
-    badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA DE BINGO!</span>';
+    badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA!</span>';
   } else if (miss === 2) {
     excitementClass = 'near-win-2';
     badge = '<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.15)">⚡ ¡A 2 BOLAS!</span>';
@@ -608,14 +625,18 @@ function renderCard(card, drawn, isSpotlight = false) {
   let h = `<div class="bcard-hdr"><span>🎟️ #${card.cardNumber} ${badge}</span><span>${card.hash.slice(0, 8)}</span></div>`;
   h += '<table><thead><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr></thead><tbody>';
   for (let r = 0; r < 5; r++) {
+    const isWinRow = completedRows.includes(r);
     h += '<tr>';
     for (let c = 0; c < 5; c++) {
       const n = card.grid[r][c], free = (r === 2 && c === 2) || n === 0, hit = free || dS.has(n);
       const k = `${card.id}-${r}-${c}`, was = prevDaub[k], isNew = hit && !was;
       if (!isSpotlight) prevDaub[k] = hit;
-      if (free) h += '<td class="free">★</td>';
-      else if (hit) {
-        h += `<td class="daubed ${isNew ? 'daubed-new' : ''}">${n}</td>`;
+      
+      const winGoldClass = isWinRow ? 'win-line-gold' : '';
+      if (free) {
+        h += `<td class="free ${winGoldClass}">★</td>`;
+      } else if (hit) {
+        h += `<td class="daubed ${isNew ? 'daubed-new' : ''} ${winGoldClass}">${n}</td>`;
         if (isNew && !isSpotlight) playDaub();
       } else {
         h += `<td>${n}</td>`;
