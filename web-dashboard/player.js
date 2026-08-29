@@ -446,15 +446,26 @@ function updateCountdowns(d) {
     rt.textContent = fmt(rem); if (rl) rl.textContent = 'VENTAS ABIERTAS';
   } else if (d.status === 'DRAWING') {
     const ballsCount = d.drawnBalls ? d.drawnBalls.length : 0;
-    lt.textContent = `${ballsCount}/75`; if (ls) ls.textContent = '🔴 EN VIVO CANTANDO';
-    rt.textContent = `${ballsCount}/75`; if (rl) rl.textContent = 'EN VIVO';
-  } else if (d.scheduledAt) {
-    const rem = Math.max(0, Math.floor((new Date(d.scheduledAt).getTime() - Date.now()) / 1000));
-    lt.textContent = fmt(rem); if (ls) ls.textContent = '⏳ PRÓXIMO JUEGO';
-    rt.textContent = fmt(rem); if (rl) rl.textContent = 'INICIA PRONTO';
+    // Outside Lobby: show countdown until NEXT bingo round starts!
+    if (d.nextRoundScheduledAt) {
+      const remNext = Math.max(0, Math.floor((new Date(d.nextRoundScheduledAt).getTime() - Date.now()) / 1000));
+      lt.textContent = fmt(remNext); if (ls) ls.textContent = '🎲 PRÓXIMO BINGO (EN VIVO)';
+    } else {
+      lt.textContent = `${ballsCount}/75`; if (ls) ls.textContent = '🔴 EN VIVO CANTANDO';
+    }
+    // Inside Room: show live ball progress
+    rt.textContent = `${ballsCount}/75`; if (rl) rl.textContent = '🔴 CANTANDO EN VIVO';
   } else {
-    lt.textContent = '00:00'; if (ls) ls.textContent = '⏳ PREPARANDO';
-    rt.textContent = '00:00'; if (rl) rl.textContent = 'PREPARANDO';
+    // Waiting / Next round countdown
+    const target = d.nextRoundScheduledAt || d.scheduledAt;
+    if (target) {
+      const rem = Math.max(0, Math.floor((new Date(target).getTime() - Date.now()) / 1000));
+      lt.textContent = fmt(rem); if (ls) ls.textContent = '⏳ PRÓXIMO JUEGO';
+      rt.textContent = fmt(rem); if (rl) rl.textContent = 'INICIA PRONTO';
+    } else {
+      lt.textContent = '00:00'; if (ls) ls.textContent = '⏳ PREPARANDO';
+      rt.textContent = '00:00'; if (rl) rl.textContent = 'PREPARANDO';
+    }
   }
 }
 

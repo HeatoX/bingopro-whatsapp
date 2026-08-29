@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma, purchaseCard } from '../wallet/ledger';
 import { config } from '../config/env';
 import { generateCard } from '../game/card-generator';
+import { GameScheduler } from '../game/scheduler';
 
 // Login / Register player by phone number
 export const playerLogin = async (req: Request, res: Response) => {
@@ -154,6 +155,7 @@ export const getPlayerGame = async (req: Request, res: Response) => {
       sellingStartedAt: activeRound.sellingStartedAt?.toISOString() || null,
       drawingStartedAt: activeRound.drawingStartedAt?.toISOString() || null,
       scheduledAt: activeRound.scheduledAt?.toISOString() || null,
+      nextRoundScheduledAt: GameScheduler.nextRoundAt?.toISOString() || null,
       createdAt: activeRound.createdAt.toISOString(),
       sellingWindowSeconds: config.sellingWindowSeconds,
       ballDrawIntervalSeconds: config.ballDrawIntervalSeconds,

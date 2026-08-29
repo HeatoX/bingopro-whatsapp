@@ -3,6 +3,7 @@ import { GameEngine } from './engine';
 import { logger } from '../utils/logger';
 
 export class GameScheduler {
+  public static nextRoundAt: Date | null = null;
   private gameEngine: GameEngine;
   private isRunning = false;
   private isPaused = false;
@@ -35,6 +36,7 @@ export class GameScheduler {
     if (!this.isRunning) return;
 
     const delay = delayMs ?? config.gameIntervalMinutes * 60 * 1000;
+    GameScheduler.nextRoundAt = new Date(Date.now() + delay);
     logger.info(`⏰ Next round scheduled in ${Math.round(delay / 1000)}s`);
 
     this.currentTimeout = setTimeout(async () => {
