@@ -12,11 +12,11 @@ export const config = {
   waSessionName: process.env.WA_SESSION_NAME || 'BingoPro',
 
   // Game Settings
-  gameIntervalMinutes: parseInt(process.env.GAME_INTERVAL_MINUTES || '5'),
+  gameIntervalMinutes: parseInt(process.env.GAME_INTERVAL_MINUTES || '3'),
   cardPriceBs: parseFloat(process.env.CARD_PRICE_BS || '100'),
   maxCardsPerPlayer: parseInt(process.env.MAX_CARDS_PER_PLAYER || '50'),
   ballDrawIntervalSeconds: parseInt(process.env.BALL_DRAW_INTERVAL_SECONDS || '4'),
-  sellingWindowSeconds: parseInt(process.env.SELLING_WINDOW_SECONDS || '60'),
+  sellingWindowSeconds: parseInt(process.env.SELLING_WINDOW_SECONDS || '120'),
   minPlayersToStart: parseInt(process.env.MIN_PLAYERS_TO_START || '1'),
 
   // Prize Distribution (percentages)

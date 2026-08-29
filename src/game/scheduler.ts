@@ -65,13 +65,16 @@ export class GameScheduler {
       if (closedRound.totalCards < config.minPlayersToStart) {
         logger.warn(`Round ${round.id} cancelled — not enough players (${closedRound.totalCards} cards, min ${config.minPlayersToStart})`);
         await this.gameEngine.cancelRound(round.id);
-        this.scheduleNextRound();
+        this.scheduleNextRound(60000); // 60s before opening next round
         return;
       }
 
       logger.info(`🔒 Selling closed for round ${round.id} — ${closedRound.totalCards} cards, pool: ${closedRound.prizePool} Bs`);
 
       // 4. Start Ball Drawing Loop (Sequential Loop - No setInterval Race Conditions)
+      // Estimate next round time during live drawing (average 55 balls @ 4s = 220s + 60s pause)
+      GameScheduler.nextRoundAt = new Date(Date.now() + 280000);
+
       await new Promise(r => setTimeout(r, 3000)); // 3s pause before first ball
 
       while (this.isRunning) {
