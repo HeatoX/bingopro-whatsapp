@@ -389,6 +389,56 @@ body {
 }
 .cph-title { font-family: var(--ft); font-size: 12px; font-weight: 900; color: var(--gold); }
 .cph-btn { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #FFF; font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+.cph-btn:hover { background: rgba(255, 255, 255, 0.15); }
+
+.cards-filter-bar {
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  border-left: 1px solid var(--border-gold);
+  border-right: 1px solid var(--border-gold);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 8px;
+  overflow-x: auto;
+}
+.cfb-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--dim);
+  font-family: var(--ft);
+  font-size: 9px;
+  font-weight: 800;
+  padding: 4px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+}
+.cfb-btn:hover { color: #FFF; background: rgba(255, 255, 255, 0.1); }
+.cfb-btn.active {
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #000;
+  border-color: var(--gold);
+  box-shadow: 0 0 10px var(--gold-glow);
+}
+.cfb-btn.cfb-1tg.active {
+  background: linear-gradient(135deg, #FF1744, #FF5252);
+  color: #FFF;
+  border-color: #FF1744;
+  box-shadow: 0 0 12px rgba(255, 23, 68, 0.6);
+}
+.cfb-btn.cfb-2tg.active {
+  background: linear-gradient(135deg, #FFD700, #FFA000);
+  color: #000;
+  border-color: #FFD700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+}
+.cfb-btn.cfb-win.active {
+  background: linear-gradient(135deg, #00E676, #00C853);
+  color: #000;
+  border-color: #00E676;
+  box-shadow: 0 0 12px rgba(0, 230, 118, 0.6);
+}
 
 .cards-scroll-grid {
   background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-glass);

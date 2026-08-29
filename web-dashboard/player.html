@@ -126,10 +126,16 @@
                 <!-- LEFT COLUMN: CARTONES DISPONIBLES & MIS CARTONES -->
                 <aside class="gr-col-left">
                     <div class="cards-panel-header">
-                        <span class="cph-title">🎟️ CARTONES (<span id="card-count">0</span>)</span>
+                        <span class="cph-title">🎟️ MIS CARTONES (<span id="card-count">0</span>)</span>
                         <div class="cph-controls">
-                            <button class="cph-btn" title="Renovar">🔄 Renovar</button>
+                            <button class="cph-btn" id="btn-refresh-cards" title="Actualizar">🔄 Actualizar</button>
                         </div>
+                    </div>
+                    <div class="cards-filter-bar">
+                        <button class="cfb-btn active" data-filter="all">Todos (<span id="cnt-all">0</span>)</button>
+                        <button class="cfb-btn cfb-1tg" data-filter="1tg">🔥 A 1 Bola (<span id="cnt-1tg">0</span>)</button>
+                        <button class="cfb-btn cfb-2tg" data-filter="2tg">⚡ A 2 Bolas (<span id="cnt-2tg">0</span>)</button>
+                        <button class="cfb-btn cfb-win" data-filter="win">🏆 Ganadores (<span id="cnt-win">0</span>)</button>
                     </div>
                     <div id="cards-zone" class="cards-scroll-grid">
                         <div class="no-cards">Compra cartones a la derecha para comenzar a jugar 🎲</div>

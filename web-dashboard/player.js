@@ -564,21 +564,76 @@ function getMissingCount(card, dSet) {
   return miss;
 }
 
+let currentCardFilter = 'all';
+
+// Attach event listeners to filter buttons
+$$('.cfb-btn').forEach(btn => {
+  btn.onclick = () => {
+    $$('.cfb-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCardFilter = btn.dataset.filter || 'all';
+    renderFilteredCards();
+  };
+});
+
+const refreshCardsBtn = $id('btn-refresh-cards');
+if (refreshCardsBtn) {
+  refreshCardsBtn.onclick = () => { fetchCards(); };
+}
+
 async function fetchCards() {
   if (!phone) return;
   try {
     const d = await (await fetch(`/api/player/my-cards?phone=${phone}`)).json();
     userCardsList = d.cards || [];
-    $id('card-count').textContent = userCardsList.length;
-    if (!userCardsList.length) { $id('cards-zone').innerHTML = '<div class="no-cards">Compra cartones para jugar 🎲</div>'; return; }
+    if ($id('card-count')) $id('card-count').textContent = userCardsList.length;
     
     const dSet = new Set(d.drawnNumbers || []);
     // DYNAMIC AUTO-SORTING: Cards closest to BINGO automatically rank FIRST!
     userCardsList.sort((a, b) => getMissingCount(a, dSet) - getMissingCount(b, dSet));
 
-    const z = $id('cards-zone'); z.innerHTML = '';
-    userCardsList.forEach(c => z.appendChild(renderCard(c, d.drawnNumbers || [])));
+    // Update filter counts in realtime
+    let cnt1tg = 0, cnt2tg = 0, cntWin = 0;
+    userCardsList.forEach(c => {
+      const m = getMissingCount(c, dSet);
+      if (m === 0) cntWin++;
+      else if (m === 1) cnt1tg++;
+      else if (m === 2) cnt2tg++;
+    });
+
+    if ($id('cnt-all')) $id('cnt-all').textContent = userCardsList.length;
+    if ($id('cnt-1tg')) $id('cnt-1tg').textContent = cnt1tg;
+    if ($id('cnt-2tg')) $id('cnt-2tg').textContent = cnt2tg;
+    if ($id('cnt-win')) $id('cnt-win').textContent = cntWin;
+
+    renderFilteredCards(d.drawnNumbers || []);
   } catch {}
+}
+
+function renderFilteredCards(drawnList) {
+  const z = $id('cards-zone');
+  if (!z) return;
+  if (!userCardsList.length) {
+    z.innerHTML = '<div class="no-cards">Compra cartones a la derecha para comenzar a jugar 🎲</div>';
+    return;
+  }
+
+  const dSet = new Set(drawnList || Array.from(drawnSet));
+  let filtered = userCardsList;
+  if (currentCardFilter === '1tg') {
+    filtered = userCardsList.filter(c => getMissingCount(c, dSet) === 1);
+  } else if (currentCardFilter === '2tg') {
+    filtered = userCardsList.filter(c => getMissingCount(c, dSet) === 2);
+  } else if (currentCardFilter === 'win') {
+    filtered = userCardsList.filter(c => getMissingCount(c, dSet) === 0);
+  }
+
+  z.innerHTML = '';
+  if (!filtered.length) {
+    z.innerHTML = `<div class="no-cards">No tienes cartones en esta categoría</div>`;
+    return;
+  }
+  filtered.forEach(c => z.appendChild(renderCard(c, Array.from(dSet))));
 }
 
 function renderCard(card, drawn, isSpotlight = false) {
