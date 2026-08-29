@@ -79,8 +79,7 @@ function showScreen(name) {
     if (el) el.classList.toggle('hidden', s !== name);
   });
   $$('.bn-item').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
-  if (name === 'room') { startGamePolling(); initDrum(); }
-  else { stopGamePolling(); }
+  if (name === 'room') { initDrum(); fetchCards(); }
   if (name === 'profile') refreshProfile();
   if (name === 'lobby') refreshLobby();
 }
@@ -118,7 +117,8 @@ function enterApp() {
   $id('app-shell').classList.remove('hidden');
   updateTopbar();
   showScreen('lobby');
-  setInterval(updateTopbar, 4000);
+  startGamePolling();
+  setInterval(updateTopbar, 3000);
 }
 
 // Auto-login
@@ -307,7 +307,7 @@ function buildPizarra() {
 buildPizarra();
 
 // ═══ GAME POLLING ═══
-function startGamePolling() { if (pollTimer) return; poll(); pollTimer = setInterval(poll, 2000); }
+function startGamePolling() { if (pollTimer) return; poll(); pollTimer = setInterval(poll, 1000); }
 function stopGamePolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 
 let lastRoundNum = null;
@@ -320,6 +320,14 @@ async function poll() {
     const oc = d.onlineCount || 1;
     if ($id('online-count-lbl')) $id('online-count-lbl').textContent = `${oc} En Línea`;
     if ($id('chat-online-num')) $id('chat-online-num').textContent = oc;
+
+    // Always update Lobby card elements in real time
+    if ($id('lobby-pot')) $id('lobby-pot').textContent = `Bs ${(d.prizePool || 0).toFixed(2)}`;
+    if ($id('lobby-players')) $id('lobby-players').textContent = d.activePlayersCount || 0;
+    if ($id('lobby-cards-count')) $id('lobby-cards-count').textContent = d.totalCards || 0;
+
+    // Always update countdown timers across all screens
+    updateCountdowns(d);
 
     if (!d.hasActiveGame) { $id('room-label').textContent = 'RONDA #--'; $id('status-text').textContent = 'ESPERANDO RONDA…'; $id('prog-bar').style.width = '0%'; return; }
     
