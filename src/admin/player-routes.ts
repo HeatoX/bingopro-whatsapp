@@ -71,9 +71,30 @@ export const getPlayerMe = async (req: Request, res: Response) => {
   }
 };
 
+// Active Online Users Tracker (TTL 45 seconds)
+const onlineUsers = new Map<string, number>();
+
+export const trackOnlineUser = (req: Request) => {
+  const phone = (req.query.phone as string) || (req.body?.phone as string);
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const key = phone ? `phone:${phone}` : `ip:${ip}`;
+  onlineUsers.set(key, Date.now());
+};
+
+export const getOnlineCount = () => {
+  const now = Date.now();
+  const cutoff = now - 45000;
+  for (const [k, v] of onlineUsers.entries()) {
+    if (v < cutoff) onlineUsers.delete(k);
+  }
+  return Math.max(1, onlineUsers.size);
+};
+
 // Get live game status for player web app
 export const getPlayerGame = async (req: Request, res: Response) => {
   try {
+    trackOnlineUser(req);
+
     const activeRound = await prisma.gameRound.findFirst({
       where: { status: { in: ['WAITING', 'SELLING', 'DRAWING', 'PAUSED'] } },
       orderBy: { createdAt: 'desc' },
@@ -83,12 +104,23 @@ export const getPlayerGame = async (req: Request, res: Response) => {
       }
     });
 
+    const onlineCount = getOnlineCount();
+
     if (!activeRound) {
       return res.json({
         hasActiveGame: false,
+        onlineCount,
+        activePlayersCount: 0,
         message: 'Esperando próxima ronda...'
       });
     }
+
+    // Real distinct active players in current round
+    const cardsInRound = await prisma.card.findMany({
+      where: { gameRoundId: activeRound.id },
+      select: { userId: true }
+    });
+    const activePlayersCount = new Set(cardsInRound.map(c => c.userId)).size;
 
     let winner1LineName = null;
     let winner2LinesName = null;
@@ -112,7 +144,9 @@ export const getPlayerGame = async (req: Request, res: Response) => {
       roundId: activeRound.id,
       roundNumber: activeRound.roundNumber,
       status: activeRound.status,
-      totalCards: activeRound.totalCards,
+      totalCards: cardsInRound.length,
+      activePlayersCount,
+      onlineCount,
       prizePool: Number(activeRound.prizePool),
       cardPriceBs: config.cardPriceBs,
       drawnBalls: activeRound.drawnBalls.map(b => ({ number: b.number, column: b.column, sequence: b.sequence })),

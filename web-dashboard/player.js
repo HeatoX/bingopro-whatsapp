@@ -145,10 +145,16 @@ async function updateTopbar() {
 // ═══ LOBBY ═══
 async function refreshLobby() {
   try {
-    const d = await (await fetch('/api/player/game')).json();
+    const url = phone ? `/api/player/game?phone=${phone}` : '/api/player/game';
+    const d = await (await fetch(url)).json();
+    const oc = d.onlineCount || 1;
+    if ($id('online-count-lbl')) $id('online-count-lbl').textContent = `${oc} En Línea`;
+    if ($id('chat-online-num')) $id('chat-online-num').textContent = oc;
+
     if (d.hasActiveGame) {
-      $id('lobby-pot').textContent = `Bs ${d.prizePool.toFixed(2)}`;
-      $id('lobby-players').textContent = d.totalCards || 0;
+      if ($id('lobby-pot')) $id('lobby-pot').textContent = `Bs ${d.prizePool.toFixed(2)}`;
+      if ($id('lobby-players')) $id('lobby-players').textContent = d.activePlayersCount || 0;
+      if ($id('lobby-cards-count')) $id('lobby-cards-count').textContent = d.totalCards || 0;
     }
   } catch {}
 }
@@ -308,9 +314,18 @@ let announcedWinners = new Set();
 
 async function poll() {
   try {
-    const d = await (await fetch('/api/player/game')).json();
+    const url = phone ? `/api/player/game?phone=${phone}` : '/api/player/game';
+    const d = await (await fetch(url)).json();
+    const oc = d.onlineCount || 1;
+    if ($id('online-count-lbl')) $id('online-count-lbl').textContent = `${oc} En Línea`;
+    if ($id('chat-online-num')) $id('chat-online-num').textContent = oc;
+
     if (!d.hasActiveGame) { $id('room-label').textContent = 'RONDA #--'; $id('status-text').textContent = 'ESPERANDO RONDA…'; $id('prog-bar').style.width = '0%'; return; }
     
+    // Update live player & card counters inside game room
+    if ($id('room-active-players')) $id('room-active-players').textContent = d.activePlayersCount || 0;
+    if ($id('room-total-cards')) $id('room-total-cards').textContent = d.totalCards || 0;
+
     // Reset state on new round transition
     if (lastRoundNum !== d.roundNumber) {
       lastRoundNum = d.roundNumber;

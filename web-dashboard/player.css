@@ -85,6 +85,24 @@ body {
 .tb-brand { font-family: var(--ft); font-size: 18px; font-weight: 900; letter-spacing: 1px; }
 .tag-live { background: var(--red-neon); color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 900; margin-left: 6px; }
 
+.topbar-online-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0, 230, 118, 0.1); border: 1px solid rgba(0, 230, 118, 0.3);
+  padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; color: var(--green-neon);
+  margin-left: 10px;
+}
+.dot-live-green {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--green-neon);
+  box-shadow: 0 0 8px var(--green-glow); animation: pulseGreen 1.5s infinite;
+}
+@keyframes pulseGreen { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.6; } }
+
+.room-live-players-pill {
+  font-size: 11px; font-weight: 800; color: var(--cyan);
+  background: rgba(0, 229, 255, 0.08); border: 1px solid rgba(0, 229, 255, 0.2);
+  padding: 3px 10px; border-radius: 8px; margin-bottom: 4px; text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
 /* Green Balance Pill (Estilo Apuestas Royal) */
 .user-pill {
   display: flex; align-items: center; gap: 10px;

@@ -33,6 +33,7 @@
             <div class="tb-left">
                 <div class="crown-logo">👑</div>
                 <div class="tb-brand">BINGO<span class="gold">ROYAL</span> <span class="tag-live">EN VIVO</span></div>
+                <div class="topbar-online-pill"><span class="dot-live-green"></span> <span id="online-count-lbl">1 En Línea</span></div>
             </div>
             <div class="tb-center">
                 <div class="user-pill" id="nav-profile-btn">
@@ -120,7 +121,7 @@
                         </div>
                         <div class="rc-offer-pill">🎁 LLEVA 6 CARTONES Y PAGA SOLO 4</div>
                         <div class="rc-footer">
-                            <span class="rc-players">👥 <strong id="lobby-players">0</strong> Jugadores</span>
+                            <span class="rc-players">👥 <strong id="lobby-players">0</strong> Jugando (<strong id="lobby-cards-count">0</strong> cartones)</span>
                             <span class="rc-price-badge">Bs 100.00 c/u</span>
                         </div>
                         <button class="btn-play-now">¡ENTRAR A JUGAR AHORA! 🚀</button>
@@ -194,6 +195,7 @@
                     <span class="rtt-jackpot">Jackpot Acumulado: <strong>Bs 1,828,392.30</strong></span>
                 </div>
                 <div class="room-live-pozo">
+                    <div class="room-live-players-pill">👥 <strong id="room-active-players">0</strong> Jugadores • 🎟️ <strong id="room-total-cards">0</strong> Cartones</div>
                     <span class="rlp-lbl">POZO EN VIVO</span>
                     <span class="rlp-val" id="pot-value">Bs 0.00</span>
                 </div>
@@ -300,7 +302,7 @@
                     <div class="chat-panel">
                         <div class="chat-panel-hdr">
                             <h3>💬 SALA DE CHAT</h3>
-                            <span class="chat-online-count">🟢 55 En Línea</span>
+                            <span class="chat-online-count">🟢 <span id="chat-online-num">1</span> En Línea</span>
                         </div>
                         <div id="chat-messages" class="chat-msgs-box">
                             <div class="chat-msg sys">🤖 <i>Bot: ¡Bienvenidos a BingoPro Royal! Suerte a todos.</i></div>
