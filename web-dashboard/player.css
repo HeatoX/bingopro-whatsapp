@@ -678,3 +678,136 @@ body {
 .wb-icon { font-size: 36px; }
 .wb-text h2 { font-family: var(--ft); font-size: 18px; font-weight: 900; }
 .wb-text p { font-size: 13px; font-weight: 700; }
+
+/* ═══ EXCITEMENT CARD ANIMATIONS (A 1 O 2 BOLAS DE GANAR) ═══ */
+.bcard.near-win-1 {
+  border: 2px solid #FF1744 !important;
+  background: radial-gradient(circle at top, rgba(255, 23, 68, 0.18), rgba(15, 16, 32, 0.95)) !important;
+  animation: excitementVibrate 0.6s ease-in-out infinite, flamePulse 1.2s infinite alternate !important;
+  transform-origin: center center;
+}
+
+.bcard.near-win-2 {
+  border: 2px solid #FFD700 !important;
+  background: radial-gradient(circle at top, rgba(255, 215, 0, 0.12), rgba(15, 16, 32, 0.95)) !important;
+  animation: goldPulse 1.5s infinite alternate !important;
+}
+
+@keyframes excitementVibrate {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-1.5px, 1px) rotate(-0.6deg); }
+  50% { transform: translate(1.5px, -1px) rotate(0.6deg); }
+  75% { transform: translate(-1px, -1.5px) rotate(-0.3deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes flamePulse {
+  0% { border-color: #FF1744; box-shadow: 0 0 15px rgba(255, 23, 68, 0.5); }
+  50% { border-color: #FF9100; box-shadow: 0 0 35px rgba(255, 145, 0, 0.85), inset 0 0 15px rgba(255, 23, 68, 0.3); }
+  100% { border-color: #FF1744; box-shadow: 0 0 20px rgba(255, 23, 68, 0.6); }
+}
+
+@keyframes goldPulse {
+  0% { border-color: rgba(255, 215, 0, 0.4); box-shadow: 0 0 15px rgba(255, 215, 0, 0.25); }
+  100% { border-color: #FFD700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.7); }
+}
+
+/* ═══ ROYAL WINNER SPOTLIGHT CELEBRATION MODAL ═══ */
+.royal-win-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 6, 16, 0.9);
+  backdrop-filter: blur(14px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: winFadeIn .3s ease-out;
+}
+.royal-win-overlay.hidden { display: none !important; }
+
+@keyframes winFadeIn {
+  from { opacity: 0; transform: scale(.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.royal-win-box {
+  background: radial-gradient(circle at center, #1F1735 0%, #0D0E1F 80%, #05060F 100%);
+  border: 3px solid var(--gold);
+  border-radius: 28px;
+  padding: 28px 24px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 0 80px rgba(255, 215, 0, 0.6), inset 0 0 40px rgba(255, 215, 0, 0.15);
+  animation: winBoxBounce .6s cubic-bezier(.175, .885, .32, 1.275);
+}
+
+@keyframes winBoxBounce {
+  0% { transform: scale(.4) rotate(-5deg); opacity: 0; }
+  70% { transform: scale(1.05) rotate(1deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.rwb-sparkles { font-size: 28px; margin-bottom: 8px; animation: sparklePulse 1s infinite alternate; }
+@keyframes sparklePulse { from { transform: scale(1); } to { transform: scale(1.15); } }
+
+.rwb-title {
+  font-family: var(--ft);
+  font-size: 26px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #FFF, var(--gold), #FFA000);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+.rwb-winner-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #FFF;
+  margin-bottom: 14px;
+}
+
+.rwb-amount-badge {
+  display: inline-flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(0, 230, 118, 0.2), rgba(0, 200, 83, 0.08));
+  border: 2px solid var(--green-neon);
+  border-radius: 16px;
+  padding: 10px 24px;
+  margin-bottom: 18px;
+  box-shadow: 0 0 25px var(--green-glow);
+}
+.rwb-amount-lbl { font-size: 11px; font-weight: 800; color: var(--dim); letter-spacing: 1px; }
+.rwb-amount-val { font-family: var(--ft); font-size: 30px; font-weight: 900; color: var(--green-neon); text-shadow: 0 0 15px var(--green-glow); }
+
+.rwb-card-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.rwb-card-container .bcard {
+  max-width: 320px;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 35px rgba(255, 215, 0, 0.6) !important;
+  transform: scale(1.03);
+}
+
+.btn-royal-win-close {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  border: none;
+  border-radius: 14px;
+  color: #000;
+  font-family: var(--ft);
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 0 30px var(--gold-glow);
+  transition: all .2s;
+}
+.btn-royal-win-close:hover { transform: translateY(-2px); box-shadow: 0 0 45px rgba(255, 215, 0, 0.9); }

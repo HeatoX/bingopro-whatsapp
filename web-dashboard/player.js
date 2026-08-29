@@ -362,7 +362,7 @@ async function poll() {
     if (d.drawnBalls.length > 0) { const last = d.drawnBalls[d.drawnBalls.length - 1]; if (lastBallNum !== last.number) { lastBallNum = last.number; onNewBall(last); } }
     renderHistory(d.drawnBalls.slice(-8).reverse());
 
-    // Winner detection (triggers GIANT BINGO BANNER with winner name)
+    // Winner detection (triggers SPOTLIGHT WINNER MODAL with winning card in center and exact prize)
     const winType = d.winnerFullCardUserId ? 'full' : d.winner2LinesUserId ? '2line' : d.winner1LineUserId ? '1line' : null;
     if (winType) {
       const winKey = `${d.roundNumber}-${winType}`;
@@ -371,16 +371,20 @@ async function poll() {
         const prize60 = (d.prizePool * 0.6).toFixed(2);
         const prize15 = (d.prizePool * 0.15).toFixed(2);
         const prize10 = (d.prizePool * 0.1).toFixed(2);
+        const bestCard = userCardsList && userCardsList.length ? userCardsList[0] : null;
 
         if (d.winnerFullCardUserId) {
+          openWinnerCelebration('👑 ¡BINGO COMPLETO!', d.winnerFullCardName || 'Jugador', `Bs ${prize60}`, bestCard);
           showBanner('👑 ¡BINGO CARTÓN LLENO!', `🎉 Ganador: ${d.winnerFullCardName || 'Jugador'} | Premio: Bs ${prize60}`);
-          confetti(150);
+          confetti(180);
         } else if (d.winner2LinesUserId) {
+          openWinnerCelebration('✌️ ¡2 LÍNEAS GANADAS!', d.winner2LinesName || 'Jugador', `Bs ${prize15}`, bestCard);
           showBanner('✌️ ¡DOS LÍNEAS COMPLETAS!', `⭐ Ganador: ${d.winner2LinesName || 'Jugador'} | Premio: Bs ${prize15}`);
-          confetti(80);
+          confetti(100);
         } else if (d.winner1LineUserId) {
+          openWinnerCelebration('🥇 ¡1 LÍNEA GANADA!', d.winner1LineName || 'Jugador', `Bs ${prize10}`, bestCard);
           showBanner('🎉 ¡UNA LÍNEA COMPLETA!', `🎊 Ganador: ${d.winner1LineName || 'Jugador'} | Premio: Bs ${prize10}`);
-          confetti(60);
+          confetti(80);
         }
       }
     }
@@ -442,7 +446,6 @@ function updateLivePrizes(d) {
       $id('badge-prize-full').className = 'ppc-badge gold';
       $id('prize-full-winner').textContent = '¡Máximo premio en juego!';
       $id('card-prize-full').className = 'prize-pill-card gold-jackpot';
-    }
   }
 }
 
@@ -517,6 +520,36 @@ function showBanner(title, msg) {
   bannerT = setTimeout(() => b.classList.add('hidden'), 6000);
 }
 
+let userCardsList = [];
+
+// ═══ ROYAL WINNER SPOTLIGHT MODAL ═══
+function openWinnerCelebration(title, winnerName, amountStr, cardObj) {
+  const modal = $id('winner-celebration-modal');
+  if (!modal) return;
+  $id('rwb-title').textContent = title;
+  $id('rwb-winner-name').textContent = `🏆 Ganador: ${winnerName}`;
+  $id('rwb-amount-val').textContent = amountStr;
+
+  const container = $id('rwb-card-container');
+  container.innerHTML = '';
+  if (cardObj) {
+    const rendered = renderCard(cardObj, Array.from(drawnSet), true);
+    container.appendChild(rendered);
+  }
+
+  modal.classList.remove('hidden');
+  confetti(160);
+  playPop();
+}
+
+const winCloseBtn = $id('btn-win-close');
+if (winCloseBtn) {
+  winCloseBtn.onclick = () => {
+    const modal = $id('winner-celebration-modal');
+    if (modal) modal.classList.add('hidden');
+  };
+}
+
 // ═══ CARDS + AUTO-SORTING (BEST CARDS FIRST) ═══
 function getMissingCount(card, dSet) {
   let miss = 0;
@@ -534,40 +567,64 @@ async function fetchCards() {
   if (!phone) return;
   try {
     const d = await (await fetch(`/api/player/my-cards?phone=${phone}`)).json();
-    $id('card-count').textContent = d.cards ? d.cards.length : 0;
-    if (!d.cards || !d.cards.length) { $id('cards-zone').innerHTML = '<div class="no-cards">Compra cartones para jugar 🎲</div>'; return; }
+    userCardsList = d.cards || [];
+    $id('card-count').textContent = userCardsList.length;
+    if (!userCardsList.length) { $id('cards-zone').innerHTML = '<div class="no-cards">Compra cartones para jugar 🎲</div>'; return; }
     
     const dSet = new Set(d.drawnNumbers || []);
     // DYNAMIC AUTO-SORTING: Cards closest to BINGO automatically rank FIRST!
-    d.cards.sort((a, b) => getMissingCount(a, dSet) - getMissingCount(b, dSet));
+    userCardsList.sort((a, b) => getMissingCount(a, dSet) - getMissingCount(b, dSet));
 
     const z = $id('cards-zone'); z.innerHTML = '';
-    d.cards.forEach(c => z.appendChild(renderCard(c, d.drawnNumbers || [])));
+    userCardsList.forEach(c => z.appendChild(renderCard(c, d.drawnNumbers || [])));
   } catch {}
 }
 
-function renderCard(card, drawn) {
+function renderCard(card, drawn, isSpotlight = false) {
   const dS = new Set(drawn), div = document.createElement('div');
-  div.className = 'bcard';
   let miss = 0;
-  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) { const n = card.grid[r][c]; if (!((r === 2 && c === 2) || n === 0) && !dS.has(n)) miss++; }
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const n = card.grid[r][c];
+      if (!((r === 2 && c === 2) || n === 0) && !dS.has(n)) miss++;
+    }
+  }
+
+  let excitementClass = '';
   let badge = '';
-  if (miss === 1) badge = '<span class="near-win-badge">🔥 ¡FALTA 1!</span>';
-  else if (miss === 2) badge = '<span class="near-win-badge" style="border-color:#FF9100;color:#FF9100">⚡ FALTAN 2</span>';
-  let h = `<div class="bcard-hdr"><span>🎟️ #${card.cardNumber} ${badge}</span><span>${card.hash}</span></div>`;
+  if (miss === 0) {
+    excitementClass = 'winner-card';
+    badge = '<span class="near-win-badge" style="border-color:#00E676;color:#00E676;background:rgba(0,230,118,0.2)">👑 ¡BINGO!</span>';
+  } else if (miss === 1) {
+    excitementClass = 'near-win-1';
+    badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA DE BINGO!</span>';
+  } else if (miss === 2) {
+    excitementClass = 'near-win-2';
+    badge = '<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.15)">⚡ ¡A 2 BOLAS!</span>';
+  }
+
+  div.className = `bcard ${excitementClass}`;
+  let h = `<div class="bcard-hdr"><span>🎟️ #${card.cardNumber} ${badge}</span><span>${card.hash.slice(0, 8)}</span></div>`;
   h += '<table><thead><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr></thead><tbody>';
   for (let r = 0; r < 5; r++) {
     h += '<tr>';
     for (let c = 0; c < 5; c++) {
       const n = card.grid[r][c], free = (r === 2 && c === 2) || n === 0, hit = free || dS.has(n);
-      const k = `${card.id}-${r}-${c}`, was = prevDaub[k], isNew = hit && !was; prevDaub[k] = hit;
+      const k = `${card.id}-${r}-${c}`, was = prevDaub[k], isNew = hit && !was;
+      if (!isSpotlight) prevDaub[k] = hit;
       if (free) h += '<td class="free">★</td>';
-      else if (hit) { h += `<td class="daubed ${isNew ? 'daubed-new' : ''}">${n}</td>`; if (isNew) playDaub(); }
-      else h += `<td>${n}</td>`;
+      else if (hit) {
+        h += `<td class="daubed ${isNew ? 'daubed-new' : ''}">${n}</td>`;
+        if (isNew && !isSpotlight) playDaub();
+      } else {
+        h += `<td>${n}</td>`;
+      }
     }
     h += '</tr>';
   }
-  h += '</tbody></table>'; div.innerHTML = h; return div;
+  h += '</tbody></table>';
+  div.innerHTML = h;
+  return div;
 }
 
 // ═══ EPIC 3D MECHANICAL DRUM ═══
