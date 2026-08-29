@@ -367,9 +367,65 @@ async function poll() {
       }
     }
 
+    updateLivePrizes(d);
     updateCountdowns(d);
     fetchCards();
   } catch {}
+}
+
+function updateLivePrizes(d) {
+  const pool = d.prizePool || 0;
+  const p10 = (pool * 0.10).toFixed(2);
+  const p15 = (pool * 0.15).toFixed(2);
+  const p60 = (pool * 0.60).toFixed(2);
+
+  // 1 Line
+  if ($id('prize-1line-val')) $id('prize-1line-val').textContent = `Bs ${p10}`;
+  if ($id('card-prize-1line')) {
+    if (d.winner1LineUserId) {
+      $id('badge-prize-1line').textContent = '✅ GANADO';
+      $id('badge-prize-1line').className = 'ppc-badge won';
+      $id('prize-1line-winner').textContent = `🏆 ${d.winner1LineName || 'Jugador'}`;
+      $id('card-prize-1line').className = 'prize-pill-card won';
+    } else {
+      $id('badge-prize-1line').textContent = '⚡ EN JUEGO';
+      $id('badge-prize-1line').className = 'ppc-badge';
+      $id('prize-1line-winner').textContent = 'En competencia...';
+      $id('card-prize-1line').className = 'prize-pill-card';
+    }
+  }
+
+  // 2 Lines
+  if ($id('prize-2lines-val')) $id('prize-2lines-val').textContent = `Bs ${p15}`;
+  if ($id('card-prize-2lines')) {
+    if (d.winner2LinesUserId) {
+      $id('badge-prize-2lines').textContent = '✅ GANADO';
+      $id('badge-prize-2lines').className = 'ppc-badge won';
+      $id('prize-2lines-winner').textContent = `🏆 ${d.winner2LinesName || 'Jugador'}`;
+      $id('card-prize-2lines').className = 'prize-pill-card won';
+    } else {
+      $id('badge-prize-2lines').textContent = '⚡ EN JUEGO';
+      $id('badge-prize-2lines').className = 'ppc-badge';
+      $id('prize-2lines-winner').textContent = 'En competencia...';
+      $id('card-prize-2lines').className = 'prize-pill-card';
+    }
+  }
+
+  // Full Card
+  if ($id('prize-full-val')) $id('prize-full-val').textContent = `Bs ${p60}`;
+  if ($id('card-prize-full')) {
+    if (d.winnerFullCardUserId) {
+      $id('badge-prize-full').textContent = '👑 BINGO GANADO';
+      $id('badge-prize-full').className = 'ppc-badge won gold';
+      $id('prize-full-winner').textContent = `🎉 ${d.winnerFullCardName || 'Jugador'}`;
+      $id('card-prize-full').className = 'prize-pill-card gold-jackpot won';
+    } else {
+      $id('badge-prize-full').textContent = '👑 GRAN POZO';
+      $id('badge-prize-full').className = 'ppc-badge gold';
+      $id('prize-full-winner').textContent = '¡Máximo premio en juego!';
+      $id('card-prize-full').className = 'prize-pill-card gold-jackpot';
+    }
+  }
 }
 
 function updateCountdowns(d) {

@@ -284,6 +284,92 @@ body {
 .rlp-lbl { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
 .rlp-val { font-family: var(--ft); font-size: 18px; font-weight: 900; color: var(--green-neon); }
 
+/* ═══ LIVE PRIZES STRIP (BANDA DE PREMIOS EN VIVO) ═══ */
+.live-prizes-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 1480px;
+  margin: 12px auto 0;
+  padding: 0 16px;
+}
+@media(max-width: 768px) {
+  .live-prizes-strip { grid-template-columns: 1fr; gap: 8px; padding: 0 10px; }
+}
+
+.prize-pill-card {
+  background: linear-gradient(135deg, rgba(20, 22, 45, 0.9), rgba(10, 11, 24, 0.95));
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 10px 14px;
+  position: relative;
+  transition: all .2s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+.prize-pill-card:hover { transform: translateY(-2px); border-color: rgba(255, 215, 0, 0.4); }
+
+.prize-pill-card.gold-jackpot {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, rgba(40, 30, 10, 0.9), rgba(15, 12, 5, 0.95));
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+}
+
+.prize-pill-card.won {
+  border-color: var(--green-neon);
+  background: linear-gradient(135deg, rgba(10, 40, 20, 0.9), rgba(5, 20, 10, 0.95));
+}
+
+.ppc-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.ppc-icon { font-size: 16px; }
+.ppc-title { font-family: var(--ft); font-size: 11px; font-weight: 800; color: #FFF; flex: 1; letter-spacing: 0.5px; }
+.ppc-badge {
+  font-size: 9px; font-weight: 900;
+  padding: 2px 6px; border-radius: 6px;
+  background: rgba(0, 229, 255, 0.15); color: var(--cyan);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+.ppc-badge.gold {
+  background: rgba(255, 215, 0, 0.15); color: var(--gold);
+  border-color: var(--gold);
+}
+.ppc-badge.won {
+  background: rgba(0, 230, 118, 0.2); color: var(--green-neon);
+  border-color: var(--green-neon);
+}
+
+.ppc-amount {
+  font-family: var(--ft);
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--cyan);
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+  line-height: 1.1;
+}
+.ppc-amount.gold {
+  color: var(--gold);
+  text-shadow: 0 0 15px var(--gold-glow);
+  font-size: 22px;
+}
+
+.ppc-winner {
+  font-size: 10px;
+  color: var(--dim);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+.prize-pill-card.won .ppc-winner {
+  color: var(--green-neon);
+  font-weight: 800;
+}
+
 .game-room-grid {
   display: grid; grid-template-columns: 360px 1fr 280px; gap: 16px;
   padding: 16px; max-width: 1480px; margin: 0 auto;
