@@ -271,6 +271,7 @@ $id('buy-modal-confirm').onclick = async () => {
       updateTopbar();
       refreshProfile();
       fetchCards();
+      poll();
     } else {
       btn.disabled = false;
       btn.textContent = '✅ SÍ, COMPRAR';
