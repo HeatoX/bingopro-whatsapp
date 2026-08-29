@@ -446,6 +446,7 @@ function updateLivePrizes(d) {
       $id('badge-prize-full').className = 'ppc-badge gold';
       $id('prize-full-winner').textContent = '¡Máximo premio en juego!';
       $id('card-prize-full').className = 'prize-pill-card gold-jackpot';
+    }
   }
 }
 
