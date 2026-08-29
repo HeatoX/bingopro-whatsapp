@@ -19,11 +19,12 @@ export const config = {
   sellingWindowSeconds: parseInt(process.env.SELLING_WINDOW_SECONDS || '120'),
   minPlayersToStart: parseInt(process.env.MIN_PLAYERS_TO_START || '1'),
 
-  // Prize Distribution (percentages)
+  // Prize Distribution (percentages: 9% 1-line, 14% 2-lines, 57% full-card, 5% next-round seed, 15% house)
   housePercentage: parseFloat(process.env.HOUSE_PERCENTAGE || '15'),
-  prize1LinePercentage: parseFloat(process.env.PRIZE_1_LINE_PERCENTAGE || '10'),
-  prize2LinesPercentage: parseFloat(process.env.PRIZE_2_LINES_PERCENTAGE || '15'),
-  prizeFullCardPercentage: parseFloat(process.env.PRIZE_FULL_CARD_PERCENTAGE || '60'),
+  prize1LinePercentage: parseFloat(process.env.PRIZE_1_LINE_PERCENTAGE || '9'),
+  prize2LinesPercentage: parseFloat(process.env.PRIZE_2_LINES_PERCENTAGE || '14'),
+  prizeFullCardPercentage: parseFloat(process.env.PRIZE_FULL_CARD_PERCENTAGE || '57'),
+  reserveSeedPercentage: parseFloat(process.env.RESERVE_SEED_PERCENTAGE || '5'),
 
   // Admin
   adminPort: parseInt(process.env.ADMIN_PORT || '3000'),
@@ -43,7 +44,8 @@ export const config = {
 
 // Validate prize distribution sums to 100%
 const totalPercentage = config.housePercentage + config.prize1LinePercentage + 
-                        config.prize2LinesPercentage + config.prizeFullCardPercentage;
+                        config.prize2LinesPercentage + config.prizeFullCardPercentage +
+                        config.reserveSeedPercentage;
 if (Math.abs(totalPercentage - 100) > 0.01) {
   throw new Error(`Prize distribution must sum to 100%. Current: ${totalPercentage}%`);
 }

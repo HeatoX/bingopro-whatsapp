@@ -16,13 +16,18 @@ export async function distributePrizes(
     where: { type: 'HOUSE_REVENUE' },
     include: { balance: true }
   });
+  const houseJackpotAccount = await prisma.account.findFirst({
+    where: { type: 'HOUSE_JACKPOT' },
+    include: { balance: true }
+  });
 
   if (!escrowAccount || !houseRevenueAccount) {
     throw new Error('System accounts not initialized for payout');
   }
 
-  // Calculate allocations
+  // Calculate allocations (9% 1-line, 14% 2-lines, 57% full-card, 5% next-round seed, 15% house)
   const houseAmount = (totalPool * config.housePercentage) / 100;
+  const reserveSeedAmount = (totalPool * config.reserveSeedPercentage) / 100;
   let line1Amount = (totalPool * config.prize1LinePercentage) / 100;
   let line2Amount = (totalPool * config.prize2LinesPercentage) / 100;
   let fullCardAmount = (totalPool * config.prizeFullCardPercentage) / 100;
@@ -53,7 +58,7 @@ export async function distributePrizes(
         type: 'PAYOUT_MASTER',
         gameRoundId,
         description: `Distribución de premios ronda ${gameRoundId}`,
-        metadata: JSON.stringify({ totalPool, houseAmount, line1Amount, line2Amount, fullCardAmount, winners }),
+        metadata: JSON.stringify({ totalPool, houseAmount, reserveSeedAmount, line1Amount, line2Amount, fullCardAmount, winners }),
       }
     });
 
@@ -89,6 +94,33 @@ export async function distributePrizes(
             create: [
               { accountId: escrowAccount.id, amount: -houseAmount },
               { accountId: houseRevenueAccount.id, amount: houseAmount }
+            ]
+          }
+        }
+      });
+    }
+
+    // 3.1 Process 5% Reserve Seed Accumulator for Next Bingo Round (Escrow -> House Jackpot)
+    if (reserveSeedAmount > 0 && houseJackpotAccount) {
+      await tx.accountBalance.update({
+        where: { accountId: escrowAccount.id },
+        data: { availableBalance: { decrement: reserveSeedAmount } }
+      });
+      await tx.accountBalance.update({
+        where: { accountId: houseJackpotAccount.id },
+        data: { availableBalance: { increment: reserveSeedAmount } }
+      });
+      await tx.transaction.create({
+        data: {
+          idempotencyKey: generateIdempotencyKey('RESERVE_SEED', gameRoundId),
+          type: 'RESERVE_SEED_ACCUMULATOR',
+          gameRoundId,
+          description: `Pozo Acumulado Próxima Ronda (${config.reserveSeedPercentage}%)`,
+          metadata: JSON.stringify({ amount: reserveSeedAmount }),
+          ledgerEntries: {
+            create: [
+              { accountId: escrowAccount.id, amount: -reserveSeedAmount },
+              { accountId: houseJackpotAccount.id, amount: reserveSeedAmount }
             ]
           }
         }

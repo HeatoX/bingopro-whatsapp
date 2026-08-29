@@ -107,6 +107,8 @@ export class GameScheduler {
         if (roundFinished) {
           logger.info(`🏁 Round ${round.id} complete — BINGO!`);
           await this.gameEngine.finishRound(round.id);
+          // Wait 10 seconds so all players can celebrate and see the winning spotlight card
+          await new Promise(r => setTimeout(r, 10000));
           this.scheduleNextRound();
           return;
         }

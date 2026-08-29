@@ -96,7 +96,8 @@ export const getPlayerGame = async (req: Request, res: Response) => {
   try {
     trackOnlineUser(req);
 
-    const activeRound = await prisma.gameRound.findFirst({
+    // Check for active round or recently finished round (15s celebration buffer)
+    let activeRound = await prisma.gameRound.findFirst({
       where: { status: { in: ['WAITING', 'SELLING', 'DRAWING', 'PAUSED'] } },
       orderBy: { roundNumber: 'desc' },
       include: {
@@ -104,6 +105,20 @@ export const getPlayerGame = async (req: Request, res: Response) => {
         _count: { select: { cards: true } }
       }
     });
+
+    if (!activeRound) {
+      const recentFinished = await prisma.gameRound.findFirst({
+        where: { status: 'FINISHED' },
+        orderBy: { roundNumber: 'desc' },
+        include: {
+          drawnBalls: { orderBy: { sequence: 'asc' } },
+          _count: { select: { cards: true } }
+        }
+      });
+      if (recentFinished && recentFinished.finishedAt && (Date.now() - new Date(recentFinished.finishedAt).getTime() < 15000)) {
+        activeRound = recentFinished;
+      }
+    }
 
     const onlineCount = getOnlineCount();
 
@@ -185,11 +200,22 @@ export const getPlayerCards = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { phone: cleanPhone } });
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-    const activeRound = await prisma.gameRound.findFirst({
+    let activeRound = await prisma.gameRound.findFirst({
       where: { status: { in: ['WAITING', 'SELLING', 'DRAWING', 'PAUSED'] } },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { roundNumber: 'desc' },
       include: { drawnBalls: true }
     });
+
+    if (!activeRound) {
+      const recentFinished = await prisma.gameRound.findFirst({
+        where: { status: 'FINISHED' },
+        orderBy: { roundNumber: 'desc' },
+        include: { drawnBalls: true }
+      });
+      if (recentFinished && recentFinished.finishedAt && (Date.now() - new Date(recentFinished.finishedAt).getTime() < 15000)) {
+        activeRound = recentFinished;
+      }
+    }
 
     if (!activeRound) return res.json({ cards: [], drawnNumbers: [] });
 

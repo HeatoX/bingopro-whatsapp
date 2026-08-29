@@ -368,22 +368,22 @@ async function poll() {
       const winKey = `${d.roundNumber}-${winType}`;
       if (!announcedWinners.has(winKey)) {
         announcedWinners.add(winKey);
-        const prize60 = (d.prizePool * 0.6).toFixed(2);
-        const prize15 = (d.prizePool * 0.15).toFixed(2);
-        const prize10 = (d.prizePool * 0.1).toFixed(2);
-        const bestCard = userCardsList && userCardsList.length ? userCardsList[0] : null;
+        const prize57 = (d.prizePool * 0.57).toFixed(2);
+        const prize14 = (d.prizePool * 0.14).toFixed(2);
+        const prize9 = (d.prizePool * 0.09).toFixed(2);
+        const winningCard = findWinningCard(winType, drawnSet);
 
         if (d.winnerFullCardUserId) {
-          openWinnerCelebration('👑 ¡BINGO COMPLETO!', d.winnerFullCardName || 'Jugador', `Bs ${prize60}`, bestCard);
-          showBanner('👑 ¡BINGO CARTÓN LLENO!', `🎉 Ganador: ${d.winnerFullCardName || 'Jugador'} | Premio: Bs ${prize60}`);
+          openWinnerCelebration('👑 ¡BINGO COMPLETO!', d.winnerFullCardName || 'Jugador', `Bs ${prize57}`, winningCard);
+          showBanner('👑 ¡BINGO CARTÓN LLENO!', `🎉 Ganador: ${d.winnerFullCardName || 'Jugador'} | Premio: Bs ${prize57}`);
           confetti(180);
         } else if (d.winner2LinesUserId) {
-          openWinnerCelebration('✌️ ¡2 LÍNEAS GANADAS!', d.winner2LinesName || 'Jugador', `Bs ${prize15}`, bestCard);
-          showBanner('✌️ ¡DOS LÍNEAS COMPLETAS!', `⭐ Ganador: ${d.winner2LinesName || 'Jugador'} | Premio: Bs ${prize15}`);
+          openWinnerCelebration('✌️ ¡2 LÍNEAS GANADAS!', d.winner2LinesName || 'Jugador', `Bs ${prize14}`, winningCard);
+          showBanner('✌️ ¡DOS LÍNEAS COMPLETAS!', `⭐ Ganador: ${d.winner2LinesName || 'Jugador'} | Premio: Bs ${prize14}`);
           confetti(100);
         } else if (d.winner1LineUserId) {
-          openWinnerCelebration('🥇 ¡1 LÍNEA GANADA!', d.winner1LineName || 'Jugador', `Bs ${prize10}`, bestCard);
-          showBanner('🎉 ¡UNA LÍNEA COMPLETA!', `🎊 Ganador: ${d.winner1LineName || 'Jugador'} | Premio: Bs ${prize10}`);
+          openWinnerCelebration('🥇 ¡1 LÍNEA GANADA!', d.winner1LineName || 'Jugador', `Bs ${prize9}`, winningCard);
+          showBanner('🎉 ¡UNA LÍNEA COMPLETA!', `🎊 Ganador: ${d.winner1LineName || 'Jugador'} | Premio: Bs ${prize9}`);
           confetti(80);
         }
       }
@@ -397,12 +397,12 @@ async function poll() {
 
 function updateLivePrizes(d) {
   const pool = d.prizePool || 0;
-  const p10 = (pool * 0.10).toFixed(2);
-  const p15 = (pool * 0.15).toFixed(2);
-  const p60 = (pool * 0.60).toFixed(2);
+  const p9 = (pool * 0.09).toFixed(2);
+  const p14 = (pool * 0.14).toFixed(2);
+  const p57 = (pool * 0.57).toFixed(2);
 
-  // 1 Line
-  if ($id('prize-1line-val')) $id('prize-1line-val').textContent = `Bs ${p10}`;
+  // 1 Line (9%)
+  if ($id('prize-1line-val')) $id('prize-1line-val').textContent = `Bs ${p9}`;
   if ($id('card-prize-1line')) {
     if (d.winner1LineUserId) {
       $id('badge-prize-1line').textContent = '✅ GANADO';
@@ -417,8 +417,8 @@ function updateLivePrizes(d) {
     }
   }
 
-  // 2 Lines
-  if ($id('prize-2lines-val')) $id('prize-2lines-val').textContent = `Bs ${p15}`;
+  // 2 Lines (14%)
+  if ($id('prize-2lines-val')) $id('prize-2lines-val').textContent = `Bs ${p14}`;
   if ($id('card-prize-2lines')) {
     if (d.winner2LinesUserId) {
       $id('badge-prize-2lines').textContent = '✅ GANADO';
@@ -433,8 +433,8 @@ function updateLivePrizes(d) {
     }
   }
 
-  // Full Card
-  if ($id('prize-full-val')) $id('prize-full-val').textContent = `Bs ${p60}`;
+  // Full Card (57%)
+  if ($id('prize-full-val')) $id('prize-full-val').textContent = `Bs ${p57}`;
   if ($id('card-prize-full')) {
     if (d.winnerFullCardUserId) {
       $id('badge-prize-full').textContent = '👑 BINGO GANADO';
@@ -524,6 +524,25 @@ function showBanner(title, msg) {
 let userCardsList = [];
 
 // ═══ ROYAL WINNER SPOTLIGHT MODAL ═══
+function findWinningCard(winType, dSet) {
+  if (!userCardsList || !userCardsList.length) return null;
+  if (winType === 'full') {
+    return userCardsList.find(c => getMissingCount(c, dSet) === 0) || userCardsList[0];
+  }
+  return userCardsList.find(c => {
+    let completed = 0;
+    for (let r = 0; r < 5; r++) {
+      let rowComplete = true;
+      for (let ci = 0; ci < 5; ci++) {
+        const n = c.grid[r][ci];
+        if (!((r === 2 && ci === 2) || n === 0 || dSet.has(n))) { rowComplete = false; break; }
+      }
+      if (rowComplete) completed++;
+    }
+    return winType === '2line' ? completed >= 2 : completed >= 1;
+  }) || userCardsList[0];
+}
+
 function openWinnerCelebration(title, winnerName, amountStr, cardObj) {
   const modal = $id('winner-celebration-modal');
   if (!modal) return;
@@ -658,22 +677,43 @@ function renderCard(card, drawn, isSpotlight = false) {
     if (rowComplete) completedRows.push(r);
   }
 
+  // Check minimum missing balls for ANY uncompleted horizontal line (1-to-go Line)
+  let minMissForLine = 5;
+  for (let r = 0; r < 5; r++) {
+    let uncompletedInRow = 0;
+    for (let c = 0; c < 5; c++) {
+      const n = card.grid[r][c];
+      const free = (r === 2 && c === 2) || n === 0;
+      if (!free && !dS.has(n)) uncompletedInRow++;
+    }
+    if (uncompletedInRow > 0 && uncompletedInRow < minMissForLine) {
+      minMissForLine = uncompletedInRow;
+    }
+  }
+
   let excitementClass = '';
   let badge = '';
+
   if (miss === 0) {
     excitementClass = 'winner-card';
     badge = '<span class="near-win-badge" style="border-color:#00E676;color:#00E676;background:rgba(0,230,118,0.25)">👑 ¡BINGO COMPLETO!</span>';
+  } else if (miss === 1) {
+    excitementClass = 'near-win-1';
+    badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA DE BINGO!</span>';
+  } else if (minMissForLine === 1) {
+    excitementClass = 'near-win-1';
+    badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA DE LÍNEA!</span>';
   } else if (completedRows.length >= 2) {
     excitementClass = 'winner-card';
     badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">✌️ 2 LÍNEAS (Filas ${completedRows.map(x=>x+1).join(' y ')})</span>`;
   } else if (completedRows.length === 1) {
     badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">🥇 1 LÍNEA (Fila ${completedRows[0]+1})</span>`;
-  } else if (miss === 1) {
-    excitementClass = 'near-win-1';
-    badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA!</span>';
   } else if (miss === 2) {
     excitementClass = 'near-win-2';
-    badge = '<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.15)">⚡ ¡A 2 BOLAS!</span>';
+    badge = '<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.15)">⚡ ¡A 2 BOLAS DE BINGO!</span>';
+  } else if (minMissForLine === 2) {
+    excitementClass = 'near-win-2';
+    badge = '<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.15)">⚡ ¡A 2 BOLAS DE LÍNEA!</span>';
   }
 
   div.className = `bcard ${excitementClass}`;

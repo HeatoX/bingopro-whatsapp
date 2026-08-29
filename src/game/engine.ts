@@ -16,7 +16,7 @@ export interface DrawResult {
 
 export class GameEngine extends EventEmitter {
   async initialize() {
-    for (const type of ['HOUSE_REVENUE', 'HOUSE_ESCROW', 'PAYMENT_GATEWAY'] as const) {
+    for (const type of ['HOUSE_REVENUE', 'HOUSE_ESCROW', 'PAYMENT_GATEWAY', 'HOUSE_JACKPOT'] as const) {
       const acc = await prisma.account.findFirst({ where: { type } });
       if (!acc) {
         await prisma.account.create({
@@ -35,7 +35,7 @@ export class GameEngine extends EventEmitter {
     if (cleaned.count > 0) {
       logger.info(`🧹 Cleaned up ${cleaned.count} stale rounds from previous sessions`);
     }
-    logger.info('System accounts initialized');
+    logger.info('System accounts initialized (including HOUSE_JACKPOT accumulator)');
   }
 
   async createRound() {
@@ -47,11 +47,35 @@ export class GameEngine extends EventEmitter {
     });
     const roundNumber = (lastRound?.roundNumber || 0) + 1;
 
+    // Check accumulated seed pot from previous rounds (5% progressive seed)
+    const jackpotAcc = await prisma.account.findFirst({
+      where: { type: 'HOUSE_JACKPOT' },
+      include: { balance: true }
+    });
+    const seedBalance = jackpotAcc?.balance?.availableBalance || 0;
+
+    // Transfer seed from jackpot into escrow for the new round
+    if (seedBalance > 0 && jackpotAcc) {
+      const escrowAcc = await prisma.account.findFirst({ where: { type: 'HOUSE_ESCROW' } });
+      if (escrowAcc) {
+        await prisma.accountBalance.update({
+          where: { accountId: jackpotAcc.id },
+          data: { availableBalance: 0 }
+        });
+        await prisma.accountBalance.update({
+          where: { accountId: escrowAcc.id },
+          data: { availableBalance: { increment: seedBalance } }
+        });
+        logger.info(`💎 Seeded new Round #${roundNumber} with Bs ${seedBalance.toFixed(2)} from previous round reserve`);
+      }
+    }
+
     const round = await prisma.gameRound.create({
       data: {
         roundNumber,
         serverSeed,
         serverSeedHash,
+        prizePool: seedBalance, // New round starts with real cash from accumulated seed!
         scheduledAt: new Date(Date.now() + config.gameIntervalMinutes * 60000),
       }
     });
