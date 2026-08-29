@@ -17,7 +17,7 @@ export const config = {
   maxCardsPerPlayer: parseInt(process.env.MAX_CARDS_PER_PLAYER || '50'),
   ballDrawIntervalSeconds: parseInt(process.env.BALL_DRAW_INTERVAL_SECONDS || '4'),
   sellingWindowSeconds: parseInt(process.env.SELLING_WINDOW_SECONDS || '60'),
-  minPlayersToStart: parseInt(process.env.MIN_PLAYERS_TO_START || '2'),
+  minPlayersToStart: parseInt(process.env.MIN_PLAYERS_TO_START || '1'),
 
   // Prize Distribution (percentages)
   housePercentage: parseFloat(process.env.HOUSE_PERCENTAGE || '15'),

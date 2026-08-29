@@ -329,7 +329,16 @@ async function poll() {
     // Always update countdown timers across all screens
     updateCountdowns(d);
 
-    if (!d.hasActiveGame) { $id('room-label').textContent = 'RONDA #--'; $id('status-text').textContent = 'ESPERANDO RONDA…'; $id('prog-bar').style.width = '0%'; return; }
+    if (!d.hasActiveGame) {
+      $id('room-label').textContent = 'RONDA #--';
+      $id('status-text').textContent = 'ESPERANDO PRÓXIMA RONDA…';
+      $id('prog-bar').style.width = '0%';
+      $id('pot-value').textContent = 'Bs 0.00';
+      if ($id('room-active-players')) $id('room-active-players').textContent = '0';
+      if ($id('room-total-cards')) $id('room-total-cards').textContent = '0';
+      updateLivePrizes({ prizePool: 0 });
+      return;
+    }
     
     // Update live player & card counters inside game room
     if ($id('room-active-players')) $id('room-active-players').textContent = d.activePlayersCount || 0;
@@ -450,8 +459,13 @@ function updateCountdowns(d) {
   if (d.status === 'SELLING' && d.sellingStartedAt) {
     const elapsed = (Date.now() - new Date(d.sellingStartedAt).getTime()) / 1000;
     const rem = Math.max(0, Math.floor(d.sellingWindowSeconds - elapsed));
-    lt.textContent = fmt(rem); if (ls) ls.textContent = '🛒 VENTAS ABIERTAS';
-    rt.textContent = fmt(rem); if (rl) rl.textContent = 'VENTAS ABIERTAS';
+    if (rem > 0) {
+      lt.textContent = fmt(rem); if (ls) ls.textContent = '🛒 VENTAS ABIERTAS';
+      rt.textContent = fmt(rem); if (rl) rl.textContent = 'VENTAS ABIERTAS';
+    } else {
+      lt.textContent = '00:00'; if (ls) ls.textContent = '🔒 INICIANDO SORTEO...';
+      rt.textContent = '00:00'; if (rl) rl.textContent = 'INICIANDO BOMBO...';
+    }
   } else if (d.status === 'DRAWING') {
     const ballsCount = d.drawnBalls ? d.drawnBalls.length : 0;
     // Outside Lobby: show countdown until NEXT bingo round starts!

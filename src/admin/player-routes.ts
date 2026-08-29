@@ -112,6 +112,9 @@ export const getPlayerGame = async (req: Request, res: Response) => {
         hasActiveGame: false,
         onlineCount,
         activePlayersCount: 0,
+        totalCards: 0,
+        prizePool: 0,
+        nextRoundScheduledAt: GameScheduler.nextRoundAt?.toISOString() || null,
         message: 'Esperando próxima ronda...'
       });
     }
