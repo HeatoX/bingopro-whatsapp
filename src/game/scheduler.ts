@@ -1,4 +1,3 @@
-import { config } from '../config/env';
 import { GameEngine } from './engine';
 import { logger } from '../utils/logger';
 import { getSystemSettings } from '../config/settings';

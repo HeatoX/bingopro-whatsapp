@@ -1066,7 +1066,7 @@ function updateCountdowns(d) {
   $$('.room-timer-shared').forEach(el => el.textContent = timerStr);
   $$('.room-status-shared').forEach(el => el.textContent = statusStr);
   $$('.room-players-shared').forEach(el => {
-    el.textContent = `${activePlayers}/${minPlayers}`;
+    el.textContent = playerBadgeStr;
   });
 
   // Update room screen elements
