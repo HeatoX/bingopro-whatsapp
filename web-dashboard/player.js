@@ -613,8 +613,16 @@ function addChat(u, t) {
 function buildPizarra() {
   const cols = { B: [1,15], I: [16,30], N: [31,45], G: [46,60], O: [61,75] };
   for (const [L, [lo, hi]] of Object.entries(cols)) {
-    const c = $id(`mb-${L}`); if (!c) continue; c.innerHTML = '';
-    for (let n = lo; n <= hi; n++) { const d = document.createElement('div'); d.className = 'piz-cell'; d.id = `pc-${n}`; d.textContent = n; c.appendChild(d); }
+    const c = $id(`piz-${L}`) || $id(`mb-${L}`);
+    if (!c) continue;
+    c.innerHTML = '';
+    for (let n = lo; n <= hi; n++) {
+      const d = document.createElement('div');
+      d.className = 'piz-cell';
+      d.id = `pc-${n}`;
+      d.textContent = n;
+      c.appendChild(d);
+    }
   }
 }
 buildPizarra();
@@ -659,9 +667,10 @@ async function poll() {
       currentWinnerFullCard = null;
       for (let i = 1; i <= 75; i++) { const el = $id(`pc-${i}`); if (el) el.classList.remove('lit'); }
       renderHistory([]);
+      if ($id('cur-ball')) $id('cur-ball').className = 'big-ball idle';
+      if ($id('cb-col')) $id('cb-col').textContent = '?';
       if ($id('cb-num')) $id('cb-num').textContent = '--';
-      if ($id('cb-col')) $id('cb-col').textContent = '';
-      if ($id('cb-lbl')) $id('cb-lbl').textContent = 'ESPERANDO';
+      if ($id('cb-announce')) $id('cb-announce').textContent = 'CANTADOR EN VIVO';
       if ($id('cards-zone')) $id('cards-zone').innerHTML = '<div class="no-cards">Compra cartones para la próxima ronda 🎲</div>';
       if ($id('card-count')) $id('card-count').textContent = '0';
       userCardsList = [];
@@ -829,14 +838,14 @@ function updateCountdowns(d) {
 }
 
 function onNewBall(ball) {
-  const s = $id('active-ball');
+  const s = $id('cur-ball') || $id('active-ball');
   if (s) {
-    s.className = `active-ball ball-${ball.column.toLowerCase()} drop-in`;
+    s.className = `big-ball ball-${ball.column.toLowerCase()} drop-in`;
     setTimeout(() => s.classList.remove('drop-in'), 600);
   }
   if ($id('cb-col')) $id('cb-col').textContent = ball.column;
   if ($id('cb-num')) $id('cb-num').textContent = ball.number;
-  if ($id('cb-lbl')) $id('cb-lbl').textContent = `${ball.column} - ${ball.number}`;
+  if ($id('cb-announce')) $id('cb-announce').textContent = `${ball.column} - ${ball.number}`;
 
   $$('.bh').forEach(h => {
     h.className = 'bh';

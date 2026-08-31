@@ -233,45 +233,43 @@
                             <div class="bh" data-col="O">O</div>
                         </div>
 
-                        <!-- 3D Drum + Active Ball Output Center -->
-                        <div class="drum-ball-arena">
-                            <div class="cage-wrapper">
-                                <canvas id="drum-canvas" width="220" height="220"></canvas>
-                                <div class="cage-shadow"></div>
+                        <!-- 3D Physics Drum + Current Big Ball -->
+                        <div class="drum-display-row">
+                            <div class="drum-canvas-frame">
+                                <canvas id="drum-canvas" width="240" height="240"></canvas>
+                                <div class="drum-glow-ring"></div>
                             </div>
-                            
-                            <div class="current-ball-spotlight">
-                                <div class="active-ball" id="active-ball">
-                                    <span class="ab-col" id="cb-col"></span>
-                                    <span class="ab-num" id="cb-num">--</span>
+                            <div class="active-ball-container">
+                                <div id="cur-ball" class="big-ball idle">
+                                    <div class="bb-face">
+                                        <span id="cb-col" class="bb-col">?</span>
+                                        <span id="cb-num" class="bb-num">--</span>
+                                    </div>
+                                    <div class="bb-shine"></div>
                                 </div>
-                                <span class="ab-label" id="cb-lbl">ESPERANDO</span>
+                                <div id="cb-announce" class="ball-announce">CANTADOR EN VIVO</div>
                             </div>
                         </div>
 
-                        <!-- Ball Draw Progress Bar -->
-                        <div class="draw-progress-track">
-                            <div class="dpt-fill" id="prog-bar"></div>
-                        </div>
+                        <!-- Progress Bar -->
+                        <div class="prog-wrap"><div id="prog-bar" class="prog-fill"></div></div>
 
                         <!-- Live Ball History Strip -->
-                        <div class="history-tray">
-                            <span class="ht-title">Últimas:</span>
-                            <div id="history-balls" class="history-balls-strip"></div>
+                        <div class="history-strip">
+                            <span class="hs-label">Últimas:</span>
+                            <div id="history-balls" class="hs-balls"></div>
                         </div>
                     </div>
 
-                    <!-- PIZARRA OFICIAL 75 BOLAS (Collapsible Full Board) -->
-                    <div class="master-board-card">
-                        <div class="mbc-header">
-                            <span>⚡ PIZARRA OFICIAL EN VIVO (1 - 75)</span>
-                        </div>
-                        <div class="master-board-grid">
-                            <div class="mb-col" data-col="B"><div class="mb-hd">B</div><div class="mb-cells" id="mb-B"></div></div>
-                            <div class="mb-col" data-col="I"><div class="mb-hd">I</div><div class="mb-cells" id="mb-I"></div></div>
-                            <div class="mb-col" data-col="N"><div class="mb-hd">N</div><div class="mb-cells" id="mb-N"></div></div>
-                            <div class="mb-col" data-col="G"><div class="mb-hd">G</div><div class="mb-cells" id="mb-G"></div></div>
-                            <div class="mb-col" data-col="O"><div class="mb-hd">O</div><div class="mb-cells" id="mb-O"></div></div>
+                    <!-- MASTER PIZARRA 1-75 (LED Dynamic Matrix) -->
+                    <div class="pizarra">
+                        <div class="piz-label">⚡ PIZARRA OFICIAL EN VIVO (1 - 75)</div>
+                        <div class="piz-cols">
+                            <div class="piz-col" data-letter="B"><div class="piz-col-hdr">B</div><div class="piz-nums" id="piz-B"></div></div>
+                            <div class="piz-col" data-letter="I"><div class="piz-col-hdr">I</div><div class="piz-nums" id="piz-I"></div></div>
+                            <div class="piz-col" data-letter="N"><div class="piz-col-hdr">N</div><div class="piz-nums" id="piz-N"></div></div>
+                            <div class="piz-col" data-letter="G"><div class="piz-col-hdr">G</div><div class="piz-nums" id="piz-G"></div></div>
+                            <div class="piz-col" data-letter="O"><div class="piz-col-hdr">O</div><div class="piz-nums" id="piz-O"></div></div>
                         </div>
                     </div>
                 </main>
