@@ -466,6 +466,9 @@ export const getPlayerGame = async (req: Request, res: Response) => {
       sellingWindowSeconds: settings.sellingWindowSeconds,
       ballDrawIntervalSeconds: settings.ballDrawIntervalSeconds,
       minPlayersToStart: settings.minPlayersToStart || 5,
+      isWaitingQuorum: GameScheduler.isWaitingQuorum,
+      countdownEndsAt: GameScheduler.countdownEndsAt?.toISOString() || null,
+      quorumReachedAt: GameScheduler.quorumReachedAt?.toISOString() || null,
       // Winner data
       winner1LineUserId: activeRound.winner1LineUserId,
       winner1LineName,

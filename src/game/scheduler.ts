@@ -6,6 +6,10 @@ import { prisma } from '../wallet/ledger';
 
 export class GameScheduler {
   public static nextRoundAt: Date | null = null;
+  public static isWaitingQuorum: boolean = true;
+  public static quorumReachedAt: Date | null = null;
+  public static countdownEndsAt: Date | null = null;
+  
   private gameEngine: GameEngine;
   private isRunning = false;
   private isPaused = false;
@@ -25,7 +29,7 @@ export class GameScheduler {
     // Start first round immediately after 3 seconds
     this.scheduleNextRound(3000);
 
-    logger.info(`🎱 Game Scheduler active — continuous rounds with dynamic selling window and quorum check`);
+    logger.info(`🎱 Game Scheduler active — quorum-activated selling countdown engine`);
   }
 
   async stop(): Promise<void> {
@@ -39,6 +43,9 @@ export class GameScheduler {
 
     const delay = Math.max(1000, delayMs);
     GameScheduler.nextRoundAt = new Date(Date.now() + delay);
+    GameScheduler.isWaitingQuorum = true;
+    GameScheduler.quorumReachedAt = null;
+    GameScheduler.countdownEndsAt = null;
     logger.info(`⏰ Next round opening in ${Math.round(delay / 1000)}s`);
 
     this.currentTimeout = setTimeout(async () => {
@@ -60,15 +67,13 @@ export class GameScheduler {
 
       // 2. Start Selling immediately
       await this.gameEngine.startSelling(round.id);
-      GameScheduler.nextRoundAt = new Date(Date.now() + sellingWindow * 1000);
-      logger.info(`🛒 Selling started for round #${round.roundNumber} (${sellingWindow}s window)`);
+      GameScheduler.isWaitingQuorum = true;
+      GameScheduler.quorumReachedAt = null;
+      GameScheduler.countdownEndsAt = null;
+      logger.info(`🛒 Registration & card sales OPEN for round #${round.roundNumber} (Waiting for 5 players quorum)`);
 
-      // Wait initial selling window
-      await new Promise(r => setTimeout(r, sellingWindow * 1000));
-
-      // 3. Intelligent Quórum Check: Wait until at least minPlayers (default 5) are active
+      // 3. Quorum Gathering Loop: Wait until at least minPlayers (default 5) buy cards
       while (this.isRunning) {
-        // Check current settings dynamically in case admin changed minPlayers
         const currentSettings = getSystemSettings();
         const minPlayers = currentSettings.minPlayersToStart || 5;
 
@@ -79,28 +84,34 @@ export class GameScheduler {
         const uniquePlayers = new Set(cardsInRound.map(c => c.userId)).size;
 
         if (uniquePlayers >= minPlayers) {
-          logger.info(`🎉 Quórum reached for round #${round.roundNumber}: ${uniquePlayers}/${minPlayers} players ready with ${cardsInRound.length} cards!`);
+          logger.info(`🎉 Quórum de ${uniquePlayers}/${minPlayers} jugadores alcanzado para Ronda #${round.roundNumber}!`);
+          logger.info(`⏱️ Activando cuenta regresiva de ${sellingWindow}s — Las ventas siguen abiertas para más jugadores...`);
+          
+          GameScheduler.isWaitingQuorum = false;
+          GameScheduler.quorumReachedAt = new Date();
+          GameScheduler.countdownEndsAt = new Date(Date.now() + sellingWindow * 1000);
+          GameScheduler.nextRoundAt = GameScheduler.countdownEndsAt;
           break;
         }
 
-        // Quorum not yet reached: DO NOT cancel. Keep selling open so more players can register and enter!
-        logger.info(`⏳ Round #${round.roundNumber} waiting for quórum: ${uniquePlayers}/${minPlayers} players ready (${cardsInRound.length} cards). Keeping sales open...`);
-        
-        // Extend timer so players in UI see active sales window
-        GameScheduler.nextRoundAt = new Date(Date.now() + 20000);
-
-        // Check again every 4 seconds
-        await new Promise(r => setTimeout(r, 4000));
+        GameScheduler.isWaitingQuorum = true;
+        await new Promise(r => setTimeout(r, 2000));
       }
 
       if (!this.isRunning) return;
 
-      // 4. Close Selling and finalize seeds
-      const closedRound = await this.gameEngine.closeSelling(round.id);
-      logger.info(`🔒 Selling closed for round #${round.roundNumber} — ${closedRound.totalCards} cards, pool: ${closedRound.prizePool} Bs`);
+      // 4. Activated Countdown Window: Sales REMAIN OPEN for everyone while timer counts down!
+      await new Promise(r => setTimeout(r, sellingWindow * 1000));
 
-      // 5. Start Ball Drawing Loop (Sequential Loop - No setInterval Race Conditions)
+      if (!this.isRunning) return;
+
+      // 5. Time is up! Close selling and prepare draw
+      const closedRound = await this.gameEngine.closeSelling(round.id);
+      logger.info(`🔒 Selling closed for round #${round.roundNumber} — Total ${closedRound.totalCards} cards, pool: ${closedRound.prizePool} Bs`);
+
+      // 6. Start Ball Drawing Loop (Sequential Loop - No setInterval Race Conditions)
       GameScheduler.nextRoundAt = new Date(Date.now() + 240000);
+      GameScheduler.isWaitingQuorum = false;
 
       await new Promise(r => setTimeout(r, 3000)); // 3s pause before first ball
 

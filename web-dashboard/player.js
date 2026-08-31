@@ -1004,36 +1004,42 @@ function updateCountdowns(d) {
   const minPlayers = d.minPlayersToStart || 5;
   const activePlayers = d.activePlayersCount || 0;
   const totalCards = d.totalCards || 0;
+  const isWaiting = d.isWaitingQuorum !== false && activePlayers < minPlayers;
 
   let timerStr = '--:--';
   let statusStr = 'Cargando...';
   let badgeStatusStr = '🟢 DISPONIBLE';
+  let playerBadgeStr = `${activePlayers}/${minPlayers}`;
 
-  if (d.status === 'SELLING' && d.sellingStartedAt) {
-    const elapsed = (Date.now() - new Date(d.sellingStartedAt).getTime()) / 1000;
-    const windowSecs = d.sellingWindowSeconds || 120;
-    const rem = Math.max(0, Math.floor(windowSecs - elapsed));
-
-    if (activePlayers < minPlayers) {
+  if (d.status === 'SELLING') {
+    if (isWaiting) {
+      // Phase 1: Waiting for 5 unique players to buy cards
       const missing = minPlayers - activePlayers;
-      if (rem > 0) {
-        timerStr = fmt(rem);
-        statusStr = `🛒 ESPERANDO JUGADORES (${activePlayers}/${minPlayers})`;
-        badgeStatusStr = `⏳ FALTAN ${missing} JUGADORES`;
-      } else {
-        timerStr = '⏳ ESPERANDO';
-        statusStr = `FALTAN ${missing} JUGADOR(ES) PARA QUÓRUM`;
-        badgeStatusStr = `⏳ ESPERANDO 5 JUGADORES`;
-      }
+      timerStr = `⏳ 0/5`;
+      if (activePlayers > 0) timerStr = `⏳ ${activePlayers}/${minPlayers}`;
+      statusStr = `🛒 FALTAN ${missing} JUGADORES PARA ACTIVAR RELOJ`;
+      badgeStatusStr = `⏳ ESPERANDO ${minPlayers} JUGADORES`;
+      playerBadgeStr = `${activePlayers}/${minPlayers}`;
     } else {
+      // Phase 2: Quórum reached! Official countdown ticking down while registrations & sales REMAIN OPEN
+      let rem = 0;
+      if (d.countdownEndsAt) {
+        rem = Math.max(0, Math.floor((new Date(d.countdownEndsAt).getTime() - Date.now()) / 1000));
+      } else if (d.sellingStartedAt) {
+        const elapsed = (Date.now() - new Date(d.sellingStartedAt).getTime()) / 1000;
+        rem = Math.max(0, Math.floor((d.sellingWindowSeconds || 120) - elapsed));
+      }
+
       if (rem > 0) {
         timerStr = fmt(rem);
-        statusStr = `🟢 ¡QUÓRUM LISTO! INICIA EN ${timerStr}`;
-        badgeStatusStr = `🟢 QUÓRUM COMPLETO (${activePlayers}/${minPlayers})`;
+        statusStr = `🔥 ¡QUÓRUM LISTO (${activePlayers} JUGADORES)! • INICIA EN ${timerStr}`;
+        badgeStatusStr = `🟢 EN CUENTA REGRESIVA (${activePlayers} JUGADORES)`;
+        playerBadgeStr = `${activePlayers} Inscritos`;
       } else {
         timerStr = '00:00';
         statusStr = '🔒 INICIANDO SORTEO...';
         badgeStatusStr = `🔴 INICIANDO...`;
+        playerBadgeStr = `${activePlayers} Jugando`;
       }
     }
   } else if (d.status === 'DRAWING') {
@@ -1041,6 +1047,7 @@ function updateCountdowns(d) {
     timerStr = `${ballsCount}/75`;
     statusStr = '🔴 CANTANDO EN VIVO';
     badgeStatusStr = '🔴 EN VIVO';
+    playerBadgeStr = `${activePlayers} Jugando`;
   } else {
     const target = d.nextRoundScheduledAt || d.scheduledAt;
     if (target) {
