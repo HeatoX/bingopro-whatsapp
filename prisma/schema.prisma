@@ -15,6 +15,11 @@ model User {
   id            String    @id @default(uuid())
   phone         String    @unique
   name          String?
+  pinHash       String?   // 4-digit PIN bcrypt hash
+  email         String?
+  cedula        String?   // V-12345678
+  bankCode      String?   // 0102, 0105, 0108, etc.
+  bankAccount   String?   // Telefono or account for Pago Movil / Transferencia
   isAdmin       Boolean   @default(false)
   isBlocked     Boolean   @default(false)
   registeredAt  DateTime  @default(now())
@@ -22,6 +27,8 @@ model User {
   
   accounts      Account[]
   cards         Card[]
+  deposits      PagoMovilDeposit[]
+  withdrawals   WithdrawalRequest[]
   
   @@map("users")
 }
@@ -33,7 +40,7 @@ model User {
 model Account {
   id        String        @id @default(uuid())
   userId    String?
-  type      String        // USER_REAL, HOUSE_REVENUE, HOUSE_ESCROW, PAYMENT_GATEWAY
+  type      String        // USER_REAL, HOUSE_REVENUE, HOUSE_ESCROW, PAYMENT_GATEWAY, HOUSE_JACKPOT
   currency  String        @default("VES")
   createdAt DateTime      @default(now())
   
@@ -174,20 +181,25 @@ model PagoMovilDeposit {
   approvedAt    DateTime?
   createdAt     DateTime      @default(now())
   
+  user User @relation(fields: [userId], references: [id])
+  
   @@map("pago_movil_deposits")
 }
 
 model WithdrawalRequest {
-  id            String        @id @default(uuid())
-  userId        String
-  amount        Float
-  bankCode      String
-  phoneNumber   String
-  cedulaNumber  String
-  status        String        @default("PENDING") // PENDING, APPROVED, REJECTED
-  processedBy   String?
-  processedAt   DateTime?
-  createdAt     DateTime      @default(now())
+  id              String        @id @default(uuid())
+  userId          String
+  amount          Float
+  bankCode        String
+  phoneNumber     String
+  cedulaNumber    String
+  status          String        @default("PENDING") // PENDING, APPROVED, REJECTED
+  rejectionReason String?
+  processedBy     String?
+  processedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  
+  user User @relation(fields: [userId], references: [id])
   
   @@map("withdrawal_requests")
 }

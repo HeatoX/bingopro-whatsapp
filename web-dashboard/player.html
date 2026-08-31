@@ -10,7 +10,7 @@
 <body>
     <canvas id="fx-canvas"></canvas>
 
-    <!-- ═══ LOGIN SCREEN ═══ -->
+    <!-- ═══ LOGIN / REGISTER SCREEN ═══ -->
     <div id="screen-login" class="screen">
         <div class="login-wrap">
             <div class="login-card">
@@ -18,10 +18,31 @@
                 <div class="login-logo-big">👑</div>
                 <h1 class="login-h1">BINGO<span class="gold">ROYAL</span> 3D</h1>
                 <p class="login-tag">La Plataforma de Bingo #1 de Venezuela</p>
-                <input type="text" id="login-phone" class="input-glass" placeholder="Tu Número WhatsApp (ej: 04121234567)" autofocus />
-                <input type="text" id="login-name" class="input-glass" placeholder="Tu Nombre / Apodo" />
-                <button id="btn-register" class="btn-gold-lg">ENTRAR A JUGAR AHORA →</button>
-                <p class="login-foot">🔒 Transacciones Seguras con Pago Móvil Instantáneo</p>
+
+                <!-- Auth Mode Switcher -->
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn active" id="tab-login-btn">🔑 Iniciar Sesión</button>
+                    <button class="auth-tab-btn" id="tab-register-btn">📝 Crear Cuenta</button>
+                </div>
+
+                <!-- Login Form -->
+                <div id="form-login-box" class="auth-form-box">
+                    <input type="text" id="login-phone" class="input-glass" placeholder="Tu WhatsApp (ej: 04121234567)" autofocus />
+                    <input type="password" id="login-pin" class="input-glass" placeholder="PIN de 4 Dígitos (ej: 1234)" maxlength="4" inputmode="numeric" />
+                    <button id="btn-login" class="btn-gold-lg">ENTRAR A JUGAR AHORA 🚀</button>
+                </div>
+
+                <!-- Register Form -->
+                <div id="form-register-box" class="auth-form-box hidden">
+                    <input type="text" id="reg-phone" class="input-glass" placeholder="WhatsApp (ej: 04121234567)" />
+                    <input type="text" id="reg-name" class="input-glass" placeholder="Tu Nombre / Apodo" />
+                    <input type="password" id="reg-pin" class="input-glass" placeholder="Crea tu PIN de 4 Dígitos (ej: 1234)" maxlength="4" inputmode="numeric" />
+                    <input type="text" id="reg-cedula" class="input-glass" placeholder="Cédula (ej: V-12345678)" />
+                    <button id="btn-register" class="btn-gold-lg">CREAR MI CUENTA GRATIS ✨</button>
+                </div>
+
+                <div id="auth-error-msg" class="auth-error hidden"></div>
+                <p class="login-foot">🔒 Cuentas individuales seguras con Pago Móvil instantáneo</p>
             </div>
         </div>
     </div>
@@ -32,41 +53,39 @@
         <header class="topbar">
             <div class="tb-left">
                 <div class="crown-logo">👑</div>
-                <div class="tb-brand">BINGO<span class="gold">ROYAL</span> <span class="tag-live">EN VIVO</span></div>
+                <div class="tb-brand" id="brand-home-btn" style="cursor:pointer">BINGO<span class="gold">ROYAL</span> <span class="tag-live">EN VIVO</span></div>
                 <div class="topbar-online-pill"><span class="dot-live-green"></span> <span id="online-count-lbl">1 En Línea</span></div>
             </div>
             <div class="tb-center">
-                <div class="user-pill" id="nav-profile-btn">
-                    <div class="up-avatar" id="tb-avatar">?</div>
+                <div class="user-pill" id="nav-profile-btn" title="Ver mi Perfil y Billetera">
+                    <div class="up-avatar" id="tb-avatar">👤</div>
                     <div class="up-info">
-                        <span id="tb-name" class="up-name">Bienvenido, Jugador</span>
+                        <span id="tb-name" class="up-name">Jugador</span>
                         <span class="up-bal-lbl">Balance: <strong id="tb-bal" class="up-bal-val">Bs 0.00</strong></span>
                     </div>
                 </div>
             </div>
             <div class="tb-right">
                 <button id="btn-topbar-deposit" class="btn-deposit-gold">+ RECARGAR</button>
-                <button id="btn-topbar-history" class="btn-icon-tb" title="Historial">📜</button>
+                <button id="btn-topbar-withdraw" class="btn-withdraw-neon" title="Retirar Saldo">💸 RETIRAR</button>
+                <button id="btn-topbar-profile" class="btn-icon-tb" title="Mi Perfil y Billetera">👤</button>
                 <button id="btn-voice" class="btn-icon-tb active" title="Voz Cantante">🗣️</button>
                 <button id="btn-sound" class="btn-icon-tb" title="Sonido">🔊</button>
             </div>
         </header>
 
-        <!-- ═══ SCREEN 1: LOBBY DE SALAS (Estilo Apuestas Royal Lobby) ═══ -->
+        <!-- ═══ SCREEN 1: LOBBY DE SALAS ═══ -->
         <div id="screen-lobby" class="screen-inner">
             <!-- Nav Tabs -->
             <div class="lobby-tabs-bar">
-                <button class="lt-tab active">🎰 TODAS LAS SALAS</button>
-                <button class="lt-tab">🏆 GRANDES GANADORES</button>
-                <button class="lt-tab">📖 TUTORIAL & REGLAS</button>
-                <button class="lt-tab highlight">🔥 PREVENTA ACTIVA</button>
+                <button class="lt-tab active" data-tab="rooms">🎰 SALA PRINCIPAL</button>
+                <button class="lt-tab" id="lt-profile-tab" data-tab="profile">👤 MI PERFIL & BILLETERA</button>
             </div>
 
             <div class="lobby-content">
-                <!-- SALAS DE JUEGO GRID (Rooms Grid) -->
+                <!-- SALAS DE JUEGO GRID -->
                 <h3 class="section-title">🎮 SALAS DE BINGO DISPONIBLES</h3>
                 <div class="rooms-grid">
-                    <!-- Room 1: Bingo 75 En Vivo (ACTIVA CONECTADA AL BACKEND) -->
                     <div class="room-card room-live" id="btn-enter-classic">
                         <div class="rc-top-bar">
                             <span class="rc-title-badge">🎤 BINGO 75 EN VIVO</span>
@@ -88,7 +107,6 @@
                         </div>
                         <button class="btn-play-now">¡ENTRAR A JUGAR AHORA! 🚀</button>
                     </div>
-                    </div>
                 </div>
 
                 <!-- TABLA DE PREMIOS OFICIAL -->
@@ -105,7 +123,7 @@
             </div>
         </div>
 
-        <!-- ═══ SCREEN 2: DENTRO DE LA SALA DE JUEGO (Estilo Apuestas Royal Room) ═══ -->
+        <!-- ═══ SCREEN 2: SALA DE JUEGO ═══ -->
         <div id="screen-room" class="screen-inner hidden">
             <!-- Room Top Control Bar -->
             <div class="room-nav-bar">
@@ -121,10 +139,10 @@
                 </div>
             </div>
 
-            <!-- Main Game Layout Grid (3 Columnas Estilo Casino Royal) -->
+            <!-- Main Game Layout Grid (3 Columnas) -->
             <div class="game-room-grid">
                 
-                <!-- LEFT COLUMN: CARTONES DISPONIBLES & MIS CARTONES -->
+                <!-- LEFT COLUMN: CARTONES -->
                 <aside class="gr-col-left">
                     <div class="cards-panel-header">
                         <span class="cph-title">🎟️ MIS CARTONES (<span id="card-count">0</span>)</span>
@@ -146,7 +164,7 @@
                 <!-- CENTER COLUMN: PREMIOS + BOMBO 3D + COMPRA + PIZARRA -->
                 <main class="gr-col-center">
                     
-                    <!-- LIVE PRIZES STRIP (Montos Recaudados en Vivo por Categoría) -->
+                    <!-- LIVE PRIZES STRIP -->
                     <div class="live-prizes-strip">
                         <div class="prize-pill-card" id="card-prize-1line">
                             <div class="ppc-top">
@@ -179,7 +197,7 @@
                         </div>
                     </div>
 
-                    <!-- Quick Purchase Controls Bar (Pills de Compra Estilo Apuestas Royal) -->
+                    <!-- Quick Purchase Controls Bar -->
                     <div class="quick-buy-box">
                         <div class="qbb-header">
                             <span class="qbb-title">🛒 COMPRAR CARTONES</span>
@@ -195,7 +213,7 @@
                         </div>
                     </div>
 
-                    <!-- 3D MECHANICAL DRUM STAGE (El Bombo 3D Espectacular) -->
+                    <!-- 3D MECHANICAL DRUM STAGE -->
                     <div class="drum-stage-box">
                         <div class="stage-status-header">
                             <div class="live-badge"><span class="dot-live"></span> <span id="room-label">RONDA #--</span></div>
@@ -215,149 +233,204 @@
                             <div class="bh" data-col="O">O</div>
                         </div>
 
-                        <!-- 3D Physics Drum + Current Ball -->
-                        <div class="drum-display-row">
-                            <div class="drum-canvas-frame">
-                                <canvas id="drum-canvas" width="240" height="240"></canvas>
-                                <div class="drum-glow-ring"></div>
+                        <!-- 3D Drum + Active Ball Output Center -->
+                        <div class="drum-ball-arena">
+                            <div class="cage-wrapper">
+                                <canvas id="drum-canvas" width="220" height="220"></canvas>
+                                <div class="cage-shadow"></div>
                             </div>
-                            <div class="active-ball-container">
-                                <div id="cur-ball" class="big-ball idle">
-                                    <div class="bb-face">
-                                        <span id="cb-col" class="bb-col">?</span>
-                                        <span id="cb-num" class="bb-num">--</span>
-                                    </div>
-                                    <div class="bb-shine"></div>
+                            
+                            <div class="current-ball-spotlight">
+                                <div class="active-ball" id="active-ball">
+                                    <span class="ab-col" id="cb-col"></span>
+                                    <span class="ab-num" id="cb-num">--</span>
                                 </div>
-                                <div id="cb-announce" class="ball-announce">CANTADOR EN VIVO</div>
+                                <span class="ab-label" id="cb-lbl">ESPERANDO</span>
                             </div>
                         </div>
 
-                        <!-- Progress Bar -->
-                        <div class="prog-wrap"><div id="prog-bar" class="prog-fill"></div></div>
+                        <!-- Ball Draw Progress Bar -->
+                        <div class="draw-progress-track">
+                            <div class="dpt-fill" id="prog-bar"></div>
+                        </div>
 
-                        <!-- History Strip -->
-                        <div class="history-strip">
-                            <span class="hs-label">Últimas:</span>
-                            <div id="history-balls" class="hs-balls"></div>
+                        <!-- Live Ball History Strip -->
+                        <div class="history-tray">
+                            <span class="ht-title">Últimas:</span>
+                            <div id="history-balls" class="history-balls-strip"></div>
                         </div>
                     </div>
 
-                    <!-- MASTER PIZARRA 1-75 (LED Dynamic Matrix) -->
-                    <div class="pizarra">
-                        <div class="piz-label">⚡ PIZARRA OFICIAL EN VIVO (1 - 75)</div>
-                        <div class="piz-cols">
-                            <div class="piz-col" data-letter="B"><div class="piz-col-hdr">B</div><div class="piz-nums" id="piz-B"></div></div>
-                            <div class="piz-col" data-letter="I"><div class="piz-col-hdr">I</div><div class="piz-nums" id="piz-I"></div></div>
-                            <div class="piz-col" data-letter="N"><div class="piz-col-hdr">N</div><div class="piz-nums" id="piz-N"></div></div>
-                            <div class="piz-col" data-letter="G"><div class="piz-col-hdr">G</div><div class="piz-nums" id="piz-G"></div></div>
-                            <div class="piz-col" data-letter="O"><div class="piz-col-hdr">O</div><div class="piz-nums" id="piz-O"></div></div>
+                    <!-- PIZARRA OFICIAL 75 BOLAS (Collapsible Full Board) -->
+                    <div class="master-board-card">
+                        <div class="mbc-header">
+                            <span>⚡ PIZARRA OFICIAL EN VIVO (1 - 75)</span>
+                        </div>
+                        <div class="master-board-grid">
+                            <div class="mb-col" data-col="B"><div class="mb-hd">B</div><div class="mb-cells" id="mb-B"></div></div>
+                            <div class="mb-col" data-col="I"><div class="mb-hd">I</div><div class="mb-cells" id="mb-I"></div></div>
+                            <div class="mb-col" data-col="N"><div class="mb-hd">N</div><div class="mb-cells" id="mb-N"></div></div>
+                            <div class="mb-col" data-col="G"><div class="mb-hd">G</div><div class="mb-cells" id="mb-G"></div></div>
+                            <div class="mb-col" data-col="O"><div class="mb-hd">O</div><div class="mb-cells" id="mb-O"></div></div>
                         </div>
                     </div>
                 </main>
 
-                <!-- RIGHT COLUMN: SALA DE CHAT EN VIVO -->
+                <!-- RIGHT COLUMN: CHAT EN VIVO & COMUNIDAD -->
                 <aside class="gr-col-right">
                     <div class="chat-panel">
-                        <div class="chat-panel-hdr">
-                            <h3>💬 SALA DE CHAT</h3>
-                            <span class="chat-online-count">🟢 <span id="chat-online-num">1</span> En Línea</span>
+                        <div class="chat-header">
+                            <span>💬 SALA DE CHAT</span>
+                            <span class="chat-online-badge">🟢 <strong id="chat-online-num">1</strong> En Línea</span>
                         </div>
-                        <div id="chat-messages" class="chat-msgs-box">
-                            <div class="chat-msg sys">🤖 <i>Bot: ¡Bienvenidos a BingoPro Royal! Suerte a todos.</i></div>
-                            <div class="chat-msg"><span class="uname">yelitza552:</span> ¡Vamos por ese Bingo! 🤞</div>
-                            <div class="chat-msg"><span class="uname">mansur27:</span> Buena suerte a todos 🔥</div>
+                        <div class="chat-messages" id="chat-box">
+                            <div class="chat-msg system">
+                                <span class="c-user">👑 Bot:</span> ¡Bienvenidos a BingoPro Royal! Suerte a todos.
+                            </div>
                         </div>
-                        <div class="chat-input-bar">
-                            <input type="text" id="chat-input" placeholder="Ingrese su mensaje..." />
-                            <button id="chat-send" class="btn-chat-send">▶</button>
-                        </div>
+                        <form id="chat-form" class="chat-input-bar">
+                            <input type="text" id="chat-input" placeholder="Escribe un mensaje..." maxlength="120" />
+                            <button type="submit" class="btn-chat-send">🚀</button>
+                        </form>
                     </div>
                 </aside>
-
             </div>
         </div>
 
-        <!-- ═══ SCREEN 3: PERFIL Y CARTERA ═══ -->
+        <!-- ═══ SCREEN 3: PERFIL DE USUARIO Y BILLETERA ═══ -->
         <div id="screen-profile" class="screen-inner hidden">
-            <div class="prof-header">
-                <button class="btn-back" data-to="lobby">← VOLVER AL LOBBY</button>
-                <h3>MI CUENTA & CARTERA</h3>
-            </div>
-            <div class="prof-body">
-                <div class="prof-avatar-big" id="prof-avatar">?</div>
-                <h2 id="prof-name" class="prof-name">Jugador</h2>
-                <p id="prof-phone" class="prof-phone">0412...</p>
+            <div class="profile-page-container">
+                <div class="profile-header-card">
+                    <button class="btn-change-room" id="btn-profile-back" data-to="lobby">← VOLVER AL LOBBY</button>
+                    <div class="ph-user-info">
+                        <div class="ph-avatar">👤</div>
+                        <div class="ph-details">
+                            <h2 id="prof-name">Jugador</h2>
+                            <p>📱 <span id="prof-phone">0412-0000000</span> • 🪪 <span id="prof-cedula">Sin registrar</span></p>
+                        </div>
+                    </div>
+                    <button id="btn-logout" class="btn-logout">🚪 Cerrar Sesión</button>
+                </div>
 
-                <div class="balance-card">
-                    <span class="bc-label">BALANCE DISPONIBLE</span>
-                    <span id="prof-balance" class="bc-amount">Bs 0.00</span>
-                    <div class="bc-btns">
-                        <button class="btn-gold-lg" id="prof-deposit-btn">+ RECARGAR PAGO MÓVIL</button>
+                <!-- Wallet Balances Strip -->
+                <div class="profile-wallet-strip">
+                    <div class="pws-card available">
+                        <span class="pws-lbl">💰 SALDO DISPONIBLE</span>
+                        <span class="pws-val" id="prof-available-bal">Bs 0.00</span>
+                        <div class="pws-btns">
+                            <button id="prof-btn-dep" class="btn-gold-sm">+ Recargar</button>
+                            <button id="prof-btn-with" class="btn-neon-sm">💸 Retirar</button>
+                        </div>
+                    </div>
+                    <div class="pws-card locked">
+                        <span class="pws-lbl">🔒 EN TRÁNSITO / RETIRO</span>
+                        <span class="pws-val" id="prof-locked-bal">Bs 0.00</span>
+                        <span class="pws-sub">Fondos solicitados para retiro</span>
                     </div>
                 </div>
 
-                <button class="btn-logout" id="btn-logout">Cerrar Sesión</button>
+                <!-- Profile Editing & Banking Details -->
+                <div class="profile-grid-sections">
+                    <div class="prof-card">
+                        <h3>🏦 DATOS BANCARIOS PAGO MÓVIL</h3>
+                        <p class="prof-desc">Registra tus datos para retiros directos e instantáneos.</p>
+                        <div class="prof-form-row">
+                            <label>Banco:</label>
+                            <select id="prof-input-bank" class="input-glass">
+                                <option value="0102">0102 - Banco de Venezuela</option>
+                                <option value="0134">0134 - Banesco</option>
+                                <option value="0105">0105 - Mercantil</option>
+                                <option value="0108">0108 - Provincial</option>
+                                <option value="0172">0172 - Bancamiga</option>
+                                <option value="0191">0191 - BNC</option>
+                                <option value="0114">0114 - Bancaribe</option>
+                                <option value="0163">0163 - Banco del Tesoro</option>
+                            </select>
+                        </div>
+                        <div class="prof-form-row">
+                            <label>Cédula:</label>
+                            <input type="text" id="prof-input-cedula" class="input-glass" placeholder="V-12345678" />
+                        </div>
+                        <div class="prof-form-row">
+                            <label>Teléfono Pago Móvil:</label>
+                            <input type="text" id="prof-input-bank-tel" class="input-glass" placeholder="04121234567" />
+                        </div>
+                        <div class="prof-form-row">
+                            <label>Cambiar PIN (4 dígitos):</label>
+                            <input type="password" id="prof-input-pin" class="input-glass" placeholder="Nuevo PIN (opcional)" maxlength="4" inputmode="numeric" />
+                        </div>
+                        <button id="btn-save-profile" class="btn-gold-lg">GUARDAR DATOS 💾</button>
+                        <div id="prof-save-alert" class="auth-error hidden" style="margin-top:10px;"></div>
+                    </div>
+
+                    <!-- Transaction Ledger History -->
+                    <div class="prof-card">
+                        <h3>📜 HISTORIAL DE MOVIMIENTOS & RETIROS</h3>
+                        <div class="history-table-container">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Concepto</th>
+                                        <th>Monto</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prof-history-tbody">
+                                    <tr><td colspan="4" class="text-center">Cargando movimientos...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Mobile Bottom Navigation Bar -->
-        <nav class="bottom-nav">
-            <button class="bn-item active" data-screen="lobby"><span class="bn-icon">🏠</span><span class="bn-lbl">Lobby</span></button>
-            <button class="bn-item" data-screen="room"><span class="bn-icon">🎮</span><span class="bn-lbl">Juego</span></button>
-            <button class="bn-item" data-screen="profile"><span class="bn-icon">👤</span><span class="bn-lbl">Perfil</span></button>
-        </nav>
     </div>
 
-    <!-- Buy Confirmation Modal (Casino Royal Luxury Ticket) -->
-    <div id="buy-modal" class="modal-overlay hidden">
+    <!-- ═══ MODAL: COMPRA DE CARTONES ═══ -->
+    <div id="buy-confirm-modal" class="modal-overlay hidden">
         <div class="buy-confirm-box">
             <button id="buy-modal-close" class="close-x">✕</button>
             <div class="bcm-header">
-                <span class="bcm-icon">🎟️</span>
-                <h2>CONFIRMAR COMPRA</h2>
-                <p class="bcm-sub">Revisa los detalles antes de adquirir tus cartones</p>
+                <span class="bcm-badge-deal">🛒 CONFIRMACIÓN DE COMPRA</span>
+                <h2 id="bcm-title">Comprar Cartones</h2>
             </div>
             
-            <div class="bcm-ticket-card">
+            <div class="bcm-details-grid">
                 <div class="bcm-row">
-                    <span class="bcm-label">Cartones a comprar</span>
-                    <strong id="bcm-count" class="bcm-val">6 Cartones</strong>
+                    <span class="bcm-lbl">Cartones Solicitados:</span>
+                    <strong id="bcm-cards-count" class="bcm-val gold">6</strong>
                 </div>
                 <div class="bcm-row">
-                    <span class="bcm-label">Precio por unidad</span>
+                    <span class="bcm-lbl">Precio Unitario:</span>
                     <span id="bcm-unit-price" class="bcm-val">Bs 100.00</span>
                 </div>
-                <div class="bcm-row" id="bcm-promo-row" style="display:none;">
-                    <span class="bcm-label" style="color:var(--green-btn)">🎁 Descuento Promo</span>
-                    <span id="bcm-promo-val" class="bcm-val" style="color:var(--green-btn)">- Bs 0.00</span>
+                <div class="bcm-row" id="bcm-discount-row">
+                    <span class="bcm-lbl">🎁 Promoción Especial:</span>
+                    <span class="bcm-val green" id="bcm-discount-txt">Pagas solo 4 cartones</span>
                 </div>
-                <div class="bcm-divider"></div>
-                <div class="bcm-row total-row">
-                    <span class="bcm-label">TOTAL A PAGAR</span>
-                    <strong id="bcm-total" class="bcm-total-val">Bs 600.00</strong>
+                <div class="bcm-row total-highlight">
+                    <span class="bcm-lbl-total">TOTAL A DEBITAR:</span>
+                    <strong id="bcm-total-price" class="bcm-val-total gold">Bs 400.00</strong>
                 </div>
             </div>
 
-            <!-- Wallet status breakdown -->
-            <div class="bcm-wallet-box">
-                <div class="bcm-w-item">
+            <div class="bcm-wallet-check">
+                <div class="bcm-wallet-col">
                     <span class="bcm-w-lbl">Tu Saldo Actual</span>
-                    <strong id="bcm-curr-balance" class="bcm-w-val">Bs 0.00</strong>
+                    <strong id="bcm-user-balance" class="bcm-w-val">Bs 0.00</strong>
                 </div>
-                <span class="bcm-w-arrow">➔</span>
-                <div class="bcm-w-item">
+                <div class="bcm-wallet-arrow">➔</div>
+                <div class="bcm-wallet-col">
                     <span class="bcm-w-lbl">Saldo Restante</span>
                     <strong id="bcm-next-balance" class="bcm-w-val green">Bs 0.00</strong>
                 </div>
             </div>
 
-            <!-- Insufficient funds warning if needed -->
             <div id="bcm-funds-alert" class="bcm-alert hidden">
                 ⚠️ Saldo insuficiente. Recarga para continuar.
             </div>
 
-            <!-- Modal Action Buttons -->
             <div class="bcm-actions">
                 <button id="buy-modal-cancel" class="btn-royal-cancel">❌ CANCELAR</button>
                 <button id="buy-modal-confirm" class="btn-royal-confirm">✅ SÍ, COMPRAR</button>
@@ -366,7 +439,7 @@
         </div>
     </div>
 
-    <!-- Deposit Modal -->
+    <!-- ═══ MODAL: RECARGA PAGO MÓVIL ═══ -->
     <div id="dep-modal" class="modal-overlay hidden">
         <div class="dep-box">
             <button id="dep-close" class="close-x">✕</button>
@@ -379,6 +452,33 @@
             <input type="number" id="dep-amt" class="input-glass" placeholder="Monto en Bs" />
             <input type="text" id="dep-ref" class="input-glass" placeholder="Últimos 6 dígitos referencia" />
             <button id="dep-submit" class="btn-gold-lg">REPORTAR PAGO →</button>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: RETIRO DE FONDOS ═══ -->
+    <div id="withdraw-modal" class="modal-overlay hidden">
+        <div class="dep-box">
+            <button id="with-close" class="close-x">✕</button>
+            <h2>💸 RETIRAR SALDO</h2>
+            <p class="prof-desc">El monto solicitado se enviará por Pago Móvil a tus datos registrados.</p>
+            <div class="with-avail-badge">
+                <span>Saldo Disponible: </span>
+                <strong id="with-available-txt" class="green">Bs 0.00</strong>
+            </div>
+            <input type="number" id="with-amt" class="input-glass" placeholder="Monto a retirar en Bs" min="10" />
+            <select id="with-bank" class="input-glass">
+                <option value="0102">0102 - Banco de Venezuela</option>
+                <option value="0134">0134 - Banesco</option>
+                <option value="0105">0105 - Mercantil</option>
+                <option value="0108">0108 - Provincial</option>
+                <option value="0172">0172 - Bancamiga</option>
+                <option value="0191">0191 - BNC</option>
+                <option value="0114">0114 - Bancaribe</option>
+            </select>
+            <input type="text" id="with-cedula" class="input-glass" placeholder="Cédula Titular (ej: V-12345678)" />
+            <input type="text" id="with-phone" class="input-glass" placeholder="Teléfono Pago Móvil (ej: 04121234567)" />
+            <button id="with-submit" class="btn-gold-lg">SOLICITAR RETIRO INMEDIATO 💸</button>
+            <div id="with-error-msg" class="auth-error hidden" style="margin-top:10px;"></div>
         </div>
     </div>
 

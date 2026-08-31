@@ -1,15 +1,23 @@
 /* ═══════════════════════════════════════════════════════════════
    BINGOPRO ROYAL 3D — FULL SPA ENGINE
-   Apuestas Royal Style: Lobby, Promos, Quick Buy Pills, 3D Physics Drum
+   Apuestas Royal Style: Lobby, Promos, Quick Buy Pills, 3D Physics Drum,
+   User Profile, Double-Entry Ledger Wallet & Instant Withdrawals
    ═══════════════════════════════════════════════════════════════ */
 
 let phone = localStorage.getItem('bp_phone') || '';
 let userName = localStorage.getItem('bp_name') || '';
+let userToken = localStorage.getItem('bp_token') || '';
 let soundOn = true, voiceOn = true;
 let lastBallNum = null;
 let drawnSet = new Set();
 let prevDaub = {};
 let pollTimer = null;
+let serverCardPrice = 100;
+
+// Phase winners tracking
+let currentWinner1Line = null;
+let currentWinner2Lines = null;
+let currentWinnerFullCard = null;
 
 const $id = id => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
@@ -79,6 +87,7 @@ function showScreen(name) {
     if (el) el.classList.toggle('hidden', s !== name);
   });
   $$('.bn-item').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
+  $$('.lt-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name || (name === 'lobby' && t.dataset.tab === 'rooms')));
   if (name === 'room') { initDrum(); fetchCards(); }
   if (name === 'profile') refreshProfile();
   if (name === 'lobby') refreshLobby();
@@ -90,27 +99,101 @@ $$('.btn-back').forEach(b => b.onclick = () => showScreen(b.dataset.to));
 $$('.btn-change-room').forEach(b => b.onclick = () => showScreen(b.dataset.to));
 const btnClassic = $id('btn-enter-classic');
 if (btnClassic) btnClassic.onclick = () => { snd(); showScreen('room'); };
-$id('nav-profile-btn').onclick = () => showScreen('profile');
+if ($id('nav-profile-btn')) $id('nav-profile-btn').onclick = () => showScreen('profile');
+if ($id('btn-topbar-profile')) $id('btn-topbar-profile').onclick = () => showScreen('profile');
+if ($id('brand-home-btn')) $id('brand-home-btn').onclick = () => showScreen('lobby');
+if ($id('lt-profile-tab')) $id('lt-profile-tab').onclick = () => showScreen('profile');
 
-// Tab switching inside lobby
-$$('.lt-tab').forEach(t => t.onclick = () => {
-  $$('.lt-tab').forEach(x => x.classList.remove('active'));
-  t.classList.add('active');
-});
+// ═══ AUTH MODE TOGGLE ═══
+if ($id('tab-login-btn') && $id('tab-register-btn')) {
+  $id('tab-login-btn').onclick = () => {
+    $id('tab-login-btn').classList.add('active');
+    $id('tab-register-btn').classList.remove('active');
+    $id('form-login-box').classList.remove('hidden');
+    $id('form-register-box').classList.add('hidden');
+    $id('auth-error-msg').classList.add('hidden');
+  };
+  $id('tab-register-btn').onclick = () => {
+    $id('tab-register-btn').classList.add('active');
+    $id('tab-login-btn').classList.remove('active');
+    $id('form-register-box').classList.remove('hidden');
+    $id('form-login-box').classList.add('hidden');
+    $id('auth-error-msg').classList.add('hidden');
+  };
+}
 
-// ═══ LOGIN / REGISTER ═══
-$id('btn-register').onclick = async () => {
-  snd();
-  const ph = $id('login-phone').value.trim().replace(/[^0-9]/g, '');
-  const nm = $id('login-name').value.trim();
-  if (!ph) return alert('Ingresa tu número de WhatsApp');
-  phone = ph; userName = nm || `Jugador ${ph.slice(-4)}`;
-  localStorage.setItem('bp_phone', phone); localStorage.setItem('bp_name', userName);
-  try {
-    await fetch('/api/player/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, name: userName }) });
-  } catch {}
-  enterApp();
-};
+function showAuthError(msg) {
+  const el = $id('auth-error-msg');
+  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+}
+
+// ═══ LOGIN HANDLER ═══
+if ($id('btn-login')) {
+  $id('btn-login').onclick = async () => {
+    snd();
+    const ph = $id('login-phone').value.trim().replace(/[^0-9]/g, '');
+    const pin = $id('login-pin').value.trim();
+    if (!ph) return showAuthError('Ingresa tu número de WhatsApp');
+
+    try {
+      const res = await fetch('/api/player/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: ph, pin })
+      });
+      const d = await res.json();
+      if (!res.ok || d.error) {
+        return showAuthError(d.error || 'Error al iniciar sesión');
+      }
+
+      phone = d.user.phone;
+      userName = d.user.name || `Jugador ${phone.slice(-4)}`;
+      userToken = d.token || '';
+      localStorage.setItem('bp_phone', phone);
+      localStorage.setItem('bp_name', userName);
+      if (userToken) localStorage.setItem('bp_token', userToken);
+      enterApp();
+    } catch {
+      showAuthError('Error de conexión con el servidor');
+    }
+  };
+}
+
+// ═══ REGISTER HANDLER ═══
+if ($id('btn-register')) {
+  $id('btn-register').onclick = async () => {
+    snd();
+    const ph = $id('reg-phone').value.trim().replace(/[^0-9]/g, '');
+    const nm = $id('reg-name').value.trim();
+    const pin = $id('reg-pin').value.trim();
+    const ced = $id('reg-cedula').value.trim();
+
+    if (!ph || ph.length < 10) return showAuthError('Ingresa un número de WhatsApp válido');
+    if (pin && !/^\d{4}$/.test(pin)) return showAuthError('El PIN debe tener exactamente 4 dígitos numéricos');
+
+    try {
+      const res = await fetch('/api/player/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: ph, name: nm, pin, cedula: ced })
+      });
+      const d = await res.json();
+      if (!res.ok || d.error) {
+        return showAuthError(d.error || 'Error al registrar usuario');
+      }
+
+      phone = d.user.phone;
+      userName = d.user.name || `Jugador ${phone.slice(-4)}`;
+      userToken = d.token || '';
+      localStorage.setItem('bp_phone', phone);
+      localStorage.setItem('bp_name', userName);
+      if (userToken) localStorage.setItem('bp_token', userToken);
+      enterApp();
+    } catch {
+      showAuthError('Error de conexión con el servidor');
+    }
+  };
+}
 
 function enterApp() {
   $id('screen-login').classList.add('hidden');
@@ -118,14 +201,16 @@ function enterApp() {
   updateTopbar();
   showScreen('lobby');
   startGamePolling();
-  setInterval(updateTopbar, 3000);
+  setInterval(updateTopbar, 4000);
 }
 
 // Auto-login
 if (phone) enterApp();
 
 // Logout
-$id('btn-logout').onclick = () => { localStorage.clear(); phone = ''; location.reload(); };
+if ($id('btn-logout')) {
+  $id('btn-logout').onclick = () => { localStorage.clear(); phone = ''; location.reload(); };
+}
 
 // ═══ TOPBAR ═══
 async function updateTopbar() {
@@ -134,10 +219,15 @@ async function updateTopbar() {
     const d = await (await fetch(`/api/player/me?phone=${phone}`)).json();
     if (d.name) {
       userName = d.name;
-      $id('tb-name').textContent = `Bienvenido, ${d.name}`;
+      serverCardPrice = d.cardPriceBs || 100;
+      $id('tb-name').textContent = d.name;
       $id('tb-bal').textContent = `Bs ${d.balance.toFixed(2)}`;
       $id('tb-avatar').textContent = d.name.charAt(0).toUpperCase();
-      if (d.pagoMovil) { $id('pm-banco').textContent = d.pagoMovil.banco; $id('pm-tel').textContent = d.pagoMovil.telefono; $id('pm-ced').textContent = d.pagoMovil.cedula; }
+      if (d.pagoMovil) {
+        if ($id('pm-banco')) $id('pm-banco').textContent = d.pagoMovil.banco;
+        if ($id('pm-tel')) $id('pm-tel').textContent = d.pagoMovil.telefono;
+        if ($id('pm-ced')) $id('pm-ced').textContent = d.pagoMovil.cedula;
+      }
     }
   } catch {}
 }
@@ -159,32 +249,220 @@ async function refreshLobby() {
   } catch {}
 }
 
-// ═══ PROFILE ═══
+// ═══ PROFILE & WALLET VIEW ═══
 async function refreshProfile() {
   if (!phone) return;
   try {
-    const d = await (await fetch(`/api/player/me?phone=${phone}`)).json();
-    if (d.name) {
-      $id('prof-avatar').textContent = d.name.charAt(0).toUpperCase();
-      $id('prof-name').textContent = d.name;
-      $id('prof-phone').textContent = d.phone;
-      $id('prof-balance').textContent = `Bs ${d.balance.toFixed(2)}`;
+    const me = await (await fetch(`/api/player/me?phone=${phone}`)).json();
+    if (me.name) {
+      if ($id('prof-name')) $id('prof-name').textContent = me.name;
+      if ($id('prof-phone')) $id('prof-phone').textContent = me.phone;
+      if ($id('prof-cedula')) $id('prof-cedula').textContent = me.cedula || 'Sin registrar';
+      if ($id('prof-available-bal')) $id('prof-available-bal').textContent = `Bs ${me.balance.toFixed(2)}`;
+      if ($id('prof-locked-bal')) $id('prof-locked-bal').textContent = `Bs ${(me.lockedBalance || 0).toFixed(2)}`;
+      
+      // Fill form inputs if empty
+      if ($id('prof-input-bank') && me.bankCode) $id('prof-input-bank').value = me.bankCode;
+      if ($id('prof-input-cedula') && me.cedula) $id('prof-input-cedula').value = me.cedula;
+      if ($id('prof-input-bank-tel') && (me.bankAccount || me.phone)) $id('prof-input-bank-tel').value = me.bankAccount || me.phone;
     }
+
+    // Fetch transactions
+    const txData = await (await fetch(`/api/player/transactions?phone=${phone}`)).json();
+    renderProfileHistory(txData);
   } catch {}
 }
 
+function renderProfileHistory(txData) {
+  const tbody = $id('prof-history-tbody');
+  if (!tbody) return;
+
+  const rows = [];
+  
+  // Withdrawals
+  (txData.withdrawals || []).forEach(w => {
+    const statusBadges = {
+      PENDING: '<span style="color:#FFD700;font-weight:700">⏳ PENDIENTE</span>',
+      APPROVED: '<span style="color:#00FF88;font-weight:700">✅ APROBADO</span>',
+      REJECTED: '<span style="color:#FF4444;font-weight:700">❌ RECHAZADO</span>'
+    };
+    rows.push({
+      date: new Date(w.date),
+      concept: `💸 Retiro Pago Móvil (${w.bankCode})`,
+      amount: `- Bs ${w.amount.toFixed(2)}`,
+      amountColor: '#FF6B6B',
+      status: statusBadges[w.status] || w.status
+    });
+  });
+
+  // Deposits
+  (txData.deposits || []).forEach(d => {
+    const statusBadges = {
+      PENDING: '<span style="color:#FFD700;font-weight:700">⏳ PENDIENTE</span>',
+      APPROVED: '<span style="color:#00FF88;font-weight:700">✅ ACREDITADO</span>',
+      REJECTED: '<span style="color:#FF4444;font-weight:700">❌ RECHAZADO</span>'
+    };
+    rows.push({
+      date: new Date(d.date),
+      concept: `🏦 Recarga Pago Móvil (Ref: ${d.reference})`,
+      amount: `+ Bs ${d.amount.toFixed(2)}`,
+      amountColor: '#00FF88',
+      status: statusBadges[d.status] || d.status
+    });
+  });
+
+  // Ledger entries (game purchases & payouts)
+  (txData.ledger || []).forEach(l => {
+    const isCredit = l.amount > 0;
+    rows.push({
+      date: new Date(l.date),
+      concept: l.description || l.type,
+      amount: `${isCredit ? '+' : ''} Bs ${l.amount.toFixed(2)}`,
+      amountColor: isCredit ? '#00FF88' : '#AAA',
+      status: '<span style="color:#00E5FF;font-weight:700">✔ EJECUTADO</span>'
+    });
+  });
+
+  rows.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="padding:20px;color:#888;">No tienes movimientos registrados aún</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.slice(0, 20).map(r => `
+    <tr>
+      <td style="color:#AAA">${r.date.toLocaleDateString()} ${r.date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+      <td>${r.concept}</td>
+      <td style="color:${r.amountColor};font-weight:800">${r.amount}</td>
+      <td>${r.status}</td>
+    </tr>
+  `).join('');
+}
+
+// Save profile
+if ($id('btn-save-profile')) {
+  $id('btn-save-profile').onclick = async () => {
+    const bankCode = $id('prof-input-bank').value;
+    const cedula = $id('prof-input-cedula').value.trim();
+    const bankAccount = $id('prof-input-bank-tel').value.trim();
+    const newPin = $id('prof-input-pin').value.trim();
+
+    const alertEl = $id('prof-save-alert');
+    try {
+      const res = await fetch('/api/player/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, bankCode, cedula, bankAccount, newPin })
+      });
+      const d = await res.json();
+      if (!res.ok || d.error) {
+        alertEl.textContent = d.error || 'Error al guardar datos';
+        alertEl.classList.remove('hidden');
+      } else {
+        alertEl.textContent = '✅ ¡Datos actualizados exitosamente!';
+        alertEl.style.background = 'rgba(0, 255, 136, 0.15)';
+        alertEl.style.borderColor = '#00FF88';
+        alertEl.style.color = '#00FF88';
+        alertEl.classList.remove('hidden');
+        if ($id('prof-input-pin')) $id('prof-input-pin').value = '';
+        setTimeout(() => alertEl.classList.add('hidden'), 4000);
+        refreshProfile();
+      }
+    } catch {
+      alertEl.textContent = 'Error de conexión';
+      alertEl.classList.remove('hidden');
+    }
+  };
+}
+
 // ═══ DEPOSITS ═══
-$id('btn-topbar-deposit').onclick = () => $id('dep-modal').classList.remove('hidden');
-$id('prof-deposit-btn').onclick = () => $id('dep-modal').classList.remove('hidden');
-$id('dep-close').onclick = () => $id('dep-modal').classList.add('hidden');
-$id('dep-submit').onclick = async () => {
-  const amt = $id('dep-amt').value, ref = $id('dep-ref').value;
-  if (!amt || !ref) return alert('Completa ambos campos');
+if ($id('btn-topbar-deposit')) $id('btn-topbar-deposit').onclick = () => $id('dep-modal').classList.remove('hidden');
+if ($id('prof-btn-dep')) $id('prof-btn-dep').onclick = () => $id('dep-modal').classList.remove('hidden');
+if ($id('dep-close')) $id('dep-close').onclick = () => $id('dep-modal').classList.add('hidden');
+if ($id('dep-submit')) {
+  $id('dep-submit').onclick = async () => {
+    const amt = $id('dep-amt').value, ref = $id('dep-ref').value;
+    if (!amt || !ref) return alert('Completa ambos campos');
+    try {
+      const d = await (await fetch('/api/player/deposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, amount: amt, referenceCode: ref }) })).json();
+      if (d.success) {
+        alert('✅ Recarga registrada — será aprobada en breve por administración');
+        $id('dep-modal').classList.add('hidden');
+        $id('dep-amt').value = '';
+        $id('dep-ref').value = '';
+        refreshProfile();
+      } else {
+        alert('Error: ' + d.error);
+      }
+    } catch { alert('Error de conexión'); }
+  };
+}
+
+// ═══ WITHDRAWALS ═══
+async function openWithdrawModal() {
+  if (!phone) return alert('Inicia sesión primero');
+  const modal = $id('withdraw-modal');
+  if (!modal) return;
+
   try {
-    const d = await (await fetch('/api/player/deposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, amount: amt, referenceCode: ref }) })).json();
-    d.success ? (alert('✅ Recarga registrada — será aprobada en breve'), $id('dep-modal').classList.add('hidden')) : alert('Error: ' + d.error);
-  } catch { alert('Error de conexión'); }
-};
+    const me = await (await fetch(`/api/player/me?phone=${phone}`)).json();
+    if ($id('with-available-txt')) $id('with-available-txt').textContent = `Bs ${me.balance.toFixed(2)}`;
+    if ($id('with-bank') && me.bankCode) $id('with-bank').value = me.bankCode;
+    if ($id('with-cedula') && me.cedula) $id('with-cedula').value = me.cedula;
+    if ($id('with-phone')) $id('with-phone').value = me.bankAccount || me.phone;
+  } catch {}
+
+  modal.classList.remove('hidden');
+}
+
+if ($id('btn-topbar-withdraw')) $id('btn-topbar-withdraw').onclick = openWithdrawModal;
+if ($id('prof-btn-with')) $id('prof-btn-with').onclick = openWithdrawModal;
+if ($id('with-close')) $id('with-close').onclick = () => $id('withdraw-modal').classList.add('hidden');
+
+if ($id('with-submit')) {
+  $id('with-submit').onclick = async () => {
+    const amt = parseFloat($id('with-amt').value);
+    const bankCode = $id('with-bank').value;
+    const cedula = $id('with-cedula').value.trim();
+    const bankAccount = $id('with-phone').value.trim();
+    const errEl = $id('with-error-msg');
+
+    if (isNaN(amt) || amt <= 0) {
+      errEl.textContent = 'Ingresa un monto válido a retirar';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (!cedula || !bankAccount) {
+      errEl.textContent = 'Completa tu cédula y teléfono Pago Móvil';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/player/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, amount: amt, bankCode, cedula, bankAccount })
+      });
+      const d = await res.json();
+      if (!res.ok || d.error) {
+        errEl.textContent = d.error || 'Error al solicitar retiro';
+        errEl.classList.remove('hidden');
+      } else {
+        alert(`✅ ¡Solicitud de retiro por Bs ${amt.toFixed(2)} procesada!\n\nTus fondos han quedado reservados y se transferirán a tu Pago Móvil.`);
+        $id('withdraw-modal').classList.add('hidden');
+        $id('with-amt').value = '';
+        errEl.classList.add('hidden');
+        updateTopbar();
+        refreshProfile();
+      }
+    } catch {
+      errEl.textContent = 'Error de conexión';
+      errEl.classList.remove('hidden');
+    }
+  };
+}
 
 // ═══ SOUND / VOICE TOGGLES ═══
 $id('btn-sound').onclick = () => { snd(); soundOn = !soundOn; $id('btn-sound').textContent = soundOn ? '🔊' : '🔇'; };
@@ -194,6 +472,15 @@ $id('btn-voice').onclick = () => { voiceOn = !voiceOn; $id('btn-voice').classLis
 let pendingBuyCount = 0;
 let userBalance = 0;
 
+// Promo: Lleva 6 Paga 4 logic
+function calculatePurchaseTotal(count, unitPrice) {
+  if (count === 6) return 4 * unitPrice;
+  if (count === 12) return 8 * unitPrice;
+  if (count === 24) return 16 * unitPrice;
+  if (count === 48) return 32 * unitPrice;
+  return count * unitPrice;
+}
+
 async function openBuyConfirmation(count) {
   snd();
   pendingBuyCount = count;
@@ -202,87 +489,99 @@ async function openBuyConfirmation(count) {
   try {
     const me = await (await fetch(`/api/player/me?phone=${phone}`)).json();
     userBalance = me.balance || 0;
+    serverCardPrice = me.cardPriceBs || 100;
   } catch { userBalance = 0; }
 
-  const unitPrice = 100; // Base card price
-  const totalCost = count * unitPrice;
+  const unitPrice = serverCardPrice;
+  const totalCost = calculatePurchaseTotal(count, unitPrice);
   const nextBal = userBalance - totalCost;
   const hasFunds = userBalance >= totalCost;
 
-  $id('bcm-count').textContent = count === 1 ? '1 Cartón' : `${count} Cartones`;
-  $id('bcm-unit-price').textContent = `Bs ${unitPrice.toFixed(2)}`;
-  $id('bcm-total').textContent = `Bs ${totalCost.toFixed(2)}`;
-  $id('bcm-curr-balance').textContent = `Bs ${userBalance.toFixed(2)}`;
+  if ($id('bcm-cards-count')) $id('bcm-cards-count').textContent = count === 1 ? '1 Cartón' : `${count} Cartones`;
+  if ($id('bcm-unit-price')) $id('bcm-unit-price').textContent = `Bs ${unitPrice.toFixed(2)}`;
+  if ($id('bcm-total-price')) $id('bcm-total-price').textContent = `Bs ${totalCost.toFixed(2)}`;
+  if ($id('bcm-user-balance')) $id('bcm-user-balance').textContent = `Bs ${userBalance.toFixed(2)}`;
   
+  const discountRow = $id('bcm-discount-row');
+  if (discountRow) {
+    discountRow.style.display = (count >= 6) ? 'flex' : 'none';
+  }
+
   const nbEl = $id('bcm-next-balance');
-  nbEl.textContent = `Bs ${Math.max(0, nextBal).toFixed(2)}`;
-  nbEl.className = hasFunds ? 'bcm-w-val green' : 'bcm-w-val red';
+  if (nbEl) {
+    nbEl.textContent = `Bs ${Math.max(0, nextBal).toFixed(2)}`;
+    nbEl.className = hasFunds ? 'bcm-w-val green' : 'bcm-w-val red';
+  }
 
   const alertBox = $id('bcm-funds-alert');
   const confirmBtn = $id('buy-modal-confirm');
   const depositBtn = $id('buy-modal-deposit');
 
   if (hasFunds) {
-    alertBox.classList.add('hidden');
-    confirmBtn.classList.remove('hidden');
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = '✅ SÍ, COMPRAR';
-    depositBtn.classList.add('hidden');
+    if (alertBox) alertBox.classList.add('hidden');
+    if (confirmBtn) { confirmBtn.classList.remove('hidden'); confirmBtn.disabled = false; confirmBtn.textContent = '✅ SÍ, COMPRAR'; }
+    if (depositBtn) depositBtn.classList.add('hidden');
   } else {
     const missing = totalCost - userBalance;
-    alertBox.textContent = `⚠️ Saldo insuficiente (Te faltan Bs ${missing.toFixed(2)}). Recarga para comprar.`;
-    alertBox.classList.remove('hidden');
-    confirmBtn.classList.add('hidden');
-    depositBtn.classList.remove('hidden');
+    if (alertBox) {
+      alertBox.textContent = `⚠️ Saldo insuficiente (Te faltan Bs ${missing.toFixed(2)}). Recarga para comprar.`;
+      alertBox.classList.remove('hidden');
+    }
+    if (confirmBtn) confirmBtn.classList.add('hidden');
+    if (depositBtn) depositBtn.classList.remove('hidden');
   }
 
-  $id('buy-modal').classList.remove('hidden');
+  $id('buy-confirm-modal').classList.remove('hidden');
 }
 
 function closeBuyModal() {
-  $id('buy-modal').classList.add('hidden');
+  $id('buy-confirm-modal').classList.add('hidden');
 }
 
-$id('buy-modal-close').onclick = closeBuyModal;
-$id('buy-modal-cancel').onclick = closeBuyModal;
+if ($id('buy-modal-close')) $id('buy-modal-close').onclick = closeBuyModal;
+if ($id('buy-modal-cancel')) $id('buy-modal-cancel').onclick = closeBuyModal;
 
-$id('buy-modal-deposit').onclick = () => {
-  closeBuyModal();
-  $id('dep-modal').classList.remove('hidden');
-};
+if ($id('buy-modal-deposit')) {
+  $id('buy-modal-deposit').onclick = () => {
+    closeBuyModal();
+    $id('dep-modal').classList.remove('hidden');
+  };
+}
 
-$id('buy-modal-confirm').onclick = async () => {
-  if (!pendingBuyCount) return;
-  const btn = $id('buy-modal-confirm');
-  btn.disabled = true;
-  btn.textContent = '⏳ Procesando compra...';
+if ($id('buy-modal-confirm')) {
+  $id('buy-modal-confirm').onclick = async () => {
+    if (!pendingBuyCount) return;
+    const btn = $id('buy-modal-confirm');
+    btn.disabled = true;
+    btn.textContent = '⏳ Procesando compra...';
 
-  try {
-    const d = await (await fetch('/api/player/buy-cards', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, count: pendingBuyCount })
-    })).json();
+    try {
+      const d = await (await fetch('/api/player/buy-cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, count: pendingBuyCount })
+      })).json();
 
-    if (d.success) {
-      closeBuyModal();
-      confetti(120);
-      playPop();
-      updateTopbar();
-      refreshProfile();
-      fetchCards();
-      poll();
-    } else {
+      if (d.success) {
+        closeBuyModal();
+        confetti(120);
+        playPop();
+        updateTopbar();
+        refreshProfile();
+        fetchCards();
+        poll();
+      } else {
+        btn.disabled = false;
+        btn.textContent = '✅ SÍ, COMPRAR';
+        alert('❌ ' + (d.error || 'Error en la compra'));
+      }
+    } catch {
       btn.disabled = false;
       btn.textContent = '✅ SÍ, COMPRAR';
-      alert('❌ ' + (d.error || 'Error en la compra'));
+      alert('Error de conexión con el servidor');
     }
-  } catch {
-    btn.disabled = false;
-    btn.textContent = '✅ SÍ, COMPRAR';
-    alert('Error de conexión con el servidor');
-  }
-};
+  };
+}
 
 // ═══ BUY CARDS PILL TRIGGERS ═══
 $$('.buy-pill').forEach(b => b.onclick = () => {
@@ -291,16 +590,30 @@ $$('.buy-pill').forEach(b => b.onclick = () => {
 });
 
 // ═══ CHAT ═══
-$id('chat-send').onclick = () => sendChat();
-$id('chat-input').onkeypress = e => { if (e.key === 'Enter') sendChat(); };
-function sendChat() { const i = $id('chat-input'), t = i.value.trim(); if (!t) return; addChat(userName || 'Tú', t); i.value = ''; }
-function addChat(u, t) { const b = $id('chat-messages'), d = document.createElement('div'); d.className = 'chat-msg'; d.innerHTML = `<span class="uname">${u}:</span> ${t}`; b.appendChild(d); b.scrollTop = b.scrollHeight; }
+if ($id('chat-form')) {
+  $id('chat-form').onsubmit = (e) => {
+    e.preventDefault();
+    const i = $id('chat-input'), t = i.value.trim();
+    if (!t) return;
+    addChat(userName || 'Tú', t);
+    i.value = '';
+  };
+}
+function addChat(u, t) {
+  const b = $id('chat-box');
+  if (!b) return;
+  const d = document.createElement('div');
+  d.className = 'chat-msg';
+  d.innerHTML = `<span class="c-user">${u}:</span> ${t}`;
+  b.appendChild(d);
+  b.scrollTop = b.scrollHeight;
+}
 
 // ═══ BUILD PIZARRA ═══
 function buildPizarra() {
   const cols = { B: [1,15], I: [16,30], N: [31,45], G: [46,60], O: [61,75] };
   for (const [L, [lo, hi]] of Object.entries(cols)) {
-    const c = $id(`piz-${L}`); if (!c) continue; c.innerHTML = '';
+    const c = $id(`mb-${L}`); if (!c) continue; c.innerHTML = '';
     for (let n = lo; n <= hi; n++) { const d = document.createElement('div'); d.className = 'piz-cell'; d.id = `pc-${n}`; d.textContent = n; c.appendChild(d); }
   }
 }
@@ -346,8 +659,9 @@ async function poll() {
       currentWinnerFullCard = null;
       for (let i = 1; i <= 75; i++) { const el = $id(`pc-${i}`); if (el) el.classList.remove('lit'); }
       renderHistory([]);
-      if ($id('current-ball-num')) $id('current-ball-num').textContent = '--';
-      if ($id('current-ball-col')) $id('current-ball-col').textContent = '';
+      if ($id('cb-num')) $id('cb-num').textContent = '--';
+      if ($id('cb-col')) $id('cb-col').textContent = '';
+      if ($id('cb-lbl')) $id('cb-lbl').textContent = 'ESPERANDO';
       if ($id('cards-zone')) $id('cards-zone').innerHTML = '<div class="no-cards">Compra cartones para la próxima ronda 🎲</div>';
       if ($id('card-count')) $id('card-count').textContent = '0';
       userCardsList = [];
@@ -370,7 +684,7 @@ async function poll() {
     if (lastRoundNum !== d.roundNumber) {
       lastRoundNum = d.roundNumber;
       announcedWinners.clear();
-      prevDaub = {}; // Clear daub history for new round
+      prevDaub = {};
       lastBallNum = null;
     }
 
@@ -384,7 +698,7 @@ async function poll() {
     if (d.drawnBalls.length > 0) { const last = d.drawnBalls[d.drawnBalls.length - 1]; if (lastBallNum !== last.number) { lastBallNum = last.number; onNewBall(last); } }
     renderHistory(d.drawnBalls.slice(-8).reverse());
 
-    // Winner detection (triggers SPOTLIGHT WINNER MODAL with winning card in center and exact prize)
+    // Winner detection (triggers SPOTLIGHT WINNER MODAL)
     const winType = d.winnerFullCardUserId ? 'full' : d.winner2LinesUserId ? '2line' : d.winner1LineUserId ? '1line' : null;
     if (winType) {
       const winKey = `${d.roundNumber}-${winType}`;
@@ -494,17 +808,14 @@ function updateCountdowns(d) {
     }
   } else if (d.status === 'DRAWING') {
     const ballsCount = d.drawnBalls ? d.drawnBalls.length : 0;
-    // Outside Lobby: show countdown until NEXT bingo round starts!
     if (d.nextRoundScheduledAt) {
       const remNext = Math.max(0, Math.floor((new Date(d.nextRoundScheduledAt).getTime() - Date.now()) / 1000));
       lt.textContent = fmt(remNext); if (ls) ls.textContent = '🎲 PRÓXIMO BINGO (EN VIVO)';
     } else {
       lt.textContent = `${ballsCount}/75`; if (ls) ls.textContent = '🔴 EN VIVO CANTANDO';
     }
-    // Inside Room: show live ball progress
     rt.textContent = `${ballsCount}/75`; if (rl) rl.textContent = '🔴 CANTANDO EN VIVO';
   } else {
-    // Waiting / Next round countdown
     const target = d.nextRoundScheduledAt || d.scheduledAt;
     if (target) {
       const rem = Math.max(0, Math.floor((new Date(target).getTime() - Date.now()) / 1000));
@@ -518,28 +829,49 @@ function updateCountdowns(d) {
 }
 
 function onNewBall(ball) {
-  const s = $id('cur-ball');
-  s.className = `big-ball ball-${ball.column.toLowerCase()} drop-in`;
-  $id('cb-col').textContent = ball.column; $id('cb-num').textContent = ball.number;
-  $id('cb-announce').textContent = `${ball.column} - ${ball.number}`;
-  setTimeout(() => s.classList.remove('drop-in'), 600);
-  $$('.bh').forEach(h => { h.className = 'bh'; if (h.dataset.col === ball.column) h.classList.add('glow-' + ball.column.toLowerCase()); });
-  const r = s.getBoundingClientRect();
-  const cmap = { B: '#FFD700', I: '#00E5FF', N: '#00FF6A', G: '#D500F9', O: '#FF1744' };
-  burst(r.left + r.width / 2, r.top + r.height / 2, cmap[ball.column] || '#FFD700', 30);
-  playPop(); speakBall(ball.column, ball.number);
+  const s = $id('active-ball');
+  if (s) {
+    s.className = `active-ball ball-${ball.column.toLowerCase()} drop-in`;
+    setTimeout(() => s.classList.remove('drop-in'), 600);
+  }
+  if ($id('cb-col')) $id('cb-col').textContent = ball.column;
+  if ($id('cb-num')) $id('cb-num').textContent = ball.number;
+  if ($id('cb-lbl')) $id('cb-lbl').textContent = `${ball.column} - ${ball.number}`;
+
+  $$('.bh').forEach(h => {
+    h.className = 'bh';
+    if (h.dataset.col === ball.column) h.classList.add('glow-' + ball.column.toLowerCase());
+  });
+
+  if (s) {
+    const r = s.getBoundingClientRect();
+    const cmap = { B: '#FFD700', I: '#00E5FF', N: '#00FF6A', G: '#D500F9', O: '#FF1744' };
+    burst(r.left + r.width / 2, r.top + r.height / 2, cmap[ball.column] || '#FFD700', 30);
+  }
+  playPop();
+  speakBall(ball.column, ball.number);
 }
 
 function renderHistory(balls) {
-  const c = $id('history-balls'); c.innerHTML = '';
-  balls.forEach(b => { const d = document.createElement('div'); d.className = `hs-ball col-${b.column.toLowerCase()}`; d.textContent = b.number; c.appendChild(d); });
+  const c = $id('history-balls');
+  if (!c) return;
+  c.innerHTML = '';
+  balls.forEach(b => {
+    const d = document.createElement('div');
+    d.className = `hs-ball col-${b.column.toLowerCase()}`;
+    d.textContent = b.number;
+    c.appendChild(d);
+  });
 }
 
 let bannerT = null;
 function showBanner(title, msg) {
-  const b = $id('winner-banner'); if (!b) return;
-  $id('wb-title').textContent = title; $id('wb-user').textContent = msg;
-  b.classList.remove('hidden'); if (bannerT) clearTimeout(bannerT);
+  const b = $id('winner-banner');
+  if (!b) return;
+  $id('wb-title').textContent = title;
+  $id('wb-user').textContent = msg;
+  b.classList.remove('hidden');
+  if (bannerT) clearTimeout(bannerT);
   bannerT = setTimeout(() => b.classList.add('hidden'), 6000);
 }
 
@@ -607,7 +939,6 @@ function getMissingCount(card, dSet) {
 
 let currentCardFilter = 'all';
 
-// Attach event listeners to filter buttons
 $$('.cfb-btn').forEach(btn => {
   btn.onclick = () => {
     $$('.cfb-btn').forEach(b => b.classList.remove('active'));
@@ -747,7 +1078,6 @@ function renderCard(card, drawn, isSpotlight = false) {
       excitementClass = 'winner-card';
       badge = `<span class="near-win-badge" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.25)">✌️ 2 LÍNEAS (Filas ${completedRows.map(x=>x+1).join(' y ')})</span>`;
     } else if (completedRows.length === 1) {
-      // Tiene 1 línea y busca la 2da línea
       if (minMissForUncompletedLine === 1) {
         excitementClass = 'near-win-1';
         badge = '<span class="near-win-badge">🔥 ¡A 1 BOLA DE 2 LÍNEAS!</span>';

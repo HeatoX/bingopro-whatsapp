@@ -49,8 +49,11 @@ app.get('/api/qr', async (req, res) => {
 });
 
 // Public Player Web App Endpoints
+app.post('/api/player/register', playerRoutes.playerRegister);
 app.post('/api/player/login', playerRoutes.playerLogin);
 app.get('/api/player/me', playerRoutes.getPlayerMe);
+app.put('/api/player/profile', playerRoutes.playerUpdateProfile);
+app.get('/api/player/transactions', playerRoutes.getPlayerTransactions);
 app.get('/api/player/game', playerRoutes.getPlayerGame);
 app.get('/api/player/my-cards', playerRoutes.getPlayerCards);
 app.post('/api/player/buy-cards', playerRoutes.playerBuyCards);
@@ -82,6 +85,7 @@ api.post('/deposits/:id/reject', routes.rejectDeposit);
 // Withdrawals
 api.get('/withdrawals', routes.getWithdrawals);
 api.post('/withdrawals/:id/process', routes.processWithdrawal);
+api.post('/withdrawals/:id/reject', routes.rejectWithdrawal);
 
 // Finance
 api.get('/finance', routes.getFinanceStats);

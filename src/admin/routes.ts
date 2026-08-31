@@ -269,6 +269,43 @@ export const processWithdrawal = async (req: Request, res: Response) => {
   }
 };
 
+export const rejectWithdrawal = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { reason } = req.body || {};
+    const reqRecord = await prisma.withdrawalRequest.findUnique({ where: { id } });
+    if (!reqRecord || reqRecord.status !== 'PENDING') {
+      return res.status(400).json({ error: 'Solicitud no encontrada o ya procesada' });
+    }
+
+    const userAccount = await prisma.account.findFirst({
+      where: { userId: reqRecord.userId, type: 'USER_REAL' }
+    });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.withdrawalRequest.update({
+        where: { id },
+        data: { status: 'REJECTED', rejectionReason: reason || 'Rechazado por administración' }
+      });
+
+      // Return locked funds back to available balance
+      if (userAccount) {
+        await tx.accountBalance.update({
+          where: { accountId: userAccount.id },
+          data: {
+            lockedBalance: { decrement: reqRecord.amount },
+            availableBalance: { increment: reqRecord.amount }
+          }
+        });
+      }
+    });
+
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
 // Finance
 export const getFinanceStats = async (req: Request, res: Response) => {
   try {

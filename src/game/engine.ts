@@ -66,6 +66,20 @@ export class GameEngine extends EventEmitter {
           where: { accountId: escrowAcc.id },
           data: { availableBalance: { increment: seedBalance } }
         });
+        await prisma.transaction.create({
+          data: {
+            idempotencyKey: `SEED_ROUND:${roundNumber}`,
+            type: 'SEED_JACKPOT_TRANSFER',
+            description: `Transferencia de pozo semilla acumulado a la Ronda #${roundNumber}`,
+            metadata: JSON.stringify({ roundNumber, amount: seedBalance }),
+            ledgerEntries: {
+              create: [
+                { accountId: jackpotAcc.id, amount: -seedBalance },
+                { accountId: escrowAcc.id, amount: seedBalance }
+              ]
+            }
+          }
+        });
         logger.info(`💎 Seeded new Round #${roundNumber} with Bs ${seedBalance.toFixed(2)} from previous round reserve`);
       }
     }
@@ -97,8 +111,11 @@ export class GameEngine extends EventEmitter {
   async closeSelling(roundId: string) {
     const clientSeed = crypto.randomBytes(16).toString('hex');
     
+    const currentRound = await prisma.gameRound.findUnique({ where: { id: roundId } });
     const cards = await prisma.card.findMany({ where: { gameRoundId: roundId } });
-    const prizePool = cards.reduce((sum, card) => sum + card.purchasePrice, 0);
+    const cardsTotal = cards.reduce((sum, card) => sum + card.purchasePrice, 0);
+    // Retain seed pot + cards sales!
+    const prizePool = Math.max(Number(currentRound?.prizePool || 0), cardsTotal);
 
     const round = await prisma.gameRound.update({
       where: { id: roundId },
@@ -120,14 +137,20 @@ export class GameEngine extends EventEmitter {
       include: { user: { include: { accounts: { include: { balance: true } } } } }
     });
 
+    const escrowAccount = await prisma.account.findFirst({ where: { type: 'HOUSE_ESCROW' } });
+
     // Atomic refund: all-or-nothing with ledger entries
     await prisma.$transaction(async (tx) => {
       for (const card of cards) {
         const userAccount = card.user.accounts.find(a => a.type === 'USER_REAL');
-        if (userAccount?.balance) {
+        if (userAccount?.balance && escrowAccount) {
           await tx.accountBalance.update({
             where: { accountId: userAccount.id },
             data: { availableBalance: { increment: card.purchasePrice } }
+          });
+          await tx.accountBalance.update({
+            where: { accountId: escrowAccount.id },
+            data: { availableBalance: { decrement: card.purchasePrice } }
           });
           await tx.transaction.create({
             data: {
@@ -136,7 +159,12 @@ export class GameEngine extends EventEmitter {
               gameRoundId: roundId,
               description: `Reembolso ronda cancelada`,
               metadata: JSON.stringify({ userId: card.userId, amount: card.purchasePrice }),
-              ledgerEntries: { create: [{ accountId: userAccount.id, amount: card.purchasePrice }] }
+              ledgerEntries: { 
+                create: [
+                  { accountId: escrowAccount.id, amount: -card.purchasePrice },
+                  { accountId: userAccount.id, amount: card.purchasePrice }
+                ] 
+              }
             }
           });
         }
