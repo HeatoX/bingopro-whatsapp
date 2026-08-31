@@ -456,11 +456,11 @@ async function loadSettings() {
         document.getElementById('cfg-room-diamante').value = s.roomDiamantePriceBs ?? 500;
 
         // Prizes (%)
-        document.getElementById('cfg-pct-1line').value = s.prize1LinePercentage ?? 9;
-        document.getElementById('cfg-pct-2lines').value = s.prize2LinesPercentage ?? 14;
-        document.getElementById('cfg-pct-full').value = s.prizeFullCardPercentage ?? 57;
+        document.getElementById('cfg-pct-1line').value = s.prize1LinePercentage ?? 10;
+        document.getElementById('cfg-pct-2lines').value = s.prize2LinesPercentage ?? 15;
+        document.getElementById('cfg-pct-full').value = s.prizeFullCardPercentage ?? 50;
         document.getElementById('cfg-pct-seed').value = s.reserveSeedPercentage ?? 5;
-        document.getElementById('cfg-pct-house').value = s.housePercentage ?? 15;
+        document.getElementById('cfg-pct-house').value = s.housePercentage ?? 20;
 
         // Times
         document.getElementById('cfg-game-interval').value = s.gameIntervalMinutes ?? 3;

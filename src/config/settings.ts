@@ -48,10 +48,10 @@ let cachedSettings: AppSettings = {
   roomOroPriceBs: 250,
   roomDiamantePriceBs: 500,
 
-  housePercentage: config.housePercentage || 15,
-  prize1LinePercentage: config.prize1LinePercentage || 9,
-  prize2LinesPercentage: config.prize2LinesPercentage || 14,
-  prizeFullCardPercentage: config.prizeFullCardPercentage || 57,
+  housePercentage: config.housePercentage || 20,
+  prize1LinePercentage: config.prize1LinePercentage || 10,
+  prize2LinesPercentage: config.prize2LinesPercentage || 15,
+  prizeFullCardPercentage: config.prizeFullCardPercentage || 50,
   reserveSeedPercentage: config.reserveSeedPercentage || 5,
 
   gameIntervalMinutes: config.gameIntervalMinutes || 3,

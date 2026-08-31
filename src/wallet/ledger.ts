@@ -146,8 +146,14 @@ export function calculatePackagePrice(count: number, unitPrice: number = config.
   return (packsOf6 * 4 + remainder) * unitPrice;
 }
 
-// Atomic Batch Card Purchase with Promo Discount
-export async function purchaseCardsBatch(userId: string, gameRoundId: string, count: number, startCardIndex: number) {
+// Atomic Batch Card Purchase with Promo Discount and Dynamic Unit Price
+export async function purchaseCardsBatch(
+  userId: string,
+  gameRoundId: string,
+  count: number,
+  startCardIndex: number,
+  unitPrice: number = config.cardPriceBs
+) {
   if (count <= 0) throw new Error('INVALID_CARD_COUNT');
 
   const round = await prisma.gameRound.findUnique({ where: { id: gameRoundId } });
@@ -168,7 +174,8 @@ export async function purchaseCardsBatch(userId: string, gameRoundId: string, co
     throw new Error('User or system accounts not found');
   }
 
-  const totalCost = calculatePackagePrice(count, config.cardPriceBs);
+  const effectiveUnitPrice = typeof unitPrice === 'number' && unitPrice > 0 ? unitPrice : config.cardPriceBs;
+  const totalCost = calculatePackagePrice(count, effectiveUnitPrice);
 
   return await prisma.$transaction(async (tx) => {
     // 1. Check user balance
@@ -200,7 +207,7 @@ export async function purchaseCardsBatch(userId: string, gameRoundId: string, co
         idempotencyKey,
         type: 'BUY_CARD',
         gameRoundId,
-        metadata: JSON.stringify({ userId, count, totalCost, promo: '6x4' }),
+        metadata: JSON.stringify({ userId, count, unitPrice: effectiveUnitPrice, totalCost, promo: '6x4' }),
         ledgerEntries: {
           create: [
             { accountId: userAccount.id, amount: -totalCost },
@@ -212,7 +219,7 @@ export async function purchaseCardsBatch(userId: string, gameRoundId: string, co
 
     // 5. Generate all cards
     const createdCards = [];
-    const effectiveUnitPrice = totalCost / count;
+    const perCardPrice = totalCost / count;
 
     for (let i = 0; i < count; i++) {
       const cardIndex = startCardIndex + i;
@@ -224,7 +231,7 @@ export async function purchaseCardsBatch(userId: string, gameRoundId: string, co
           userId,
           gameRoundId,
           grid: JSON.stringify(grid),
-          purchasePrice: effectiveUnitPrice
+          purchasePrice: perCardPrice
         }
       });
       createdCards.push(card);

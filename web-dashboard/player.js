@@ -869,22 +869,23 @@ async function poll() {
       const winKey = `${d.roundNumber}-${winType}`;
       if (!announcedWinners.has(winKey)) {
         announcedWinners.add(winKey);
-        const prize57 = (d.prizePool * 0.57).toFixed(2);
-        const prize14 = (d.prizePool * 0.14).toFixed(2);
-        const prize9 = (d.prizePool * 0.09).toFixed(2);
+        const rules = d.payoutRules || { prize1LinePercentage: 10, prize2LinesPercentage: 15, prizeFullCardPercentage: 50 };
+        const prize50 = (d.prizePool * ((rules.prizeFullCardPercentage ?? 50) / 100)).toFixed(2);
+        const prize15 = (d.prizePool * ((rules.prize2LinesPercentage ?? 15) / 100)).toFixed(2);
+        const prize10 = (d.prizePool * ((rules.prize1LinePercentage ?? 10) / 100)).toFixed(2);
         const winningCard = findWinningCard(winType, drawnSet);
 
         if (d.winnerFullCardUserId) {
-          openWinnerCelebration('👑 ¡BINGO COMPLETO!', d.winnerFullCardName || 'Jugador', `Bs ${prize57}`, winningCard);
-          showBanner('👑 ¡BINGO CARTÓN LLENO!', `🎉 Ganador: ${d.winnerFullCardName || 'Jugador'} | Premio: Bs ${prize57}`);
+          openWinnerCelebration('👑 ¡BINGO COMPLETO!', d.winnerFullCardName || 'Jugador', `Bs ${prize50}`, winningCard);
+          showBanner('👑 ¡BINGO CARTÓN LLENO!', `🎉 Ganador: ${d.winnerFullCardName || 'Jugador'} | Premio: Bs ${prize50}`);
           confetti(180);
         } else if (d.winner2LinesUserId) {
-          openWinnerCelebration('✌️ ¡2 LÍNEAS GANADAS!', d.winner2LinesName || 'Jugador', `Bs ${prize14}`, winningCard);
-          showBanner('✌️ ¡DOS LÍNEAS COMPLETAS!', `⭐ Ganador: ${d.winner2LinesName || 'Jugador'} | Premio: Bs ${prize14}`);
+          openWinnerCelebration('✌️ ¡2 LÍNEAS GANADAS!', d.winner2LinesName || 'Jugador', `Bs ${prize15}`, winningCard);
+          showBanner('✌️ ¡DOS LÍNEAS COMPLETAS!', `⭐ Ganador: ${d.winner2LinesName || 'Jugador'} | Premio: Bs ${prize15}`);
           confetti(100);
         } else if (d.winner1LineUserId) {
-          openWinnerCelebration('🥇 ¡1 LÍNEA GANADA!', d.winner1LineName || 'Jugador', `Bs ${prize9}`, winningCard);
-          showBanner('🎉 ¡UNA LÍNEA COMPLETA!', `🎊 Ganador: ${d.winner1LineName || 'Jugador'} | Premio: Bs ${prize9}`);
+          openWinnerCelebration('🥇 ¡1 LÍNEA GANADA!', d.winner1LineName || 'Jugador', `Bs ${prize10}`, winningCard);
+          showBanner('🎉 ¡UNA LÍNEA COMPLETA!', `🎊 Ganador: ${d.winner1LineName || 'Jugador'} | Premio: Bs ${prize10}`);
           confetti(80);
         }
       }
@@ -917,18 +918,18 @@ setInterval(fetchDynamicRooms, 15000);
 function updateLivePrizes(d) {
   const pool = d.prizePool || 0;
   const rules = d.payoutRules || {
-    prize1LinePercentage: 9,
-    prize2LinesPercentage: 14,
-    prizeFullCardPercentage: 57,
+    prize1LinePercentage: 10,
+    prize2LinesPercentage: 15,
+    prizeFullCardPercentage: 50,
     reserveSeedPercentage: 5,
-    housePercentage: 15
+    housePercentage: 20
   };
 
-  const pct1 = rules.prize1LinePercentage ?? 9;
-  const pct2 = rules.prize2LinesPercentage ?? 14;
-  const pctF = rules.prizeFullCardPercentage ?? 57;
+  const pct1 = rules.prize1LinePercentage ?? 10;
+  const pct2 = rules.prize2LinesPercentage ?? 15;
+  const pctF = rules.prizeFullCardPercentage ?? 50;
   const pctS = rules.reserveSeedPercentage ?? 5;
-  const pctH = rules.housePercentage ?? 15;
+  const pctH = rules.housePercentage ?? 20;
 
   if ($id('rule-pct-1l')) $id('rule-pct-1l').textContent = `${pct1}%`;
   if ($id('rule-pct-2l')) $id('rule-pct-2l').textContent = `${pct2}%`;

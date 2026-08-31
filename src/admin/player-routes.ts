@@ -572,7 +572,7 @@ export const playerBuyCards = async (req: Request, res: Response) => {
       return res.status(400).json({ error: `Saldo insuficiente. Necesitas ${totalCost.toFixed(2)} Bs y tienes ${balance.toFixed(2)} Bs.` });
     }
 
-    const { cards, totalCost: chargedAmount } = await purchaseCardsBatch(user.id, activeRound.id, numCount, existingCount + 1);
+    const { cards, totalCost: chargedAmount } = await purchaseCardsBatch(user.id, activeRound.id, numCount, existingCount + 1, unitPrice);
 
     const updatedAcc = await prisma.accountBalance.findUnique({
       where: { accountId: user.accounts[0].id }
