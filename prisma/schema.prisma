@@ -29,6 +29,7 @@ model User {
   cards         Card[]
   deposits      PagoMovilDeposit[]
   withdrawals   WithdrawalRequest[]
+  raffleTickets RaffleTicket[]
   
   @@map("users")
 }
@@ -54,7 +55,7 @@ model Account {
 model Transaction {
   id              String        @id @default(uuid())
   idempotencyKey  String        @unique
-  type            String        // DEPOSIT, WITHDRAWAL, BUY_CARD, WIN_PAYOUT, etc.
+  type            String        // DEPOSIT, WITHDRAWAL, BUY_CARD, BUY_RAFFLE, WIN_PAYOUT, etc.
   gameRoundId     String?
   description     String?
   metadata        String?
@@ -215,5 +216,48 @@ model SystemSetting {
   updatedAt DateTime @default(now()) @updatedAt
 
   @@map("system_settings")
+}
+
+// ============================================
+// SALA DE RIFAS MILLONARIAS (10,000 NÚMEROS)
+// ============================================
+
+model Raffle {
+  id             String         @id @default(uuid())
+  title          String
+  description    String?
+  imageUrl       String?
+  ticketPrice    Float          @default(100)
+  totalNumbers   Int            @default(10000) // 10000 números (0000 a 9999)
+  status         String         @default("ACTIVE") // ACTIVE, CLOSED, DRAWN, CANCELLED
+  drawDate       DateTime?
+  lotteryName    String         @default("SuperGana 10:00 PM")
+  winningNumber  String?        // 4 dígitos ej: "2266"
+  winnerUserId   String?
+  winnerName     String?
+  winnerPhone    String?
+  isAutoVerified Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now()) @updatedAt
+  
+  tickets        RaffleTicket[]
+  
+  @@map("raffles")
+}
+
+model RaffleTicket {
+  id            String   @id @default(uuid())
+  raffleId      String
+  userId        String
+  ticketNumber  String   // "0000" a "9999"
+  purchasePrice Float
+  purchasedAt   DateTime @default(now())
+  isWinner      Boolean  @default(false)
+  
+  raffle        Raffle   @relation(fields: [raffleId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@unique([raffleId, ticketNumber])
+  @@map("raffle_tickets")
 }
 

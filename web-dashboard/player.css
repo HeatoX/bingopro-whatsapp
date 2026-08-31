@@ -1555,5 +1555,122 @@ body {
   box-shadow: 0 0 40px rgba(0, 229, 255, 0.8);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SALA DE RIFAS MILLONARIAS (10,000 NÚMEROS / SUPERGANA 10:00 PM)
+   ═══════════════════════════════════════════════════════════════ */
+.btn-quick-lucky {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #FFD700;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-quick-lucky:hover {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
+.raf-range-tab {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--dim);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: var(--fm, monospace);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.raf-range-tab:hover {
+  background: rgba(0, 229, 255, 0.1);
+  color: #00E5FF;
+  border-color: #00E5FF;
+}
+.raf-range-tab.active {
+  background: linear-gradient(135deg, #00E5FF, #0091EA);
+  color: #000;
+  border-color: #00E5FF;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+/* Number Pills (0000 - 9999) */
+.raf-num-pill {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-family: var(--fm, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  color: #E2E8F0;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+.raf-num-pill:hover:not(.sold) {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: #FFD700;
+  color: #FFD700;
+  transform: scale(1.06);
+}
+.raf-num-pill.selected {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border-color: #FFD700;
+  color: #000;
+  font-weight: 900;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+  transform: scale(1.08);
+  z-index: 2;
+}
+.raf-num-pill.sold {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+/* My Ticket Luxury Card */
+.my-ticket-card {
+  background: linear-gradient(135deg, #1A1A2E, #141426);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+.my-ticket-card.winner-card {
+  border-color: #10B981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), #141426);
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+}
+.my-ticket-card .mtc-num {
+  font-family: var(--fm, monospace);
+  font-size: 32px;
+  font-weight: 900;
+  color: #FFD700;
+  letter-spacing: 2px;
+}
+.my-ticket-card.winner-card .mtc-num {
+  color: #10B981;
+}
+
 
 

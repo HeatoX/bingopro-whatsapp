@@ -104,15 +104,16 @@ function selectRoom(roomId, roomName, roomPrice) {
 
 // ═══ SPA ROUTER ═══
 function showScreen(name) {
-  ['lobby', 'profile', 'room'].forEach(s => {
+  ['lobby', 'profile', 'room', 'raffles'].forEach(s => {
     const el = $id(`screen-${s}`);
     if (el) el.classList.toggle('hidden', s !== name);
   });
   $$('.bn-item').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
-  $$('.lt-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name || (name === 'lobby' && t.dataset.tab === 'rooms')));
+  $$('.lt-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name || (name === 'lobby' && t.dataset.tab === 'rooms') || (name === 'raffles' && t.dataset.tab === 'raffles')));
   if (name === 'room') { initDrum(); fetchCards(); }
   if (name === 'profile') refreshProfile();
-  if (name === 'lobby') refreshLobby();
+  if (name === 'lobby') { refreshLobby(); fetchActiveRaffles(); }
+  if (name === 'raffles') loadActiveRaffleView();
 }
 
 // ── NAV EVENTS ──
@@ -139,7 +140,11 @@ document.addEventListener('click', (e) => {
 if ($id('nav-profile-btn')) $id('nav-profile-btn').onclick = () => showScreen('profile');
 if ($id('btn-topbar-profile')) $id('btn-topbar-profile').onclick = () => showScreen('profile');
 if ($id('brand-home-btn')) $id('brand-home-btn').onclick = () => showScreen('lobby');
+if ($id('lt-tab-rooms')) $id('lt-tab-rooms').onclick = () => showScreen('lobby');
 if ($id('lt-profile-tab')) $id('lt-profile-tab').onclick = () => showScreen('profile');
+if ($id('lt-tab-raffles')) $id('lt-tab-raffles').onclick = () => showScreen('raffles');
+if ($id('btn-enter-raffle-lobby')) $id('btn-enter-raffle-lobby').onclick = () => showScreen('raffles');
+if ($id('btn-back-to-lobby-from-raf')) $id('btn-back-to-lobby-from-raf').onclick = () => showScreen('lobby');
 
 // ═══ AUTH MODE TOGGLE ═══
 if ($id('tab-login-btn') && $id('tab-register-btn')) {
@@ -1499,3 +1504,464 @@ function initDrum() {
   }
   frame();
 }
+
+// ═══════════════════════════════════════════════════════════════
+// SALA DE RIFAS MILLONARIAS (10,000 NÚMEROS / SUPERGANA 10:00 PM)
+// ═══════════════════════════════════════════════════════════════
+let activeRaffleData = null;
+let selectedRaffleTickets = new Set();
+let soldRaffleTicketsSet = new Set();
+let currentRaffleRangeStart = 0;
+
+// Fetch and update active raffle banner in the Lobby
+async function fetchActiveRaffles() {
+  try {
+    const raffles = await (await fetch('/api/player/raffles')).json();
+    if (!Array.isArray(raffles) || raffles.length === 0) return;
+
+    // Pick first active raffle
+    const active = raffles.find(r => r.status === 'ACTIVE') || raffles[0];
+    if (!active) return;
+
+    activeRaffleData = active;
+
+    // Update Lobby Mega Card
+    if ($id('lobby-raf-img') && active.imageUrl) $id('lobby-raf-img').src = active.imageUrl;
+    if ($id('lobby-raf-title')) $id('lobby-raf-title').textContent = active.title;
+    if ($id('lobby-raf-desc') && active.description) $id('lobby-raf-desc').textContent = active.description;
+    if ($id('lobby-raf-sold')) $id('lobby-raf-sold').textContent = `${active.soldCount.toLocaleString('es-VE')} / 10,000 Boletos (${active.soldPercentage}%)`;
+    if ($id('lobby-raf-bar')) $id('lobby-raf-bar').style.width = `${Math.min(100, Math.max(3, active.soldPercentage))}%`;
+    if ($id('lobby-raf-price')) $id('lobby-raf-price').textContent = `Bs ${active.ticketPrice.toFixed(2)}`;
+
+    // Update My Tickets counter badge
+    updateMyRaffleTicketsBadge();
+  } catch {}
+}
+
+// Update ticket count badge
+async function updateMyRaffleTicketsBadge() {
+  if (!phone) return;
+  try {
+    const d = await (await fetch(`/api/player/my-raffles?phone=${phone}`)).json();
+    const count = d.tickets ? d.tickets.length : 0;
+    if ($id('my-tickets-count-badge')) $id('my-tickets-count-badge').textContent = count;
+  } catch {}
+}
+
+// Load Active Raffle View inside Screen 3
+async function loadActiveRaffleView() {
+  try {
+    const raffles = await (await fetch('/api/player/raffles')).json();
+    if (!Array.isArray(raffles) || raffles.length === 0) return;
+
+    const active = raffles.find(r => r.status === 'ACTIVE') || raffles[0];
+    activeRaffleData = active;
+
+    // Fetch full details with sold numbers
+    const detail = await (await fetch(`/api/player/raffles/${active.id}`)).json();
+    soldRaffleTicketsSet = new Set(detail.soldNumbers || []);
+
+    // Update Hero UI
+    if ($id('raf-active-price-display')) $id('raf-active-price-display').textContent = `Bs ${active.ticketPrice.toFixed(2)}`;
+    if ($id('raf-hero-img') && active.imageUrl) $id('raf-hero-img').src = active.imageUrl;
+    if ($id('raf-hero-title')) $id('raf-hero-title').textContent = active.title;
+    if ($id('raf-hero-desc')) $id('raf-hero-desc').textContent = active.description || 'Sorteo oficial verificado con SuperGana 10:00 PM.';
+    if ($id('raf-hero-progress-text')) $id('raf-hero-progress-text').textContent = `${soldRaffleTicketsSet.size.toLocaleString('es-VE')} / 10,000 Boletos (${((soldRaffleTicketsSet.size / 10000) * 100).toFixed(1)}%)`;
+    if ($id('raf-hero-bar')) $id('raf-hero-bar').style.width = `${Math.min(100, Math.max(3, (soldRaffleTicketsSet.size / 10000) * 100))}%`;
+
+    // Render numbers in current range (0 - 999)
+    renderRaffleRange(currentRaffleRangeStart);
+    updateRaffleCartUI();
+    updateMyRaffleTicketsBadge();
+  } catch (err) {
+    console.error('Error loading raffle view:', err);
+  }
+}
+
+// Render 1,000 Numbers for the selected range (e.g. 0 to 999)
+function renderRaffleRange(start) {
+  currentRaffleRangeStart = start;
+  const grid = $id('raf-numbers-grid');
+  if (!grid) return;
+
+  const frag = document.createDocumentFragment();
+
+  for (let i = 0; i < 1000; i++) {
+    const num = start + i;
+    const numStr = String(num).padStart(4, '0');
+    const isSold = soldRaffleTicketsSet.has(numStr);
+    const isSelected = selectedRaffleTickets.has(numStr);
+
+    const btn = document.createElement('div');
+    btn.className = `raf-num-pill ${isSold ? 'sold' : ''} ${isSelected ? 'selected' : ''}`;
+    btn.textContent = numStr;
+    btn.dataset.number = numStr;
+
+    if (isSold) {
+      btn.title = `Número #${numStr} ya vendido`;
+    } else {
+      btn.onclick = () => toggleRaffleNumber(numStr);
+    }
+
+    frag.appendChild(btn);
+  }
+
+  grid.innerHTML = '';
+  grid.appendChild(frag);
+
+  // Update active range tab pill
+  $$('.raf-range-tab').forEach(tab => {
+    tab.classList.toggle('active', parseInt(tab.dataset.range) === start);
+  });
+}
+
+// Toggle a 4-digit number selection
+function toggleRaffleNumber(numStr) {
+  snd();
+  if (soldRaffleTicketsSet.has(numStr)) {
+    return alert(`El número #${numStr} ya fue adquirido por otro participante.`);
+  }
+
+  if (selectedRaffleTickets.has(numStr)) {
+    selectedRaffleTickets.delete(numStr);
+  } else {
+    if (selectedRaffleTickets.size >= 50) {
+      return alert('Puedes seleccionar un máximo de 50 boletos por pedido.');
+    }
+    selectedRaffleTickets.add(numStr);
+    playPop();
+  }
+
+  // Update pill in current visible grid
+  const pill = document.querySelector(`.raf-num-pill[data-number="${numStr}"]`);
+  if (pill) {
+    pill.classList.toggle('selected', selectedRaffleTickets.has(numStr));
+  }
+
+  updateRaffleCartUI();
+}
+
+// Update Checkout Floating Bar
+function updateRaffleCartUI() {
+  const bar = $id('raf-checkout-sticky-bar');
+  if (!bar) return;
+
+  const count = selectedRaffleTickets.size;
+  if (count === 0) {
+    bar.classList.add('hidden');
+    return;
+  }
+
+  bar.classList.remove('hidden');
+  const unitPrice = activeRaffleData ? activeRaffleData.ticketPrice : 100;
+  const totalPrice = count * unitPrice;
+
+  if ($id('raf-cart-count')) $id('raf-cart-count').textContent = count;
+  if ($id('raf-cart-total-price')) $id('raf-cart-total-price').textContent = `Bs ${totalPrice.toFixed(2)}`;
+
+  const sortedList = Array.from(selectedRaffleTickets).sort();
+  if ($id('raf-cart-preview-list')) {
+    $id('raf-cart-preview-list').textContent = sortedList.map(n => `#${n}`).join(', ');
+  }
+}
+
+// Quick Lucky Pick (1, 5, 10, 20 random unsold numbers)
+async function quickPickLuckyRaffle(count) {
+  if (!activeRaffleData) return;
+  snd();
+  try {
+    const res = await (await fetch(`/api/player/raffles/${activeRaffleData.id}/random?count=${count}`)).json();
+    if (res.success && Array.isArray(res.numbers)) {
+      res.numbers.forEach(n => selectedRaffleTickets.add(n));
+      playPop();
+      renderRaffleRange(currentRaffleRangeStart);
+      updateRaffleCartUI();
+    } else {
+      alert(res.error || 'No hay suficientes números disponibles');
+    }
+  } catch {
+    alert('Error al seleccionar números al azar');
+  }
+}
+
+// Direct search & select 4-digit number
+function addSearchedRaffleNumber() {
+  const input = $id('raf-search-num');
+  if (!input) return;
+  const val = input.value.trim().replace(/[^0-9]/g, '');
+  if (!val || val.length > 4) return alert('Ingresa un número válido de hasta 4 cifras (ej: 0729 o 55)');
+
+  const numStr = val.padStart(4, '0');
+  const targetRange = Math.floor(parseInt(numStr) / 1000) * 1000;
+
+  // Switch to the target range tab if not already on it
+  if (currentRaffleRangeStart !== targetRange) {
+    renderRaffleRange(targetRange);
+  }
+
+  toggleRaffleNumber(numStr);
+  input.value = '';
+}
+
+// Hook range tabs and quick lucky buttons
+$$('.btn-quick-lucky').forEach(btn => {
+  btn.onclick = () => quickPickLuckyRaffle(parseInt(btn.dataset.count) || 1);
+});
+
+$$('.raf-range-tab').forEach(tab => {
+  tab.onclick = () => {
+    snd();
+    renderRaffleRange(parseInt(tab.dataset.range) || 0);
+  };
+});
+
+if ($id('btn-add-searched-num')) $id('btn-add-searched-num').onclick = addSearchedRaffleNumber;
+if ($id('raf-search-num')) {
+  $id('raf-search-num').onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addSearchedRaffleNumber();
+    }
+  };
+}
+
+// ─── RAFFLE CHECKOUT MODAL ───
+const btnCheckoutRaffle = $id('btn-checkout-raffle');
+if (btnCheckoutRaffle) {
+  btnCheckoutRaffle.onclick = async () => {
+    if (!selectedRaffleTickets.size || !activeRaffleData) return;
+    if (!phone) return alert('Inicia sesión para comprar boletos');
+
+    snd();
+    let currentBalance = 0;
+    try {
+      const me = await (await fetch(`/api/player/me?phone=${phone}`)).json();
+      currentBalance = me.balance || 0;
+    } catch {}
+
+    const count = selectedRaffleTickets.size;
+    const unitPrice = activeRaffleData.ticketPrice;
+    const totalCost = count * unitPrice;
+    const nextBalance = currentBalance - totalCost;
+    const hasFunds = currentBalance >= totalCost;
+
+    $id('raf-modal-target-title').textContent = activeRaffleData.title;
+    $id('raf-modal-count').textContent = `${count} Boleto(s)`;
+    $id('raf-modal-numbers-list').textContent = Array.from(selectedRaffleTickets).sort().map(n => `#${n}`).join(', ');
+    $id('raf-modal-total-price').textContent = `Bs ${totalCost.toFixed(2)}`;
+    $id('raf-modal-user-bal').textContent = `Bs ${currentBalance.toFixed(2)}`;
+    $id('raf-modal-next-bal').textContent = `Bs ${Math.max(0, nextBalance).toFixed(2)}`;
+    $id('raf-modal-next-bal').className = hasFunds ? 'bcm-w-val green' : 'bcm-w-val red';
+
+    const alertBox = $id('raf-modal-funds-alert');
+    const submitBtn = $id('btn-raf-confirm-buy-submit');
+
+    if (hasFunds) {
+      alertBox.classList.add('hidden');
+      submitBtn.disabled = false;
+      submitBtn.textContent = '¡CONFIRMAR Y COMPRAR! 🎟️';
+    } else {
+      const missing = totalCost - currentBalance;
+      alertBox.textContent = `⚠️ Saldo insuficiente (Te faltan Bs ${missing.toFixed(2)}). Recarga tu cuenta para participar.`;
+      alertBox.classList.remove('hidden');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saldo Insuficiente';
+    }
+
+    $id('modal-raffle-buy-confirm').classList.remove('hidden');
+  };
+}
+
+const closeRafBuyModal = () => $id('modal-raffle-buy-confirm').classList.add('hidden');
+if ($id('btn-close-raf-buy-modal')) $id('btn-close-raf-buy-modal').onclick = closeRafBuyModal;
+if ($id('btn-raf-cancel-buy')) $id('btn-raf-cancel-buy').onclick = closeRafBuyModal;
+
+// Submit Raffle Purchase
+const btnRafConfirmSubmit = $id('btn-raf-confirm-buy-submit');
+if (btnRafConfirmSubmit) {
+  btnRafConfirmSubmit.onclick = async () => {
+    if (!selectedRaffleTickets.size || !activeRaffleData) return;
+    btnRafConfirmSubmit.disabled = true;
+    btnRafConfirmSubmit.textContent = '⏳ Emitiendo boletos certificados...';
+
+    try {
+      const res = await fetch('/api/player/buy-raffles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone,
+          raffleId: activeRaffleData.id,
+          numbers: Array.from(selectedRaffleTickets)
+        })
+      });
+
+      const d = await res.json();
+      if (d.success) {
+        closeRafBuyModal();
+        confetti(180);
+        playPop();
+        selectedRaffleTickets.clear();
+        updateTopbar();
+        refreshProfile();
+        loadActiveRaffleView();
+
+        // Switch to "Mis Boletos" tab so the player immediately sees their purchased tickets!
+        switchRaffleSubTab('my');
+        loadMyRaffleTickets();
+
+        alert(`🎉 ¡FELICIDADES!\n\nHas comprado ${d.tickets.length} boleto(s) exitosamente.\nPuedes ver tus comprobantes digitales en la pestaña "Mis Boletos".`);
+      } else {
+        alert('Error: ' + (d.error || 'No se pudo procesar la compra'));
+        btnRafConfirmSubmit.disabled = false;
+        btnRafConfirmSubmit.textContent = '¡CONFIRMAR Y COMPRAR! 🎟️';
+      }
+    } catch {
+      alert('Error de conexión con el servidor');
+      btnRafConfirmSubmit.disabled = false;
+      btnRafConfirmSubmit.textContent = '¡CONFIRMAR Y COMPRAR! 🎟️';
+    }
+  };
+}
+
+// ─── RAFFLE SUB-TABS (BUY / MY TICKETS / HISTORY) ───
+function switchRaffleSubTab(tabKey) {
+  ['buy', 'my', 'history'].forEach(k => {
+    const tabBtn = $id(`rtab-${k}`);
+    const subView = $id(`raffle-subtab-${k}`);
+    if (tabBtn) tabBtn.classList.toggle('active', k === tabKey);
+    if (subView) subView.classList.toggle('hidden', k !== tabKey);
+  });
+  if (tabKey === 'my') loadMyRaffleTickets();
+  if (tabKey === 'history') loadRaffleHistory();
+}
+
+if ($id('rtab-buy')) $id('rtab-buy').onclick = () => switchRaffleSubTab('buy');
+if ($id('rtab-my')) $id('rtab-my').onclick = () => switchRaffleSubTab('my');
+if ($id('rtab-history')) $id('rtab-history').onclick = () => switchRaffleSubTab('history');
+
+// Load Logged-in Player's Tickets
+async function loadMyRaffleTickets() {
+  const container = $id('my-raffle-tickets-grid');
+  if (!container || !phone) return;
+
+  container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 30px;">Cargando tus boletos...</div>';
+
+  try {
+    const d = await (await fetch(`/api/player/my-raffles?phone=${phone}`)).json();
+    const tickets = d.tickets || [];
+
+    if ($id('my-tickets-count-badge')) $id('my-tickets-count-badge').textContent = tickets.length;
+
+    if (tickets.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px; background: rgba(0,0,0,0.2); border-radius: 14px;">
+          <div style="font-size: 36px; margin-bottom: 8px;">🎟️</div>
+          <p style="margin-bottom: 12px;">Aún no tienes boletos comprados.</p>
+          <button class="btn-gold-lg" onclick="switchRaffleSubTab('buy')" style="padding: 10px 24px; font-size: 13px;">¡Escoger mis números ahora!</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = tickets.map(t => {
+      const isWinner = t.isWinner;
+      const statusPill = isWinner
+        ? `<span style="background: rgba(16,185,129,0.2); color: #10B981; border: 1px solid #10B981; border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: 800;">👑 ¡BOLETO GANADOR!</span>`
+        : `<span style="background: rgba(0,229,255,0.15); color: #00E5FF; border: 1px solid #00E5FF; border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: 700;">PARTICIPANDO 10:00 PM</span>`;
+
+      return `
+        <div class="my-ticket-card ${isWinner ? 'winner-card' : ''}">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">SuperGana 10:00 PM</span>
+            ${statusPill}
+          </div>
+          <div style="text-align: center; padding: 8px 0;">
+            <span style="font-size: 11px; color: var(--text-secondary); display: block;">Número Asignado</span>
+            <div class="mtc-num">#${t.ticketNumber}</div>
+            <span style="font-size: 12px; color: #FFF; font-weight: 600;">${t.raffleTitle}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 10px; font-size: 11px; color: var(--text-secondary);">
+            <span>${new Date(t.purchasedAt).toLocaleDateString()}</span>
+            <button class="btn btn-sm" onclick='showTicketVoucher(${JSON.stringify(t)})' style="background: rgba(255,215,0,0.15); color: #FFD700; border: 1px solid rgba(255,215,0,0.3); border-radius: 6px; font-size: 11px; padding: 4px 8px;">
+              🖨️ Ver Comprobante
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    container.innerHTML = `<div style="grid-column: 1 / -1; color: var(--accent-red); text-align: center;">Error al cargar boletos: ${err.message}</div>`;
+  }
+}
+
+// Show Digital Ticket Certificate Modal
+window.showTicketVoucher = function(ticket) {
+  $id('voucher-raffle-title').textContent = ticket.raffleTitle;
+  $id('voucher-ticket-number').textContent = `#${ticket.ticketNumber}`;
+  $id('voucher-owner-name').textContent = userName || 'Jugador Registrado';
+  $id('voucher-owner-phone').textContent = phone;
+  $id('voucher-date').textContent = new Date(ticket.purchasedAt).toLocaleString();
+
+  const statusPill = $id('voucher-status-pill');
+  if (ticket.isWinner) {
+    statusPill.textContent = '👑 BOLETO GANADOR OFICIAL SUPERGANA';
+    statusPill.style.background = 'rgba(16, 185, 129, 0.2)';
+    statusPill.style.color = '#10B981';
+    statusPill.style.borderColor = '#10B981';
+  } else {
+    statusPill.textContent = 'PARTICIPANDO EN SORTEO 10:00 PM';
+    statusPill.style.background = 'rgba(0, 229, 255, 0.15)';
+    statusPill.style.color = '#00E5FF';
+    statusPill.style.borderColor = '#00E5FF';
+  }
+
+  $id('modal-digital-ticket-voucher').classList.remove('hidden');
+};
+
+const closeVoucherModal = () => $id('modal-digital-ticket-voucher').classList.add('hidden');
+if ($id('btn-close-voucher-modal')) $id('btn-close-voucher-modal').onclick = closeVoucherModal;
+if ($id('btn-print-voucher')) $id('btn-print-voucher').onclick = () => window.print();
+
+// Load Historical Past Raffles & Results
+async function loadRaffleHistory() {
+  const container = $id('raffle-history-list');
+  if (!container) return;
+
+  try {
+    const raffles = await (await fetch('/api/player/raffles')).json();
+    const finished = (raffles || []).filter(r => r.status === 'DRAWN');
+
+    if (finished.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+          <div style="font-size: 36px; margin-bottom: 8px;">🎰</div>
+          <p>No hay sorteos de rifas finalizados todavía. ¡El sorteo oficial es hoy a las 10:00 PM con SuperGana!</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = finished.map(r => `
+      <div class="glass-panel" style="padding: 16px 20px; border-radius: 14px; border: 1px solid rgba(16,185,129,0.3); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; background: rgba(16,185,129,0.05);">
+        <div>
+          <span style="font-size: 11px; color: #10B981; font-weight: 700; text-transform: uppercase;">🏆 Sorteo Certificado SuperGana</span>
+          <h4 style="margin: 3px 0 6px 0; color: #FFF; font-size: 16px;">${r.title}</h4>
+          <div style="font-size: 12px; color: var(--text-secondary);">
+            Ganador: <strong style="color: #FFD700;">${r.winnerName || 'Vacante'}</strong> ${r.winnerPhone ? `(${r.winnerPhone})` : ''} • Fecha: ${new Date(r.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+        <div style="text-align: right; background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border);">
+          <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">Boleto Ganador</span>
+          <div style="font-size: 26px; font-weight: 900; color: #FFD700; font-family: monospace; letter-spacing: 2px;">#${r.winningNumber}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<div style="color: var(--accent-red); padding: 20px;">Error al cargar historial: ${err.message}</div>`;
+  }
+}
+
+// Initial fetch of active raffles on startup
+fetchActiveRaffles();
+setInterval(fetchActiveRaffles, 15000);
+

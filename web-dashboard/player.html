@@ -119,7 +119,8 @@
         <div id="screen-lobby" class="screen-inner">
             <!-- Nav Tabs -->
             <div class="lobby-tabs-bar">
-                <button class="lt-tab active" data-tab="rooms">🎰 SALA PRINCIPAL</button>
+                <button class="lt-tab active" id="lt-tab-rooms" data-tab="rooms">🎰 SALAS DE BINGO</button>
+                <button class="lt-tab" id="lt-tab-raffles" data-tab="raffles">🎟️ RIFAS MILLONARIAS (10K)</button>
                 <button class="lt-tab" id="lt-profile-tab" data-tab="profile">👤 MI PERFIL & BILLETERA</button>
             </div>
 
@@ -145,33 +146,33 @@
                         </div>
                         <div class="rc-offer-pill">🎁 LLEVA 6 CARTONES Y PAGA SOLO 4</div>
                         <div class="rc-footer">
-                            <span class="rc-players">👥 <strong class="room-players-shared">0</strong> Jugando</span>
+                            <span class="rc-players">👥 <strong class="room-players-shared">0</strong> Jugadores</span>
                             <span class="rc-price-badge" id="lbl-price-50">Bs 50.00 c/u</span>
                         </div>
-                        <button class="btn-play-now btn-room-select" data-room-id="sala-50" data-room-name="SALA BRONCE" data-room-price="50">¡ENTRAR A JUGAR! 🎲</button>
+                        <button class="btn-play-now btn-room-select" data-room-id="sala-50" data-room-name="SALA BRONCE" data-room-price="50">¡JUGAR EN SALA BRONCE! 🎲</button>
                     </div>
 
-                    <!-- SALA 2: CLÁSICA ROYALE (100 Bs - Principal) -->
-                    <div class="room-card room-live" data-room-id="sala-100" data-room-name="SALA CLÁSICA ROYALE" data-room-price="100" id="btn-enter-classic">
+                    <!-- SALA 2: CLÁSICA ROYALE (100 Bs) -->
+                    <div class="room-card room-clasica" data-room-id="sala-100" data-room-name="SALA CLÁSICA ROYALE" data-room-price="100">
                         <div class="rc-top-bar">
-                            <span class="rc-title-badge">👑 SALA CLÁSICA ROYALE</span>
-                            <div class="rc-live-pill">🔴 EN VIVO</div>
+                            <span class="rc-title-badge gold">👑 SALA CLÁSICA ROYALE</span>
+                            <div class="rc-live-pill amber">🔴 EN VIVO</div>
                         </div>
-                        <div class="countdown-box" id="lobby-countdown">
+                        <div class="countdown-box gold-border">
                             <span class="cd-label">PRÓXIMO JUEGO</span>
-                            <span class="cd-timer" id="lobby-timer">--:--</span>
-                            <span class="cd-status" id="lobby-status">Cargando...</span>
+                            <span class="cd-timer room-timer-shared">--:--</span>
+                            <span class="cd-status room-status-shared">Cargando...</span>
                         </div>
                         <div class="rc-main-pozo">
-                            <span class="rmp-lbl">POZO OFICIAL EN VIVO</span>
-                            <span class="rmp-val" id="lobby-pot">Bs 0.00</span>
+                            <span class="rmp-lbl">POZO ESTIMADO</span>
+                            <span class="rmp-val gold room-pot-shared" id="pot-sala-100">Bs 0.00</span>
                         </div>
-                        <div class="rc-offer-pill">🎁 LLEVA 6 CARTONES Y PAGA SOLO 4</div>
+                        <div class="rc-offer-pill gold">🎁 LLEVA 6 CARTONES Y PAGA SOLO 4</div>
                         <div class="rc-footer">
-                            <span class="rc-players">👥 <strong id="lobby-players">0</strong> Jugando (<strong id="lobby-cards-count">0</strong> cartones)</span>
-                            <span class="rc-price-badge" id="lbl-price-100">Bs 100.00 c/u</span>
+                            <span class="rc-players">👥 <strong class="room-players-shared">0</strong> Jugadores Activos</span>
+                            <span class="rc-price-badge gold" id="lbl-price-100">Bs 100.00 c/u</span>
                         </div>
-                        <button class="btn-play-now btn-room-select" data-room-id="sala-100" data-room-name="SALA CLÁSICA ROYALE" data-room-price="100">¡ENTRAR A JUGAR AHORA! 🚀</button>
+                        <button class="btn-play-now gold btn-room-select" data-room-id="sala-100" data-room-name="SALA CLÁSICA ROYALE" data-room-price="100">¡JUGAR EN SALA CLÁSICA! 🎲</button>
                     </div>
 
                     <!-- SALA 3: ORO VIP (250 Bs) -->
@@ -222,8 +223,56 @@
 
                 </div>
 
+                <!-- MEGA BANNER RIFA 10,000 NÚMEROS -->
+                <div class="mega-raffle-card" id="lobby-mega-raffle-card" style="margin-top: 24px; background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(20, 15, 38, 0.95)); border: 2px solid rgba(255, 215, 0, 0.4); border-radius: 18px; padding: 20px; box-shadow: 0 10px 35px rgba(255, 215, 0, 0.15); display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-weight: 800; font-size: 12px; padding: 5px 12px; border-radius: 20px; text-transform: uppercase;">🎟️ GRAN RIFA MILLONARIA (10,000 NÚMEROS)</span>
+                        <span style="background: rgba(0, 229, 255, 0.15); border: 1px solid #00E5FF; color: #00E5FF; font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 20px;">🎰 Sorteo SuperGana 10:00 PM</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-items: center;">
+                        <div style="width: 100%; height: 200px; border-radius: 14px; overflow: hidden; background: #000; position: relative; border: 1px solid rgba(255,255,255,0.1);">
+                            <img id="lobby-raf-img" src="https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80" alt="Premio Rifa" style="width: 100%; height: 100%; object-fit: cover;">
+                            <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); padding: 4px 10px; border-radius: 6px; font-size: 11px; color: #00E5FF;">
+                                🔒 10,000 Boletos (0000 - 9999)
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                            <div>
+                                <h3 id="lobby-raf-title" style="margin: 0 0 6px 0; color: #FFD700; font-size: 20px; font-weight: 800; line-height: 1.3;">
+                                    🏍️ MOTO BERA SBR 2026 0KM + $500 EN EFECTIVO
+                                </h3>
+                                <p id="lobby-raf-desc" style="margin: 0 0 14px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.4;">
+                                    Juega con 10,000 números (del 0000 al 9999). El ganador se elige automáticamente con las 4 cifras del Sorteo Nocturno de SuperGana a las 10:00 PM.
+                                </p>
+                            </div>
+
+                            <div style="background: rgba(0,0,0,0.3); padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                                    <span style="color: var(--text-secondary);">Progreso de Venta:</span>
+                                    <strong id="lobby-raf-sold" style="color: #00E5FF;">0 / 10,000 Boletos (0.0%)</strong>
+                                </div>
+                                <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;">
+                                    <div id="lobby-raf-bar" style="width: 4%; height: 100%; background: linear-gradient(90deg, #00E5FF, #FFD700); border-radius: 5px;"></div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 4px;">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Precio por Boleto</span>
+                                    <div id="lobby-raf-price" style="font-size: 22px; font-weight: 800; color: #FFD700;">Bs 100.00</div>
+                                </div>
+                                <button id="btn-enter-raffle-lobby" class="btn-gold-lg" style="padding: 14px 28px; font-size: 15px; font-weight: 800; letter-spacing: 0.5px; border-radius: 12px; cursor: pointer;">
+                                    ¡ESCOGER MIS BOLETOS DE LA SUERTE! 🎟️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- TABLA DE PREMIOS OFICIAL -->
-                <div class="payout-rules-card">
+                <div class="payout-rules-card" style="margin-top: 24px;">
                     <h4>🏆 REGLAS Y DISTRIBUCIÓN DE PREMIOS OFICIAL</h4>
                     <div class="payout-grid">
                         <div class="pg-box"><span class="pg-pct" id="rule-pct-1l">10%</span><span class="pg-lbl">1 Línea Horizontal</span></div>
@@ -514,6 +563,237 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- ═══ SCREEN 3: SALA DE RIFAS MILLONARIAS (10,000 NÚMEROS) ═══ -->
+        <div id="screen-raffles" class="screen-inner hidden">
+            <!-- Raffle Top Control Bar -->
+            <div class="room-nav-bar" style="background: linear-gradient(135deg, rgba(20, 15, 38, 0.95), rgba(15, 20, 35, 0.95)); border: 1px solid rgba(255, 215, 0, 0.3);">
+                <button class="btn-change-room" id="btn-back-to-lobby-from-raf">← VOLVER AL LOBBY</button>
+                <div class="room-title-tag">
+                    <h2 style="color: #FFD700;">🎟️ SALA DE RIFAS MILLONARIAS</h2>
+                    <span class="rtt-jackpot" style="color: #00E5FF;">10,000 Números (0000 a 9999) • Sorteo SuperGana 10:00 PM</span>
+                </div>
+                <div class="room-live-pozo">
+                    <div class="room-live-players-pill" style="border: 1px solid #00E5FF; color: #00E5FF;">
+                        🎰 Sorteo: <strong>SuperGana 10:00 PM</strong>
+                    </div>
+                    <span class="rlp-lbl">VALOR BOLETO</span>
+                    <span class="rlp-val gold" id="raf-active-price-display">Bs 100.00</span>
+                </div>
+            </div>
+
+            <!-- Sub Navigation Tabs for Raffles -->
+            <div class="lobby-tabs-bar" style="margin-top: 16px;">
+                <button class="lt-tab active" id="rtab-buy" data-rtab="buy">🎟️ ESCOGER BOLETOS (10,000 NÚMEROS)</button>
+                <button class="lt-tab" id="rtab-my" data-rtab="my">📜 MIS BOLETOS COMPRADOS (<span id="my-tickets-count-badge">0</span>)</button>
+                <button class="lt-tab" id="rtab-history" data-rtab="history">🏆 GANADORES & SORTEOS ANTERIORES</button>
+            </div>
+
+            <!-- RAFFLE SUB-TAB 1: BUY & EXPLORE 10,000 NUMBERS -->
+            <div id="raffle-subtab-buy" class="raffle-subview">
+                <!-- Raffle Hero Header Banner -->
+                <div class="glass-panel" style="margin-top: 16px; padding: 20px; border-radius: 16px; border: 1px solid rgba(255, 215, 0, 0.3); background: rgba(20, 20, 40, 0.85); display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; align-items: center;">
+                    <div style="width: 100%; height: 180px; border-radius: 12px; overflow: hidden; background: #000;">
+                        <img id="raf-hero-img" src="https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80" alt="Premio Rifa" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div>
+                        <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                            <span class="badge" style="background: rgba(255, 215, 0, 0.2); color: #FFD700; border: 1px solid #FFD700;">🟢 EN VENTA</span>
+                            <span class="badge" style="background: rgba(0, 229, 255, 0.2); color: #00E5FF; border: 1px solid #00E5FF;">🎰 10:00 PM SUPERGANA</span>
+                        </div>
+                        <h2 id="raf-hero-title" style="margin: 0 0 6px 0; color: #FFF; font-size: 20px; font-weight: 800;">
+                            🏍️ MOTO BERA SBR 2026 0KM + $500 EN EFECTIVO
+                        </h2>
+                        <p id="raf-hero-desc" style="color: var(--text-secondary); font-size: 13px; margin: 0 0 12px 0;">
+                            Selecciona tus números favoritos del 0000 al 9999 o usa la selección rápida al azar.
+                        </p>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                            <span style="color: var(--text-secondary);">Progreso de Venta:</span>
+                            <strong id="raf-hero-progress-text" style="color: #00E5FF;">0 / 10,000 Boletos (0.0%)</strong>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden;">
+                            <div id="raf-hero-bar" style="width: 5%; height: 100%; background: linear-gradient(90deg, #00E5FF, #FFD700); border-radius: 4px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Quick Selection Toolbar -->
+                <div class="glass-panel" style="margin-top: 18px; padding: 16px 20px; border-radius: 14px; border: 1px solid var(--border); background: rgba(15, 15, 30, 0.85); display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: center;">
+                    <!-- Quick Lucky Buttons -->
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">🎲 Al Azar:</span>
+                        <button class="btn-quick-lucky" data-count="1">🎲 1 Boleto</button>
+                        <button class="btn-quick-lucky" data-count="5">🎲 5 Boletos</button>
+                        <button class="btn-quick-lucky" data-count="10">🎲 10 Boletos</button>
+                        <button class="btn-quick-lucky" data-count="20">🎲 20 Boletos</button>
+                    </div>
+
+                    <!-- Direct Number Search -->
+                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; max-width: 320px; min-width: 220px;">
+                        <input type="text" id="raf-search-num" maxlength="4" placeholder="🔍 Escribe 4 cifras (ej: 0729)" class="input-glass" style="margin: 0; font-family: monospace; font-size: 14px; font-weight: 700; text-align: center; letter-spacing: 2px;">
+                        <button id="btn-add-searched-num" class="btn btn-sm btn-primary" style="background: linear-gradient(135deg, #00E5FF, #00B4D8); color: #000; font-weight: 800; padding: 8px 14px;">Elegir</button>
+                    </div>
+                </div>
+
+                <!-- 10,000 Range Filter Tabs (0000-0999, 1000-1999...) -->
+                <div style="margin-top: 14px; display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px;" id="raf-range-tabs-bar">
+                    <button class="raf-range-tab active" data-range="0">0000 - 0999</button>
+                    <button class="raf-range-tab" data-range="1000">1000 - 1999</button>
+                    <button class="raf-range-tab" data-range="2000">2000 - 2999</button>
+                    <button class="raf-range-tab" data-range="3000">3000 - 3999</button>
+                    <button class="raf-range-tab" data-range="4000">4000 - 4999</button>
+                    <button class="raf-range-tab" data-range="5000">5000 - 5999</button>
+                    <button class="raf-range-tab" data-range="6000">6000 - 6999</button>
+                    <button class="raf-range-tab" data-range="7000">7000 - 7999</button>
+                    <button class="raf-range-tab" data-range="8000">8000 - 8999</button>
+                    <button class="raf-range-tab" data-range="9000">9000 - 9999</button>
+                </div>
+
+                <!-- Numbers Grid (Paginated 1,000 numbers at a time) -->
+                <div class="glass-panel" style="margin-top: 12px; padding: 16px; border-radius: 14px; background: rgba(10, 10, 20, 0.95); max-height: 450px; overflow-y: auto; border: 1px solid var(--border);">
+                    <div id="raf-numbers-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 6px;">
+                        <div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 30px;">Cargando números disponibles...</div>
+                    </div>
+                </div>
+
+                <!-- Sticky Checkout Bar for Selected Tickets -->
+                <div id="raf-checkout-sticky-bar" class="glass-panel hidden" style="position: sticky; bottom: 20px; margin-top: 20px; padding: 16px 24px; border-radius: 16px; background: linear-gradient(135deg, rgba(20, 25, 45, 0.98), rgba(15, 15, 30, 0.98)); border: 2px solid #FFD700; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; z-index: 100;">
+                    <div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">
+                            Boletos Seleccionados: <strong id="raf-cart-count" style="color: #FFD700; font-size: 18px;">0</strong>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="raf-cart-preview-list">
+                            --
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="text-align: right;">
+                            <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Total a Pagar</span>
+                            <div id="raf-cart-total-price" style="font-size: 22px; font-weight: 800; color: #10B981;">Bs 0.00</div>
+                        </div>
+                        <button id="btn-checkout-raffle" class="btn-gold-lg" style="padding: 12px 28px; font-size: 15px; font-weight: 800; border-radius: 10px; cursor: pointer;">
+                            ¡COMPRAR BOLETOS AHORA! 🎟️
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RAFFLE SUB-TAB 2: MIS BOLETOS COMPRADOS -->
+            <div id="raffle-subtab-my" class="raffle-subview hidden" style="margin-top: 20px;">
+                <div class="glass-panel" style="padding: 20px; border-radius: 16px; border: 1px solid var(--border); background: rgba(15, 15, 30, 0.85);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+                        <h3 style="margin: 0; color: #FFD700; font-size: 18px;">📜 Mis Boletos Registrados</h3>
+                        <span style="color: var(--text-secondary); font-size: 13px;">Comprobantes digitales con verificación hash</span>
+                    </div>
+
+                    <div id="my-raffle-tickets-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px;">
+                        <div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px;">
+                            No tienes boletos comprados para esta rifa todavía.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RAFFLE SUB-TAB 3: GANADORES & HISTORIAL -->
+            <div id="raffle-subtab-history" class="raffle-subview hidden" style="margin-top: 20px;">
+                <div class="glass-panel" style="padding: 20px; border-radius: 16px; border: 1px solid var(--border); background: rgba(15, 15, 30, 0.85);">
+                    <h3 style="margin: 0 0 16px 0; color: #00E5FF; font-size: 18px;">🏆 Historial de Ganadores y Sorteos SuperGana</h3>
+                    <div id="raffle-history-list" style="display: flex; flex-direction: column; gap: 14px;">
+                        <div style="text-align: center; color: var(--text-secondary); padding: 30px;">Cargando historial de sorteos...</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: CONFIRMACIÓN COMPRA DE BOLETOS DE RIFA ═══ -->
+    <div id="modal-raffle-buy-confirm" class="modal-overlay hidden" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 9999;">
+        <div class="buy-confirm-box" style="background: #141426; border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 16px; max-width: 480px; width: 90%; padding: 24px;">
+            <button id="btn-close-raf-buy-modal" class="close-x">✕</button>
+            <div class="bcm-header">
+                <span class="bcm-badge-deal" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000;">🎟️ CONFIRMAR BOLETOS DE RIFA</span>
+                <h2 style="font-size: 18px; color: #FFF; margin-top: 6px;">Comprobante de Selección</h2>
+            </div>
+
+            <div class="bcm-details-grid">
+                <div class="bcm-row">
+                    <span class="bcm-lbl">Rifa:</span>
+                    <strong id="raf-modal-target-title" class="bcm-val" style="color: #FFD700; font-size: 13px;">--</strong>
+                </div>
+                <div class="bcm-row">
+                    <span class="bcm-lbl">Boletos Seleccionados:</span>
+                    <strong id="raf-modal-count" class="bcm-val gold">0</strong>
+                </div>
+                <div class="bcm-row" style="align-items: flex-start;">
+                    <span class="bcm-lbl">Números:</span>
+                    <span id="raf-modal-numbers-list" style="font-family: monospace; font-weight: 700; color: #00E5FF; font-size: 13px; text-align: right; max-width: 240px; word-break: break-word;">--</span>
+                </div>
+                <div class="bcm-row total-highlight">
+                    <span class="bcm-lbl-total">TOTAL A DEBITAR:</span>
+                    <strong id="raf-modal-total-price" class="bcm-val-total gold">Bs 0.00</strong>
+                </div>
+            </div>
+
+            <div class="bcm-wallet-check">
+                <div class="bcm-wallet-col">
+                    <span class="bcm-w-lbl">Tu Saldo Actual</span>
+                    <strong id="raf-modal-user-bal" class="bcm-w-val">Bs 0.00</strong>
+                </div>
+                <div class="bcm-wallet-arrow">➔</div>
+                <div class="bcm-wallet-col">
+                    <span class="bcm-w-lbl">Saldo Restante</span>
+                    <strong id="raf-modal-next-bal" class="bcm-w-val green">Bs 0.00</strong>
+                </div>
+            </div>
+
+            <div id="raf-modal-funds-alert" class="bcm-alert hidden"></div>
+
+            <div class="bcm-actions">
+                <button id="btn-raf-cancel-buy" class="bcm-btn-cancel">Cancelar</button>
+                <button id="btn-raf-confirm-buy-submit" class="bcm-btn-confirm">¡CONFIRMAR Y COMPRAR! 🎟️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: COMPROBANTE DIGITAL DE BOLETO DE RIFA ═══ -->
+    <div id="modal-digital-ticket-voucher" class="modal-overlay hidden" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 9999;">
+        <div style="background: linear-gradient(135deg, #16162a, #0d0d1a); border: 2px solid #FFD700; border-radius: 20px; max-width: 380px; width: 90%; padding: 24px; text-align: center; box-shadow: 0 10px 40px rgba(255, 215, 0, 0.25); position: relative;">
+            <button id="btn-close-voucher-modal" style="position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 20px; color: #A0A0B0; cursor: pointer;">✕</button>
+            
+            <div style="font-size: 32px; margin-bottom: 4px;">👑</div>
+            <h4 style="color: #FFD700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin: 0;">BINGOPRO ROYALE • BOLETO OFICIAL</h4>
+            <h3 id="voucher-raffle-title" style="color: #FFF; font-size: 15px; margin: 8px 0 14px 0;">--</h3>
+
+            <div style="background: rgba(0, 0, 0, 0.6); border: 1px dashed rgba(255, 215, 0, 0.5); border-radius: 14px; padding: 18px; margin-bottom: 14px;">
+                <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Tu Número de la Suerte</span>
+                <div id="voucher-ticket-number" style="font-size: 46px; font-weight: 900; color: #FFD700; font-family: monospace; letter-spacing: 4px; margin: 4px 0;">
+                    #0000
+                </div>
+                <span id="voucher-status-pill" style="display: inline-block; background: rgba(0, 229, 255, 0.15); color: #00E5FF; border: 1px solid #00E5FF; border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 700;">
+                    PARTICIPANDO EN SORTEO 10:00 PM
+                </span>
+            </div>
+
+            <div style="text-align: left; font-size: 12px; color: var(--text-secondary); background: rgba(255, 255, 255, 0.03); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>Titular:</span>
+                    <strong id="voucher-owner-name" style="color: #FFF;">--</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>Teléfono / WhatsApp:</span>
+                    <strong id="voucher-owner-phone" style="color: #FFF;">--</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Fecha de Compra:</span>
+                    <span id="voucher-date" style="color: #FFF;">--</span>
+                </div>
+            </div>
+
+            <button id="btn-print-voucher" class="btn btn-sm" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border); color: #FFF; width: 100%; border-radius: 8px; padding: 10px;">
+                🖨️ Imprimir / Guardar Comprobante
+            </button>
         </div>
     </div>
 

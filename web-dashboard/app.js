@@ -162,13 +162,14 @@ function loadPageData(pageId) {
         'deposits': loadDeposits,
         'withdrawals': loadWithdrawals,
         'finance': loadFinance,
-        'settings': loadSettings
+        'settings': loadSettings,
+        'raffles': loadRaffles
     };
 
     if (loaders[pageId]) {
         loaders[pageId]();
         // Set auto-refresh
-        if (pageId === 'dashboard' || pageId === 'deposits' || pageId === 'withdrawals') {
+        if (pageId === 'dashboard' || pageId === 'deposits' || pageId === 'withdrawals' || pageId === 'raffles') {
              currentInterval = setInterval(loaders[pageId], 10000);
         }
     }
@@ -552,13 +553,430 @@ if (settingsForm) {
     });
 }
 
-const btnResetSettings = document.getElementById('btn-reset-settings');
-if (btnResetSettings) {
-    btnResetSettings.addEventListener('click', () => {
-        loadSettings();
-        showToast('Valores restablecidos desde el servidor', 'info');
+// ============================================
+// RAFFLE MANAGEMENT (10,000 NÚMEROS / SUPERGANA 10:00 PM)
+// ============================================
+let currentRafflesList = [];
+
+async function loadRaffles() {
+    const grid = document.getElementById('raffles-admin-grid');
+    if (!grid) return;
+
+    try {
+        currentRafflesList = await apiCall('/raffles');
+        renderRafflesAdmin(currentRafflesList);
+        fetchSuperGanaLiveAdmin();
+    } catch (err) {
+        grid.innerHTML = `<div style="color: var(--accent-red); padding: 20px;">Error al cargar rifas: ${err.message}</div>`;
+    }
+}
+
+function renderRafflesAdmin(raffles) {
+    const grid = document.getElementById('raffles-admin-grid');
+    if (!grid) return;
+
+    if (!raffles || raffles.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px dashed var(--border);">
+                <div style="font-size: 40px; margin-bottom: 12px;">🎟️</div>
+                <h3 style="color: #FFF; margin-bottom: 6px;">No hay rifas creadas todavía</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">Crea tu primera rifa de 10,000 números con sorteo de SuperGana.</p>
+                <button class="btn btn-primary" onclick="openCreateRaffleModal()" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-weight: 700;">➕ Crear Rifa</button>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = raffles.map(r => {
+        const isDrawn = r.status === 'DRAWN';
+        const isCancelled = r.status === 'CANCELLED';
+        const statusBadge = isDrawn 
+            ? `<span class="badge badge-success" style="background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid #10B981;">🏆 FINALIZADA</span>`
+            : isCancelled 
+            ? `<span class="badge badge-danger">CANCELADA</span>`
+            : `<span class="badge badge-warning" style="background: rgba(255, 215, 0, 0.2); color: #FFD700; border: 1px solid #FFD700;">🟢 EN VENTA</span>`;
+
+        const fallbackImg = 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80';
+        const imgUrl = r.imageUrl || fallbackImg;
+
+        return `
+            <div class="glass-panel" style="border-radius: 16px; overflow: hidden; border: 1px solid ${isDrawn ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255, 215, 0, 0.25)'}; display: flex; flex-direction: column; background: #151528;">
+                <div style="height: 180px; width: 100%; position: relative; overflow: hidden; background: #000;">
+                    <img src="${imgUrl}" alt="${r.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='${fallbackImg}'">
+                    <div style="position: absolute; top: 12px; left: 12px;">${statusBadge}</div>
+                    <div style="position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #FFD700; border: 1px solid rgba(255,215,0,0.3);">
+                        Bs ${r.ticketPrice.toFixed(2)} / boleto
+                    </div>
+                </div>
+
+                <div style="padding: 18px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 style="margin: 0 0 8px 0; color: #FFF; font-size: 16px; font-weight: 700; line-height: 1.3;">${r.title}</h3>
+                        <p style="margin: 0 0 14px 0; color: var(--text-secondary); font-size: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            ${r.description || 'Rifa oficial con sorteo de SuperGana (10:00 PM).'}
+                        </p>
+
+                        <!-- Progress Bar (10,000 Numbers) -->
+                        <div style="margin-bottom: 14px; background: rgba(255,255,255,0.05); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+                                <span style="color: var(--text-secondary);">Boletos Vendidos:</span>
+                                <span style="font-weight: 700; color: #00E5FF;">${r.soldCount.toLocaleString('es-VE')} / 10,000 (${r.soldPercentage}%)</span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden;">
+                                <div style="width: ${Math.min(100, Math.max(2, r.soldPercentage))}%; height: 100%; background: linear-gradient(90deg, #00E5FF, #FFD700); border-radius: 4px;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 6px; color: var(--text-secondary);">
+                                <span>Recaudado: <strong style="color: #10B981;">Bs ${r.totalRevenue.toLocaleString('es-VE', {minimumFractionDigits: 2})}</strong></span>
+                                <span>Meta: Bs ${r.potentialRevenue.toLocaleString('es-VE', {minimumFractionDigits: 2})}</span>
+                            </div>
+                        </div>
+
+                        ${isDrawn ? `
+                            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10B981; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 12px; color: #FFF;">👑 Boleto Ganador:</span>
+                                    <span style="font-size: 20px; font-weight: 800; color: #FFD700; font-family: monospace; letter-spacing: 2px;">#${r.winningNumber}</span>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    Ganador: <strong style="color: #FFF;">${r.winnerName || 'Boleto No Vendido (Vacante)'}</strong> ${r.winnerPhone ? `(${r.winnerPhone})` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 12px;">
+                        ${!isDrawn ? `
+                            <button class="btn btn-sm" onclick="openDrawRaffleModal('${r.id}')" style="flex: 1; background: linear-gradient(135deg, #00E5FF, #00B4D8); color: #000; font-weight: 700;">
+                                👑 Sorteo / Ganador
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-sm" onclick="openViewRaffleTickets('${r.id}')" style="background: rgba(255,255,255,0.08); color: #FFF;">
+                            📋 Boletos (${r.soldCount})
+                        </button>
+                        <button class="btn btn-sm" onclick="openEditRaffleModal('${r.id}')" style="background: rgba(255,255,255,0.08); color: #FFD700;">
+                            ✏️
+                        </button>
+                        <button class="btn btn-sm" onclick="deleteRaffle('${r.id}', '${r.title.replace(/'/g, "\\'")}')" style="background: rgba(239, 68, 68, 0.15); color: #EF4444;">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Fetch SuperGana 10:00 PM result in admin
+async function fetchSuperGanaLiveAdmin() {
+    try {
+        const data = await apiCall('/raffles/supergana');
+        const numEl = document.getElementById('sg-win-num');
+        const signoEl = document.getElementById('sg-win-signo');
+        if (data && data.success && data.winningNumber) {
+            if (numEl) numEl.textContent = data.winningNumber;
+            if (signoEl) signoEl.textContent = data.signo ? `${data.signo} (10:00 PM)` : 'SuperGana 10:00 PM';
+        } else {
+            if (numEl) numEl.textContent = 'Pendiente';
+            if (signoEl) signoEl.textContent = '10:00 PM Hoy';
+        }
+    } catch (err) {
+        console.warn('SuperGana scraper status:', err.message);
+    }
+}
+
+const btnRefreshSG = document.getElementById('btn-refresh-sg');
+if (btnRefreshSG) {
+    btnRefreshSG.addEventListener('click', () => {
+        btnRefreshSG.disabled = true;
+        btnRefreshSG.textContent = '⏳...';
+        fetchSuperGanaLiveAdmin().finally(() => {
+            btnRefreshSG.disabled = false;
+            btnRefreshSG.textContent = '🔄 Actualizar';
+            showToast('Resultados de SuperGana actualizados', 'info');
+        });
     });
 }
+
+const btnSyncTop = document.getElementById('btn-sync-supergana-top');
+if (btnSyncTop) {
+    btnSyncTop.addEventListener('click', () => {
+        btnSyncTop.disabled = true;
+        fetchSuperGanaLiveAdmin().then(() => {
+            showToast('SuperGana 10:00 PM verificado con éxito', 'success');
+        }).finally(() => {
+            btnSyncTop.disabled = false;
+        });
+    });
+}
+
+// --- Create & Edit Raffle Modal Handlers ---
+window.openCreateRaffleModal = function() {
+    const modal = document.getElementById('modal-raffle');
+    if (!modal) return;
+    document.getElementById('modal-raffle-title').textContent = '➕ Crear Nueva Rifa Millonaria (10k)';
+    document.getElementById('form-raffle').reset();
+    document.getElementById('raffle-edit-id').value = '';
+    document.getElementById('raf-lottery').value = 'SuperGana 10:00 PM';
+    document.getElementById('raf-img-preview').style.display = 'none';
+    document.getElementById('raf-img-placeholder').style.display = 'block';
+    modal.classList.remove('hidden');
+};
+
+const btnOpenCreate = document.getElementById('btn-open-create-raffle');
+if (btnOpenCreate) btnOpenCreate.addEventListener('click', openCreateRaffleModal);
+
+window.openEditRaffleModal = function(raffleId) {
+    const r = currentRafflesList.find(x => x.id === raffleId);
+    if (!r) return;
+
+    const modal = document.getElementById('modal-raffle');
+    if (!modal) return;
+
+    document.getElementById('modal-raffle-title').textContent = '✏️ Editar Rifa Millonaria';
+    document.getElementById('raffle-edit-id').value = r.id;
+    document.getElementById('raf-title').value = r.title;
+    document.getElementById('raf-desc').value = r.description || '';
+    document.getElementById('raf-price').value = r.ticketPrice;
+    document.getElementById('raf-lottery').value = r.lotteryName || 'SuperGana 10:00 PM';
+    document.getElementById('raf-img-url').value = r.imageUrl || '';
+
+    const imgPreview = document.getElementById('raf-img-preview');
+    const placeholder = document.getElementById('raf-img-placeholder');
+    if (r.imageUrl) {
+        imgPreview.src = r.imageUrl;
+        imgPreview.style.display = 'block';
+        placeholder.style.display = 'none';
+    } else {
+        imgPreview.style.display = 'none';
+        placeholder.style.display = 'block';
+    }
+
+    modal.classList.remove('hidden');
+};
+
+const btnCloseRaffleModal = document.getElementById('btn-close-raffle-modal');
+const btnCancelRaffle = document.getElementById('btn-cancel-raffle');
+if (btnCloseRaffleModal) btnCloseRaffleModal.addEventListener('click', () => document.getElementById('modal-raffle').classList.add('hidden'));
+if (btnCancelRaffle) btnCancelRaffle.addEventListener('click', () => document.getElementById('modal-raffle').classList.add('hidden'));
+
+// Image Upload From Local PC
+const btnUploadRafImg = document.getElementById('btn-upload-raf-img');
+const rafFileInput = document.getElementById('raf-file-input');
+const rafImgUrlInput = document.getElementById('raf-img-url');
+
+if (btnUploadRafImg && rafFileInput) {
+    btnUploadRafImg.addEventListener('click', () => rafFileInput.click());
+
+    rafFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const base64Data = event.target.result;
+            try {
+                showToast('Subiendo imagen de premio...', 'info');
+                const res = await apiCall('/raffles/upload-image', 'POST', { base64Data, filename: file.name });
+                if (res.success && res.imageUrl) {
+                    rafImgUrlInput.value = res.imageUrl;
+                    const preview = document.getElementById('raf-img-preview');
+                    preview.src = res.imageUrl;
+                    preview.style.display = 'block';
+                    document.getElementById('raf-img-placeholder').style.display = 'none';
+                    showToast('✅ Foto subida exitosamente', 'success');
+                }
+            } catch (err) {
+                showToast('Error al subir imagen: ' + err.message, 'error');
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+if (rafImgUrlInput) {
+    rafImgUrlInput.addEventListener('input', () => {
+        const url = rafImgUrlInput.value.trim();
+        const preview = document.getElementById('raf-img-preview');
+        const placeholder = document.getElementById('raf-img-placeholder');
+        if (url) {
+            preview.src = url;
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+        } else {
+            preview.style.display = 'none';
+            placeholder.style.display = 'block';
+        }
+    });
+}
+
+// Form Submit (Create / Edit)
+const formRaffle = document.getElementById('form-raffle');
+if (formRaffle) {
+    formRaffle.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('raffle-edit-id').value;
+        const title = document.getElementById('raf-title').value.trim();
+        const description = document.getElementById('raf-desc').value.trim();
+        const ticketPrice = parseFloat(document.getElementById('raf-price').value);
+        const lotteryName = document.getElementById('raf-lottery').value.trim();
+        const imageUrl = document.getElementById('raf-img-url').value.trim();
+
+        const payload = { title, description, ticketPrice, lotteryName, imageUrl };
+
+        try {
+            if (editId) {
+                await apiCall(`/raffles/${editId}`, 'PUT', payload);
+                showToast('✅ Rifa actualizada con éxito', 'success');
+            } else {
+                await apiCall('/raffles', 'POST', payload);
+                showToast('🎉 Nueva Rifa creada exitosamente (10,000 números)', 'success');
+            }
+            document.getElementById('modal-raffle').classList.add('hidden');
+            loadRaffles();
+        } catch (err) {
+            console.error(err);
+        }
+    });
+}
+
+// Delete Raffle
+window.deleteRaffle = async function(raffleId, title) {
+    if (!confirm(`¿Estás seguro de que deseas eliminar la rifa "${title}"?`)) return;
+    try {
+        await apiCall(`/raffles/${raffleId}`, 'DELETE');
+        showToast('Rifa eliminada correctamente', 'info');
+        loadRaffles();
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+// --- Draw Winner Modal (SuperGana 10:00 PM) ---
+window.openDrawRaffleModal = function(raffleId) {
+    const r = currentRafflesList.find(x => x.id === raffleId);
+    if (!r) return;
+
+    const modal = document.getElementById('modal-draw-raffle');
+    if (!modal) return;
+
+    document.getElementById('draw-raffle-id').value = r.id;
+    document.getElementById('draw-target-title').textContent = r.title;
+    document.getElementById('draw-target-sold').textContent = `Boletos Vendidos: ${r.soldCount.toLocaleString('es-VE')} / 10,000 (${r.soldPercentage}%)`;
+    document.getElementById('draw-target-revenue').textContent = `Recaudado: Bs ${r.totalRevenue.toLocaleString('es-VE', {minimumFractionDigits: 2})}`;
+    document.getElementById('draw-winning-number').value = '';
+    document.getElementById('draw-sg-result-info').innerHTML = `Lotería: <strong>${r.lotteryName || 'SuperGana 10:00 PM'}</strong>`;
+
+    modal.classList.remove('hidden');
+};
+
+const btnCloseDrawModal = document.getElementById('btn-close-draw-modal');
+const btnCancelDraw = document.getElementById('btn-cancel-draw');
+if (btnCloseDrawModal) btnCloseDrawModal.addEventListener('click', () => document.getElementById('modal-draw-raffle').classList.add('hidden'));
+if (btnCancelDraw) btnCancelDraw.addEventListener('click', () => document.getElementById('modal-draw-raffle').classList.add('hidden'));
+
+const btnFetchSgIntoDraw = document.getElementById('btn-fetch-sg-into-draw');
+if (btnFetchSgIntoDraw) {
+    btnFetchSgIntoDraw.addEventListener('click', async () => {
+        btnFetchSgIntoDraw.disabled = true;
+        btnFetchSgIntoDraw.textContent = '⏳ Consultando supergana.com.ve...';
+        try {
+            const data = await apiCall('/raffles/supergana');
+            if (data && data.success && data.winningNumber) {
+                document.getElementById('draw-winning-number').value = data.winningNumber;
+                document.getElementById('draw-sg-result-info').innerHTML = `
+                    <div style="color: #10B981; font-weight: 700;">✅ Resultado Oficial Extraído: <strong>${data.winningNumber}</strong> (${data.signo || ''} - 10:00 PM)</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 3px;">Combina: ${data.combina4Digits || '--'} | TriNapa: ${data.triNapa3Digits || '--'}</div>
+                `;
+                showToast(`Número oficial extraído: ${data.winningNumber}`, 'success');
+            } else {
+                document.getElementById('draw-sg-result-info').innerHTML = `<span style="color: var(--accent-amber);">⚠️ No se encontró número publicado aún para las 10:00 PM. Puedes ingresarlo manualmente.</span>`;
+            }
+        } catch (err) {
+            document.getElementById('draw-sg-result-info').innerHTML = `<span style="color: var(--accent-red);">Error al consultar SuperGana: ${err.message}</span>`;
+        } finally {
+            btnFetchSgIntoDraw.disabled = false;
+            btnFetchSgIntoDraw.textContent = '🔄 Consultar Número Oficial de SuperGana (10:00 PM)';
+        }
+    });
+}
+
+const btnSubmitDrawWinner = document.getElementById('btn-submit-draw-winner');
+if (btnSubmitDrawWinner) {
+    btnSubmitDrawWinner.addEventListener('click', async () => {
+        const raffleId = document.getElementById('draw-raffle-id').value;
+        const num = document.getElementById('draw-winning-number').value.trim();
+
+        if (!num || !/^\d{1,4}$/.test(num)) {
+            return showToast('Ingresa un número ganador válido de 4 cifras (ej: 2266 o 0729)', 'error');
+        }
+
+        const paddedNum = num.padStart(4, '0');
+        if (!confirm(`¿Confirmas que el número ganador oficial es el #${paddedNum}?`)) return;
+
+        btnSubmitDrawWinner.disabled = true;
+        btnSubmitDrawWinner.textContent = '⏳ Declarando Ganador...';
+
+        try {
+            const res = await apiCall(`/raffles/${raffleId}/draw`, 'POST', { winningNumber: paddedNum, isAutoVerified: true });
+            if (res.hasWinner) {
+                showToast(`👑 ¡GANADOR ENCONTRADO! ${res.winnerTicket.user.name} ganó con el boleto #${paddedNum}`, 'success');
+            } else {
+                showToast(`Sorteo completado con #${paddedNum} (Boleto no fue vendido - Vacante)`, 'info');
+            }
+            document.getElementById('modal-draw-raffle').classList.add('hidden');
+            loadRaffles();
+        } catch (err) {
+            showToast(err.message, 'error');
+        } finally {
+            btnSubmitDrawWinner.disabled = false;
+            btnSubmitDrawWinner.textContent = '🏆 Confirmar y Declarar Ganador';
+        }
+    });
+}
+
+// --- View Sold Tickets Modal ---
+window.openViewRaffleTickets = async function(raffleId) {
+    const r = currentRafflesList.find(x => x.id === raffleId);
+    if (!r) return;
+
+    const modal = document.getElementById('modal-raffle-tickets');
+    if (!modal) return;
+
+    document.getElementById('tickets-modal-raffle-title').textContent = `📋 Boletos Vendidos — ${r.title}`;
+    const tbody = document.getElementById('raffle-tickets-tbody');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">Cargando lista de boletos...</td></tr>';
+
+    modal.classList.remove('hidden');
+
+    try {
+        const details = await apiCall(`/raffles/${raffleId}`);
+        const tickets = details.tickets || details.recentTickets || r.recentTickets || [];
+
+        if (tickets.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 30px;">Aún no se han vendido boletos para esta rifa.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = tickets.map(t => `
+            <tr>
+                <td style="font-family: monospace; font-size: 15px; font-weight: 800; color: #FFD700;">#${t.ticketNumber}</td>
+                <td style="font-weight: 600; color: #FFF;">${t.buyerName || 'Jugador'}</td>
+                <td style="color: var(--text-secondary);">${t.buyerPhone || '--'}</td>
+                <td style="color: var(--text-secondary);">${t.buyerCedula || '--'}</td>
+                <td style="color: var(--text-secondary); font-size: 12px;">${formatDate(t.purchasedAt)}</td>
+                <td>
+                    ${t.isWinner ? '<span class="badge badge-success">👑 GANADOR</span>' : '<span class="badge" style="background: rgba(255,255,255,0.08); color: #FFF;">EN JUEGO</span>'}
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color: var(--accent-red); text-align: center;">Error al cargar boletos: ${err.message}</td></tr>`;
+    }
+};
+
+const btnCloseTicketsModal = document.getElementById('btn-close-tickets-modal');
+if (btnCloseTicketsModal) btnCloseTicketsModal.addEventListener('click', () => document.getElementById('modal-raffle-tickets').classList.add('hidden'));
 
 // Boot
 init();

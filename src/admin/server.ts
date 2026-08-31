@@ -4,12 +4,14 @@ import path from 'path';
 import { config } from '../config/env';
 import * as routes from './routes';
 import * as playerRoutes from './player-routes';
+import * as raffleRoutes from './raffle-routes';
 
 export const app = express();
 
-// Middleware
+// Middleware (with 50mb limit for raffle banner image uploads)
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serve static files from web-dashboard
 const dashboardPath = path.join(process.cwd(), 'web-dashboard');
@@ -61,6 +63,13 @@ app.post('/api/player/deposit', playerRoutes.playerDeposit);
 app.post('/api/player/withdraw', playerRoutes.playerWithdraw);
 app.get('/api/player/rooms', routes.getRooms);
 
+// Public Player Raffle Endpoints
+app.get('/api/player/raffles', raffleRoutes.getPlayerRaffles);
+app.get('/api/player/raffles/:id', raffleRoutes.getPlayerRaffleDetail);
+app.get('/api/player/my-raffles', raffleRoutes.getMyRaffleTickets);
+app.get('/api/player/raffles/:id/random', raffleRoutes.getRandomRaffleTickets);
+app.post('/api/player/buy-raffles', raffleRoutes.buyPlayerRaffleTickets);
+
 // Protected routes
 const api = express.Router();
 api.use(authenticateToken);
@@ -96,6 +105,15 @@ api.get('/settings', routes.getSettings);
 api.post('/settings', routes.updateSettings);
 api.put('/settings', routes.updateSettings);
 api.get('/rooms', routes.getRooms);
+
+// Raffles (Admin)
+api.get('/raffles', raffleRoutes.adminGetRaffles);
+api.post('/raffles', raffleRoutes.adminCreateRaffle);
+api.put('/raffles/:id', raffleRoutes.adminUpdateRaffle);
+api.delete('/raffles/:id', raffleRoutes.adminDeleteRaffle);
+api.get('/raffles/supergana', raffleRoutes.adminCheckSuperGanaResult);
+api.post('/raffles/:id/draw', raffleRoutes.adminDrawRaffleWinner);
+api.post('/raffles/upload-image', raffleRoutes.adminUploadRaffleImage);
 
 app.use('/api/admin', api);
 
