@@ -159,23 +159,43 @@ if ($id('btn-login')) {
   };
 }
 
-// ═══ REGISTER HANDLER ═══
+// ═══ REGISTER HANDLER (REGISTRO COMPLETO DE TITULAR) ═══
+if ($id('btn-copy-wa')) {
+  $id('btn-copy-wa').onclick = () => {
+    const wa = $id('reg-phone').value.trim();
+    if (wa) $id('reg-bank-tel').value = wa;
+  };
+}
+
 if ($id('btn-register')) {
   $id('btn-register').onclick = async () => {
     snd();
-    const ph = $id('reg-phone').value.trim().replace(/[^0-9]/g, '');
     const nm = $id('reg-name').value.trim();
-    const pin = $id('reg-pin').value.trim();
     const ced = $id('reg-cedula').value.trim();
+    const ph = $id('reg-phone').value.trim().replace(/[^0-9]/g, '');
+    const bankCode = $id('reg-bank').value;
+    const bankTel = ($id('reg-bank-tel').value.trim() || ph).replace(/[^0-9]/g, '');
+    const pin = $id('reg-pin').value.trim();
 
-    if (!ph || ph.length < 10) return showAuthError('Ingresa un número de WhatsApp válido');
-    if (pin && !/^\d{4}$/.test(pin)) return showAuthError('El PIN debe tener exactamente 4 dígitos numéricos');
+    if (!nm || nm.length < 3) return showAuthError('Ingresa tu Nombre y Apellido completo');
+    if (!ced || ced.length < 6) return showAuthError('Ingresa tu Cédula de Identidad (ej: V-12345678)');
+    if (!ph || ph.length < 10) return showAuthError('Ingresa un número de WhatsApp válido (10 dígitos)');
+    if (!bankCode) return showAuthError('Selecciona tu banco de Pago Móvil');
+    if (!bankTel || bankTel.length < 10) return showAuthError('Ingresa un teléfono válido para tu Pago Móvil');
+    if (!pin || !/^\d{4}$/.test(pin)) return showAuthError('El PIN debe tener exactamente 4 dígitos numéricos');
 
     try {
       const res = await fetch('/api/player/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: ph, name: nm, pin, cedula: ced })
+        body: JSON.stringify({
+          phone: ph,
+          name: nm,
+          cedula: ced,
+          bankCode: bankCode,
+          bankAccount: bankTel,
+          pin: pin
+        })
       });
       const d = await res.json();
       if (!res.ok || d.error) {
@@ -399,7 +419,22 @@ if ($id('dep-submit')) {
   };
 }
 
-// ═══ WITHDRAWALS ═══
+// ═══ WITHDRAWALS (TITULAR VERIFICADO & PIN) ═══
+let currentWithBalance = 0;
+
+const bankNamesMap = {
+  '0102': '0102 - Banco de Venezuela',
+  '0134': '0134 - Banesco',
+  '0105': '0105 - Banco Mercantil',
+  '0108': '0108 - BBVA Provincial',
+  '0172': '0172 - Bancamiga',
+  '0191': '0191 - BNC',
+  '0114': '0114 - Bancaribe',
+  '0163': '0163 - Banco del Tesoro',
+  '0115': '0115 - Banco Exterior',
+  '0151': '0151 - Fondo Común'
+};
+
 async function openWithdrawModal() {
   if (!phone) return alert('Inicia sesión primero');
   const modal = $id('withdraw-modal');
@@ -407,14 +442,32 @@ async function openWithdrawModal() {
 
   try {
     const me = await (await fetch(`/api/player/me?phone=${phone}`)).json();
-    if ($id('with-available-txt')) $id('with-available-txt').textContent = `Bs ${me.balance.toFixed(2)}`;
-    if ($id('with-bank') && me.bankCode) $id('with-bank').value = me.bankCode;
-    if ($id('with-cedula') && me.cedula) $id('with-cedula').value = me.cedula;
-    if ($id('with-phone')) $id('with-phone').value = me.bankAccount || me.phone;
+    currentWithBalance = me.balance || 0;
+    if ($id('with-available-txt')) $id('with-available-txt').textContent = `Bs ${currentWithBalance.toFixed(2)}`;
+    
+    // Populate verified titular card
+    if ($id('with-titular-name')) $id('with-titular-name').textContent = me.name || userName;
+    if ($id('with-titular-cedula')) $id('with-titular-cedula').textContent = me.cedula || 'No registrada';
+    if ($id('with-titular-bank')) $id('with-titular-bank').textContent = bankNamesMap[me.bankCode] || me.bankCode || '0102 - Venezuela';
+    if ($id('with-titular-phone')) $id('with-titular-phone').textContent = me.bankAccount || me.phone;
+
+    if ($id('with-amt')) $id('with-amt').value = '';
+    if ($id('with-pin')) $id('with-pin').value = '';
+    if ($id('with-error-msg')) $id('with-error-msg').classList.add('hidden');
   } catch {}
 
   modal.classList.remove('hidden');
 }
+
+// Percentage Quick-Pills for Withdrawal
+$$('.with-pill').forEach(btn => {
+  btn.onclick = () => {
+    const pct = parseInt(btn.dataset.pct);
+    if (!pct || !currentWithBalance) return;
+    const val = (currentWithBalance * (pct / 100)).toFixed(2);
+    if ($id('with-amt')) $id('with-amt').value = val;
+  };
+});
 
 if ($id('btn-topbar-withdraw')) $id('btn-topbar-withdraw').onclick = openWithdrawModal;
 if ($id('prof-btn-with')) $id('prof-btn-with').onclick = openWithdrawModal;
@@ -423,9 +476,7 @@ if ($id('with-close')) $id('with-close').onclick = () => $id('withdraw-modal').c
 if ($id('with-submit')) {
   $id('with-submit').onclick = async () => {
     const amt = parseFloat($id('with-amt').value);
-    const bankCode = $id('with-bank').value;
-    const cedula = $id('with-cedula').value.trim();
-    const bankAccount = $id('with-phone').value.trim();
+    const pin = $id('with-pin') ? $id('with-pin').value.trim() : '';
     const errEl = $id('with-error-msg');
 
     if (isNaN(amt) || amt <= 0) {
@@ -433,33 +484,47 @@ if ($id('with-submit')) {
       errEl.classList.remove('hidden');
       return;
     }
-    if (!cedula || !bankAccount) {
-      errEl.textContent = 'Completa tu cédula y teléfono Pago Móvil';
+    if (amt > currentWithBalance) {
+      errEl.textContent = `Saldo insuficiente. Tienes Bs ${currentWithBalance.toFixed(2)} disponibles`;
       errEl.classList.remove('hidden');
       return;
     }
+    if (!pin || !/^\d{4}$/.test(pin)) {
+      errEl.textContent = 'Ingresa tu PIN de seguridad de 4 dígitos para autorizar el retiro';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    const btn = $id('with-submit');
+    btn.disabled = true;
+    btn.textContent = '⏳ Procesando retiro...';
 
     try {
       const res = await fetch('/api/player/withdraw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, amount: amt, bankCode, cedula, bankAccount })
+        body: JSON.stringify({ phone, amount: amt, pin })
       });
       const d = await res.json();
+      btn.disabled = false;
+      btn.textContent = 'CONFIRMAR RETIRO A MI CUENTA 💸';
+
       if (!res.ok || d.error) {
         errEl.textContent = d.error || 'Error al solicitar retiro';
         errEl.classList.remove('hidden');
       } else {
-        alert(`✅ ¡Solicitud de retiro por Bs ${amt.toFixed(2)} procesada!\n\nTus fondos han quedado reservados y se transferirán a tu Pago Móvil.`);
+        alert(`✅ ¡Solicitud de retiro por Bs ${amt.toFixed(2)} procesada exitosamente!\n\nTus fondos han quedado reservados y se transferirán por Pago Móvil a ${d.recipient?.name || 'tu cuenta'} (${d.recipient?.bankCode} - ${d.recipient?.cedula}).`);
         $id('withdraw-modal').classList.add('hidden');
-        $id('with-amt').value = '';
+        if ($id('with-amt')) $id('with-amt').value = '';
+        if ($id('with-pin')) $id('with-pin').value = '';
         errEl.classList.add('hidden');
         updateTopbar();
         refreshProfile();
       }
     } catch {
-      errEl.textContent = 'Error de conexión';
-      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'CONFIRMAR RETIRO A MI CUENTA 💸';
+      errEl.textContent = 'Error de conexión con el servidor';
     }
   };
 }

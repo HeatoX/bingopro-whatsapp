@@ -15,11 +15,34 @@ const generatePlayerToken = (userId: string, phone: string) => {
 export const playerRegister = async (req: Request, res: Response) => {
   try {
     const { phone, name, pin, email, cedula, bankCode, bankAccount } = req.body;
-    if (!phone) return res.status(400).json({ error: 'Número de teléfono es requerido' });
+    
+    if (!name || name.trim().length < 3) {
+      return res.status(400).json({ error: 'Ingresa tu Nombre y Apellido completo' });
+    }
+    if (!cedula || cedula.trim().length < 6) {
+      return res.status(400).json({ error: 'Ingresa tu Cédula de Identidad (ej: V-12345678)' });
+    }
+    if (!phone) {
+      return res.status(400).json({ error: 'Número de WhatsApp es requerido' });
+    }
 
     const cleanPhone = phone.replace(/[^0-9]/g, '');
     if (cleanPhone.length < 10) {
-      return res.status(400).json({ error: 'Número de teléfono inválido' });
+      return res.status(400).json({ error: 'Número de WhatsApp inválido (mínimo 10 dígitos)' });
+    }
+
+    if (!bankCode) {
+      return res.status(400).json({ error: 'Selecciona tu banco de Pago Móvil' });
+    }
+
+    const cleanBankAccount = (bankAccount || cleanPhone).replace(/[^0-9]/g, '');
+    if (cleanBankAccount.length < 10) {
+      return res.status(400).json({ error: 'Ingresa un teléfono válido para recibir tu Pago Móvil' });
+    }
+
+    const cleanPin = String(pin || '').trim();
+    if (!/^\d{4}$/.test(cleanPin)) {
+      return res.status(400).json({ error: 'El PIN de seguridad debe tener exactamente 4 dígitos numéricos' });
     }
 
     const existing = await prisma.user.findUnique({ where: { phone: cleanPhone } });
@@ -27,24 +50,17 @@ export const playerRegister = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Este número de teléfono ya está registrado. Por favor inicia sesión.' });
     }
 
-    let pinHash: string | undefined = undefined;
-    if (pin) {
-      const cleanPin = String(pin).trim();
-      if (!/^\d{4}$/.test(cleanPin)) {
-        return res.status(400).json({ error: 'El PIN debe contener exactamente 4 dígitos numéricos' });
-      }
-      pinHash = await bcrypt.hash(cleanPin, 10);
-    }
+    const pinHash = await bcrypt.hash(cleanPin, 10);
 
     const user = await prisma.user.create({
       data: {
         phone: cleanPhone,
-        name: name?.trim() || `Jugador ${cleanPhone.slice(-4)}`,
+        name: name.trim(),
         pinHash,
         email: email?.trim() || null,
-        cedula: cedula?.trim() || null,
-        bankCode: bankCode?.trim() || null,
-        bankAccount: bankAccount?.trim() || null,
+        cedula: cedula.trim(),
+        bankCode: bankCode.trim(),
+        bankAccount: cleanBankAccount,
         accounts: {
           create: {
             type: 'USER_REAL',
@@ -596,10 +612,10 @@ export const playerDeposit = async (req: Request, res: Response) => {
   }
 };
 
-// Player Withdrawal request (Atomically locks balance!)
+// Player Withdrawal request (Atomically locks balance & enforces registered titular recipient!)
 export const playerWithdraw = async (req: Request, res: Response) => {
   try {
-    const { phone, amount, bankCode, cedula, bankAccount } = req.body;
+    const { phone, amount, pin } = req.body;
     const numAmount = parseFloat(amount);
     if (!phone || isNaN(numAmount) || numAmount <= 0) {
       return res.status(400).json({ error: 'Monto de retiro inválido' });
@@ -612,6 +628,26 @@ export const playerWithdraw = async (req: Request, res: Response) => {
     });
 
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    // Enforce PIN validation
+    if (user.pinHash) {
+      if (!pin) {
+        return res.status(400).json({ error: 'Ingresa tu PIN de 4 dígitos para autorizar el retiro' });
+      }
+      const valid = await bcrypt.compare(String(pin).trim(), user.pinHash);
+      if (!valid) {
+        return res.status(401).json({ error: 'PIN de seguridad incorrecto' });
+      }
+    }
+
+    // Verify user has registered bank data
+    const targetBankCode = user.bankCode || config.pagoMovilBanco;
+    const targetPhone = user.bankAccount || user.phone;
+    const targetCedula = user.cedula || '';
+
+    if (!targetCedula || !targetPhone) {
+      return res.status(400).json({ error: 'Debes completar tu Cédula y Teléfono Pago Móvil en tu perfil antes de retirar' });
+    }
 
     const userAccount = user.accounts[0];
     const availableBalance = userAccount?.balance?.availableBalance || 0;
@@ -631,14 +667,14 @@ export const playerWithdraw = async (req: Request, res: Response) => {
         }
       });
 
-      // 2. Create withdrawal request
+      // 2. Create withdrawal request ONLY to registered titular data
       const wr = await tx.withdrawalRequest.create({
         data: {
           userId: user.id,
           amount: numAmount,
-          bankCode: bankCode || user.bankCode || config.pagoMovilBanco,
-          phoneNumber: bankAccount || user.bankAccount || cleanPhone,
-          cedulaNumber: cedula || user.cedula || '',
+          bankCode: targetBankCode,
+          phoneNumber: targetPhone,
+          cedulaNumber: targetCedula,
           status: 'PENDING'
         }
       });
@@ -648,8 +684,8 @@ export const playerWithdraw = async (req: Request, res: Response) => {
         data: {
           idempotencyKey: `WITHDRAW_REQ:${wr.id}`,
           type: 'WITHDRAW_LOCK',
-          description: `Bloqueo de saldo por solicitud de retiro #${wr.id.slice(-6)}`,
-          metadata: JSON.stringify({ userId: user.id, amount: numAmount, bankCode, cedula })
+          description: `Retiro solicitado a ${user.name} (${targetBankCode} - ${targetCedula} - ${targetPhone})`,
+          metadata: JSON.stringify({ userId: user.id, amount: numAmount, bankCode: targetBankCode, cedula: targetCedula, phone: targetPhone })
         }
       });
 
@@ -663,6 +699,12 @@ export const playerWithdraw = async (req: Request, res: Response) => {
     res.json({
       success: true,
       withdrawal,
+      recipient: {
+        name: user.name,
+        cedula: targetCedula,
+        bankCode: targetBankCode,
+        phone: targetPhone
+      },
       newAvailableBalance: updatedAcc?.availableBalance || 0,
       newLockedBalance: updatedAcc?.lockedBalance || 0
     });

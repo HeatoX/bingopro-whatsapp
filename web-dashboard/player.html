@@ -32,17 +32,46 @@
                     <button id="btn-login" class="btn-gold-lg">ENTRAR A JUGAR AHORA 🚀</button>
                 </div>
 
-                <!-- Register Form -->
+                <!-- Register Form (Registro Completo de Titular y Pago Móvil) -->
                 <div id="form-register-box" class="auth-form-box hidden">
-                    <input type="text" id="reg-phone" class="input-glass" placeholder="WhatsApp (ej: 04121234567)" />
-                    <input type="text" id="reg-name" class="input-glass" placeholder="Tu Nombre / Apodo" />
-                    <input type="password" id="reg-pin" class="input-glass" placeholder="Crea tu PIN de 4 Dígitos (ej: 1234)" maxlength="4" inputmode="numeric" />
-                    <input type="text" id="reg-cedula" class="input-glass" placeholder="Cédula (ej: V-12345678)" />
-                    <button id="btn-register" class="btn-gold-lg">CREAR MI CUENTA GRATIS ✨</button>
+                    <div class="reg-notice">
+                        🔒 <strong>Registro Único de Titular:</strong> Para tu seguridad y evitar inconvenientes, los depósitos y retiros deben realizarse a la misma persona registrada.
+                    </div>
+                    <input type="text" id="reg-name" class="input-glass" placeholder="Nombre y Apellido Completo (Titular)" required />
+                    <input type="text" id="reg-cedula" class="input-glass" placeholder="Cédula de Identidad (ej: V-12345678)" required />
+                    <input type="text" id="reg-phone" class="input-glass" placeholder="Tu Número de WhatsApp (ej: 04121234567)" required />
+                    
+                    <div class="reg-bank-group">
+                        <label class="reg-label">🏦 Banco para recibir tus Retiros / Premios:</label>
+                        <select id="reg-bank" class="input-glass">
+                            <option value="0102">0102 - Banco de Venezuela</option>
+                            <option value="0134">0134 - Banesco</option>
+                            <option value="0105">0105 - Banco Mercantil</option>
+                            <option value="0108">0108 - BBVA Provincial</option>
+                            <option value="0172">0172 - Bancamiga</option>
+                            <option value="0191">0191 - BNC (Banco Nacional de Crédito)</option>
+                            <option value="0114">0114 - Bancaribe</option>
+                            <option value="0163">0163 - Banco del Tesoro</option>
+                            <option value="0115">0115 - Banco Exterior</option>
+                            <option value="0151">0151 - BFC (Fondo Común)</option>
+                        </select>
+                    </div>
+
+                    <div class="reg-bank-group">
+                        <label class="reg-label">📱 Teléfono Pago Móvil Receptor:</label>
+                        <div class="reg-input-btn-row">
+                            <input type="text" id="reg-bank-tel" class="input-glass" placeholder="Teléfono Pago Móvil (ej: 04121234567)" />
+                            <button type="button" id="btn-copy-wa" class="btn-copy-wa" title="Usar el mismo número de WhatsApp">Mismo WhatsApp</button>
+                        </div>
+                    </div>
+
+                    <input type="password" id="reg-pin" class="input-glass" placeholder="Crea tu PIN de Seguridad (4 Dígitos)" maxlength="4" inputmode="numeric" required />
+                    
+                    <button id="btn-register" class="btn-gold-lg">CREAR MI CUENTA Y ACTIVAR BILLETERA ✨</button>
                 </div>
 
                 <div id="auth-error-msg" class="auth-error hidden"></div>
-                <p class="login-foot">🔒 Cuentas individuales seguras con Pago Móvil instantáneo</p>
+                <p class="login-foot">🔒 Cuentas verificadas con sistema anti-fraude y Pago Móvil instantáneo</p>
             </div>
         </div>
     </div>
@@ -453,29 +482,46 @@
         </div>
     </div>
 
-    <!-- ═══ MODAL: RETIRO DE FONDOS ═══ -->
+    <!-- ═══ MODAL: RETIRO DE FONDOS (DIRECTO A CUENTA REGISTRADA) ═══ -->
     <div id="withdraw-modal" class="modal-overlay hidden">
-        <div class="dep-box">
+        <div class="dep-box withdraw-box">
             <button id="with-close" class="close-x">✕</button>
-            <h2>💸 RETIRAR SALDO</h2>
-            <p class="prof-desc">El monto solicitado se enviará por Pago Móvil a tus datos registrados.</p>
+            <h2>💸 RETIRAR SALDO A MI PAGO MÓVIL</h2>
+            
+            <!-- Locked Titular Security Card -->
+            <div class="with-titular-card">
+                <div class="wtc-header">
+                    <span class="wtc-lock">🔒</span>
+                    <span class="wtc-title">CUENTA RECEPTORA VERIFICADA (TITULAR)</span>
+                </div>
+                <div class="wtc-body">
+                    <div class="wtc-row"><span>👤 Titular:</span> <strong id="with-titular-name">...</strong></div>
+                    <div class="wtc-row"><span>🪪 Cédula:</span> <strong id="with-titular-cedula">...</strong></div>
+                    <div class="wtc-row"><span>🏦 Banco:</span> <strong id="with-titular-bank">...</strong></div>
+                    <div class="wtc-row"><span>📱 Pago Móvil:</span> <strong id="with-titular-phone">...</strong></div>
+                </div>
+                <div class="wtc-notice">Por seguridad, las transferencias se emiten únicamente a la cuenta del titular registrado.</div>
+            </div>
+
             <div class="with-avail-badge">
                 <span>Saldo Disponible: </span>
                 <strong id="with-available-txt" class="green">Bs 0.00</strong>
             </div>
-            <input type="number" id="with-amt" class="input-glass" placeholder="Monto a retirar en Bs" min="10" />
-            <select id="with-bank" class="input-glass">
-                <option value="0102">0102 - Banco de Venezuela</option>
-                <option value="0134">0134 - Banesco</option>
-                <option value="0105">0105 - Mercantil</option>
-                <option value="0108">0108 - Provincial</option>
-                <option value="0172">0172 - Bancamiga</option>
-                <option value="0191">0191 - BNC</option>
-                <option value="0114">0114 - Bancaribe</option>
-            </select>
-            <input type="text" id="with-cedula" class="input-glass" placeholder="Cédula Titular (ej: V-12345678)" />
-            <input type="text" id="with-phone" class="input-glass" placeholder="Teléfono Pago Móvil (ej: 04121234567)" />
-            <button id="with-submit" class="btn-gold-lg">SOLICITAR RETIRO INMEDIATO 💸</button>
+
+            <!-- Amount Input + Percentage Quick-Pills -->
+            <div class="with-amt-box">
+                <input type="number" id="with-amt" class="input-glass" placeholder="Monto a retirar en Bs (ej: 500)" min="10" />
+                <div class="with-amt-pills">
+                    <button type="button" class="with-pill" data-pct="25">25%</button>
+                    <button type="button" class="with-pill" data-pct="50">50%</button>
+                    <button type="button" class="with-pill" data-pct="75">75%</button>
+                    <button type="button" class="with-pill" data-pct="100">TODO (100%)</button>
+                </div>
+            </div>
+
+            <input type="password" id="with-pin" class="input-glass" placeholder="Ingresa tu PIN de Seguridad (4 Dígitos)" maxlength="4" inputmode="numeric" />
+
+            <button id="with-submit" class="btn-gold-lg">CONFIRMAR RETIRO A MI CUENTA 💸</button>
             <div id="with-error-msg" class="auth-error hidden" style="margin-top:10px;"></div>
         </div>
     </div>
