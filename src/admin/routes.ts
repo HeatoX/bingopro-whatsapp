@@ -234,6 +234,9 @@ export const processWithdrawal = async (req: Request, res: Response) => {
     const userAccount = await prisma.account.findFirst({
       where: { userId: reqRecord.userId, type: 'USER_REAL' }
     });
+    const gatewayAccount = await prisma.account.findFirst({
+      where: { type: { in: ['PAYMENT_GATEWAY', 'HOUSE_REVENUE'] } }
+    });
 
     await prisma.$transaction(async (tx) => {
       await tx.withdrawalRequest.update({
@@ -247,16 +250,21 @@ export const processWithdrawal = async (req: Request, res: Response) => {
           data: { lockedBalance: { decrement: reqRecord.amount } }
         });
 
+        const ledgerEntriesToCreate = [
+          { accountId: userAccount.id, amount: -reqRecord.amount }
+        ];
+        if (gatewayAccount) {
+          ledgerEntriesToCreate.push({ accountId: gatewayAccount.id, amount: reqRecord.amount });
+        }
+
         await tx.transaction.create({
           data: {
             idempotencyKey: `WITHDRAWAL:${id}`,
             type: 'WITHDRAWAL',
-            description: `Retiro procesado a ${reqRecord.phoneNumber}`,
-            metadata: JSON.stringify({ userId: reqRecord.userId, amount: reqRecord.amount }),
+            description: `Retiro Pago Móvil procesado a ${reqRecord.phoneNumber} (${reqRecord.bankCode} - ${reqRecord.cedulaNumber})`,
+            metadata: JSON.stringify({ userId: reqRecord.userId, amount: reqRecord.amount, bankCode: reqRecord.bankCode, cedula: reqRecord.cedulaNumber }),
             ledgerEntries: {
-              create: [
-                { accountId: userAccount.id, amount: -reqRecord.amount }
-              ]
+              create: ledgerEntriesToCreate
             }
           }
         });

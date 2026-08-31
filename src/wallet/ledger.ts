@@ -137,3 +137,109 @@ export async function purchaseCard(userId: string, gameRoundId: string, cardInde
     return card;
   });
 }
+
+// Calculate promo price: "Lleva 6 y Paga 4"
+export function calculatePackagePrice(count: number, unitPrice: number = config.cardPriceBs): number {
+  if (count <= 0) return 0;
+  const packsOf6 = Math.floor(count / 6);
+  const remainder = count % 6;
+  return (packsOf6 * 4 + remainder) * unitPrice;
+}
+
+// Atomic Batch Card Purchase with Promo Discount
+export async function purchaseCardsBatch(userId: string, gameRoundId: string, count: number, startCardIndex: number) {
+  if (count <= 0) throw new Error('INVALID_CARD_COUNT');
+
+  const round = await prisma.gameRound.findUnique({ where: { id: gameRoundId } });
+  if (!round || round.status !== 'SELLING') {
+    throw new Error('ROUND_NOT_SELLING');
+  }
+
+  const userAccount = await prisma.account.findFirst({
+    where: { userId, type: 'USER_REAL' },
+    include: { balance: true }
+  });
+  const escrowAccount = await prisma.account.findFirst({
+    where: { type: 'HOUSE_ESCROW' },
+    include: { balance: true }
+  });
+
+  if (!userAccount || !userAccount.balance || !escrowAccount || !escrowAccount.balance) {
+    throw new Error('User or system accounts not found');
+  }
+
+  const totalCost = calculatePackagePrice(count, config.cardPriceBs);
+
+  return await prisma.$transaction(async (tx) => {
+    // 1. Check user balance
+    const latestBalance = await tx.accountBalance.findUnique({
+      where: { accountId: userAccount.id }
+    });
+
+    if (!latestBalance || latestBalance.availableBalance < totalCost) {
+      throw new Error('INSUFFICIENT_FUNDS');
+    }
+
+    // 2. Deduct promotional total from user wallet
+    await tx.accountBalance.update({
+      where: { accountId: userAccount.id },
+      data: { availableBalance: { decrement: totalCost } }
+    });
+
+    // 3. Increment escrow balance by totalCost
+    await tx.accountBalance.update({
+      where: { accountId: escrowAccount.id },
+      data: { availableBalance: { increment: totalCost } }
+    });
+
+    const idempotencyKey = generateIdempotencyKey('BATCH_BUY', gameRoundId, userId, String(Date.now()), String(count));
+
+    // 4. Create single consolidated audit transaction
+    await tx.transaction.create({
+      data: {
+        idempotencyKey,
+        type: 'BUY_CARD',
+        gameRoundId,
+        metadata: JSON.stringify({ userId, count, totalCost, promo: '6x4' }),
+        ledgerEntries: {
+          create: [
+            { accountId: userAccount.id, amount: -totalCost },
+            { accountId: escrowAccount.id, amount: totalCost }
+          ]
+        }
+      }
+    });
+
+    // 5. Generate all cards
+    const createdCards = [];
+    const effectiveUnitPrice = totalCost / count;
+
+    for (let i = 0; i < count; i++) {
+      const cardIndex = startCardIndex + i;
+      const { grid, hash } = generateCard(gameRoundId, cardIndex);
+      const card = await tx.card.create({
+        data: {
+          cardNumber: cardIndex,
+          hash,
+          userId,
+          gameRoundId,
+          grid: JSON.stringify(grid),
+          purchasePrice: effectiveUnitPrice
+        }
+      });
+      createdCards.push(card);
+    }
+
+    // 6. Update GameRound totalCards and prizePool with promotional funds
+    await tx.gameRound.update({
+      where: { id: gameRoundId },
+      data: {
+        totalCards: { increment: count },
+        prizePool: { increment: totalCost }
+      }
+    });
+
+    return { cards: createdCards, totalCost };
+  });
+}
+

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { prisma, purchaseCard } from '../wallet/ledger';
+import { prisma, purchaseCard, purchaseCardsBatch, calculatePackagePrice } from '../wallet/ledger';
 import { config } from '../config/env';
 import { generateCard } from '../game/card-generator';
 import { GameScheduler } from '../game/scheduler';
@@ -522,11 +522,12 @@ export const getPlayerCards = async (req: Request, res: Response) => {
   }
 };
 
-// Player card purchase
+// Player card purchase (Supports "Lleva 6 Paga 4" Promos)
 export const playerBuyCards = async (req: Request, res: Response) => {
   try {
     const { phone, count } = req.body;
-    if (!phone || !count || count < 1) return res.status(400).json({ error: 'Datos inválidos' });
+    const numCount = parseInt(count);
+    if (!phone || isNaN(numCount) || numCount < 1) return res.status(400).json({ error: 'Datos de compra inválidos' });
 
     const cleanPhone = phone.replace(/[^0-9]/g, '');
     const user = await prisma.user.findUnique({
@@ -547,22 +548,18 @@ export const playerBuyCards = async (req: Request, res: Response) => {
       where: { userId: user.id, gameRoundId: activeRound.id }
     });
 
-    if (existingCount + count > config.maxCardsPerPlayer) {
+    if (existingCount + numCount > config.maxCardsPerPlayer) {
       return res.status(400).json({ error: `Máximo ${config.maxCardsPerPlayer} cartones por jugador. Ya tienes ${existingCount}.` });
     }
 
-    const totalCost = count * config.cardPriceBs;
+    const totalCost = calculatePackagePrice(numCount, config.cardPriceBs);
     const balance = user.accounts[0]?.balance?.availableBalance || 0;
 
     if (balance < totalCost) {
       return res.status(400).json({ error: `Saldo insuficiente. Necesitas ${totalCost.toFixed(2)} Bs y tienes ${balance.toFixed(2)} Bs.` });
     }
 
-    const purchased = [];
-    for (let i = 0; i < count; i++) {
-      const card = await purchaseCard(user.id, activeRound.id, existingCount + i + 1);
-      purchased.push(card);
-    }
+    const { cards, totalCost: chargedAmount } = await purchaseCardsBatch(user.id, activeRound.id, numCount, existingCount + 1);
 
     const updatedAcc = await prisma.accountBalance.findUnique({
       where: { accountId: user.accounts[0].id }
@@ -570,7 +567,8 @@ export const playerBuyCards = async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      count: purchased.length,
+      count: cards.length,
+      chargedAmount,
       newBalance: updatedAcc?.availableBalance || 0
     });
   } catch (error: any) {

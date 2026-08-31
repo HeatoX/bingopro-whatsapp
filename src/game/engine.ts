@@ -137,10 +137,24 @@ export class GameEngine extends EventEmitter {
       include: { user: { include: { accounts: { include: { balance: true } } } } }
     });
 
-    const escrowAccount = await prisma.account.findFirst({ where: { type: 'HOUSE_ESCROW' } });
+    const escrowAccount = await prisma.account.findFirst({ where: { type: 'HOUSE_ESCROW' }, include: { balance: true } });
+    const jackpotAccount = await prisma.account.findFirst({ where: { type: 'HOUSE_JACKPOT' }, include: { balance: true } });
+
+    // Check if this round had an initial seed transferred from HOUSE_JACKPOT
+    const seedTx = await prisma.transaction.findUnique({
+      where: { idempotencyKey: `SEED_TRANSFER:${roundId}` }
+    });
+    let seedToRevert = 0;
+    if (seedTx && seedTx.metadata) {
+      try {
+        const meta = JSON.parse(seedTx.metadata);
+        seedToRevert = Number(meta.seedAmount || 0);
+      } catch {}
+    }
 
     // Atomic refund: all-or-nothing with ledger entries
     await prisma.$transaction(async (tx) => {
+      // 1. Refund all players
       for (const card of cards) {
         const userAccount = card.user.accounts.find(a => a.type === 'USER_REAL');
         if (userAccount?.balance && escrowAccount) {
@@ -169,13 +183,42 @@ export class GameEngine extends EventEmitter {
           });
         }
       }
+
+      // 2. Revert Seed Pot to HOUSE_JACKPOT if applicable
+      if (seedToRevert > 0 && escrowAccount && jackpotAccount) {
+        await tx.accountBalance.update({
+          where: { accountId: escrowAccount.id },
+          data: { availableBalance: { decrement: seedToRevert } }
+        });
+        await tx.accountBalance.update({
+          where: { accountId: jackpotAccount.id },
+          data: { availableBalance: { increment: seedToRevert } }
+        });
+        await tx.transaction.create({
+          data: {
+            idempotencyKey: `SEED_REVERT:${roundId}`,
+            type: 'JACKPOT_CONTRIBUTION',
+            gameRoundId: roundId,
+            description: `Retorno de pozo semilla por cancelación de ronda #${roundId.slice(-4)}`,
+            metadata: JSON.stringify({ revertedAmount: seedToRevert }),
+            ledgerEntries: {
+              create: [
+                { accountId: escrowAccount.id, amount: -seedToRevert },
+                { accountId: jackpotAccount.id, amount: seedToRevert }
+              ]
+            }
+          }
+        });
+      }
+
+      // 3. Mark round as cancelled
       await tx.gameRound.update({
         where: { id: roundId },
         data: { status: 'CANCELLED', finishedAt: new Date() }
       });
     });
 
-    logger.info(`Round ${roundId} cancelled and ${cards.length} cards refunded (atomic)`);
+    logger.info(`Round ${roundId} cancelled, ${cards.length} cards refunded, and ${seedToRevert} Bs seed restored to HOUSE_JACKPOT`);
     this.emit('roundCancelled', { roundId, refundedCards: cards.length });
   }
 

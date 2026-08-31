@@ -248,6 +248,14 @@ async function updateTopbar() {
         if ($id('pm-tel')) $id('pm-tel').textContent = d.pagoMovil.telefono;
         if ($id('pm-ced')) $id('pm-ced').textContent = d.pagoMovil.cedula;
       }
+      if ($id('vip-tier-lbl')) {
+        const bal = d.balance || 0;
+        if (bal >= 5000) $id('vip-tier-lbl').textContent = '👑 ROYAL VIP';
+        else if (bal >= 2000) $id('vip-tier-lbl').textContent = '💎 VIP DIAMANTE';
+        else if (bal >= 800) $id('vip-tier-lbl').textContent = '⭐ VIP ORO';
+        else if (bal >= 200) $id('vip-tier-lbl').textContent = '⚡ VIP PLATA';
+        else $id('vip-tier-lbl').textContent = '🎯 VIP BRONCE';
+      }
     }
   } catch {}
 }
@@ -529,9 +537,47 @@ if ($id('with-submit')) {
   };
 }
 
-// ═══ SOUND / VOICE TOGGLES ═══
+// ═══ SOUND / VOICE / AUTO-DAUB TOGGLES ═══
+let autoDaubOn = true;
+
 $id('btn-sound').onclick = () => { snd(); soundOn = !soundOn; $id('btn-sound').textContent = soundOn ? '🔊' : '🔇'; };
 $id('btn-voice').onclick = () => { voiceOn = !voiceOn; $id('btn-voice').classList.toggle('active', voiceOn); };
+
+if ($id('btn-auto-daub')) {
+  $id('btn-auto-daub').onclick = () => {
+    snd();
+    autoDaubOn = !autoDaubOn;
+    $id('btn-auto-daub').classList.toggle('active', autoDaubOn);
+    $id('btn-auto-daub').title = autoDaubOn ? 'Auto-Marcador: ACTIVADO ⚡' : 'Auto-Marcador: MANUAL 👆';
+    fetchCards();
+  };
+}
+
+// ═══ FLYING EMOJI REACTION STORM ═══
+function spawnFlyingEmoji(emoji) {
+  const count = 10;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'flying-emoji';
+    el.textContent = emoji;
+    el.style.left = `${Math.random() * 85 + 5}vw`;
+    el.style.bottom = `${Math.random() * 40 + 20}px`;
+    el.style.animationDelay = `${Math.random() * 0.35}s`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2300);
+  }
+}
+
+// Reaction Chips Handlers
+$$('.reaction-chip').forEach(btn => {
+  btn.onclick = () => {
+    const emoji = btn.dataset.emoji;
+    if (!emoji) return;
+    spawnFlyingEmoji(emoji);
+    addChat(userName || 'Tú', emoji);
+    playPop();
+  };
+});
 
 // ═══ BUY CONFIRMATION MODAL LOGIC ═══
 let pendingBuyCount = 0;
@@ -714,6 +760,14 @@ async function poll() {
 
     // Always update countdown timers across all screens
     updateCountdowns(d);
+
+    // Update Live Ticker
+    if ($id('ticker-seed-pot')) {
+      $id('ticker-seed-pot').textContent = `Bs ${(d.prizePool || 0).toFixed(2)}`;
+    }
+    if (d.winnerFullCardName && $id('ticker-last-winner')) {
+      $id('ticker-last-winner').textContent = `¡${d.winnerFullCardName} cantó BINGO en Ronda #${d.roundNumber}! 🎉`;
+    }
 
     if (!d.hasActiveGame) {
       $id('room-label').textContent = 'RONDA #--';
@@ -1061,10 +1115,44 @@ function renderFilteredCards(drawnList) {
   if (!z) return;
   if (!userCardsList.length) {
     z.innerHTML = '<div class="no-cards">Compra cartones a la derecha para comenzar a jugar 🎲</div>';
+    const radarText = $id('tr-text'), radarBadge = $id('tr-badge');
+    if (radarText) { radarText.textContent = '🎲 Compra cartones para activar el radar'; radarText.style.color = '#AAA'; }
+    if (radarBadge) { radarBadge.textContent = '0 Cartones'; radarBadge.style.color = '#AAA'; }
     return;
   }
 
   const dSet = new Set(drawnList || Array.from(drawnSet));
+
+  // ═══ TENSION RADAR HUD REAL-TIME CALCULATION ═══
+  let cnt1tgTotal = 0;
+  let cnt2tgTotal = 0;
+  userCardsList.forEach(c => {
+    const m = getMissingCount(c, dSet);
+    if (m === 1) cnt1tgTotal++;
+    else if (m === 2) cnt2tgTotal++;
+  });
+
+  const radarText = $id('tr-text');
+  const radarBadge = $id('tr-badge');
+  if (radarText && radarBadge) {
+    if (cnt1tgTotal > 0) {
+      radarText.textContent = `🔥 ¡ALERTA! Tienes ${cnt1tgTotal} cartón(es) a 1 BOLA del BINGO!`;
+      radarText.style.color = '#FF1744';
+      radarBadge.textContent = '¡1TG ACTIVO!';
+      radarBadge.style.color = '#FF1744';
+    } else if (cnt2tgTotal > 0) {
+      radarText.textContent = `⚡ Tienes ${cnt2tgTotal} cartón(es) a 2 bolas de ganar`;
+      radarText.style.color = '#FFD700';
+      radarBadge.textContent = '2TG';
+      radarBadge.style.color = '#FFD700';
+    } else {
+      radarText.textContent = `🎯 RADAR: ${userCardsList.length} cartones en juego`;
+      radarText.style.color = '#00E5FF';
+      radarBadge.textContent = 'EN VIVO';
+      radarBadge.style.color = '#00FF6A';
+    }
+  }
+
   let filtered = userCardsList;
   if (currentCardFilter === '1tg') {
     filtered = userCardsList.filter(c => getMissingCount(c, dSet) === 1);

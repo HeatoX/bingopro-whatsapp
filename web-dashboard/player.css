@@ -13,6 +13,9 @@
   --red-neon: #FF1744;
   --purple-neon: #D500F9;
   --text: #FFFFFF;
+  --t1: #FFFFFF;
+  --t2: #A0A5C8;
+  --t3: #6E7399;
   --dim: #8F94BA;
   --border-gold: rgba(255, 215, 0, 0.25);
   --border-glass: rgba(255, 255, 255, 0.08);
@@ -1335,4 +1338,153 @@ body {
   border-color: var(--gold);
   color: #FFF;
 }
+
+/* ═══════════════════════════════════════════════════
+   CYBERPUNK / HIGH-END FUTURISTIC VIP CASINO STYLES
+═══════════════════════════════════════════════════ */
+
+/* ═══ LIVE TICKER BAR (HOLOGRAPHIC MARQUEE) ═══ */
+.live-ticker-bar {
+  background: linear-gradient(90deg, #070814, #12142E 50%, #070814);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.3);
+  padding: 6px 20px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.15);
+}
+.ticker-content {
+  display: flex;
+  gap: 30px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-family: var(--ft);
+  color: var(--t2);
+  animation: tickerMarquee 35s linear infinite;
+}
+.ticker-content:hover { animation-play-state: paused; }
+@keyframes tickerMarquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+.tc-item { display: inline-flex; align-items: center; gap: 8px; }
+.tc-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cyan); box-shadow: 0 0 8px var(--cyan);
+  animation: pulse-dot 1.2s infinite;
+}
+
+/* ═══ VIP LEVEL PILL ═══ */
+.vip-level-pill {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.1));
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: var(--ft);
+  font-size: 10px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 20px;
+  box-shadow: 0 0 12px var(--gold-glow);
+  cursor: pointer;
+  transition: all .2s;
+  letter-spacing: 0.5px;
+}
+.vip-level-pill:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px var(--gold-glow);
+}
+
+/* ═══ 1TG / 2TG TENSION RADAR HUD ═══ */
+.tension-radar-hud {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1.5px solid rgba(255, 23, 68, 0.4);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 0 20px rgba(255, 23, 68, 0.15);
+}
+.tr-left { display: flex; align-items: center; gap: 8px; font-family: var(--ft); font-size: 11px; font-weight: 900; color: #FFF; }
+.tr-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--red-neon); box-shadow: 0 0 10px var(--red-neon); animation: pulseRed 0.8s infinite; }
+.tr-count { font-family: var(--ft); font-size: 11px; font-weight: 900; color: var(--gold); }
+
+/* ═══ ADVANCED WINNER & NEAR-WIN CARDS STYLES ═══ */
+.bcard.winner-card {
+  border: 2px solid var(--gold) !important;
+  background: linear-gradient(180deg, #2B2105, #110E02) !important;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), inset 0 0 15px rgba(255, 215, 0, 0.3) !important;
+  animation: winnerCardPulse 1.2s infinite alternate !important;
+}
+@keyframes winnerCardPulse {
+  0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+  100% { transform: scale(1.03); box-shadow: 0 0 35px rgba(255, 215, 0, 1), 0 0 60px rgba(255, 215, 0, 0.4); }
+}
+
+.bcard.near-win-1 {
+  border: 2px solid var(--red-neon) !important;
+  box-shadow: 0 0 25px rgba(255, 23, 68, 0.7), inset 0 0 10px rgba(255, 23, 68, 0.3) !important;
+  animation: pulseNearWin1 0.9s infinite alternate !important;
+}
+@keyframes pulseNearWin1 {
+  0% { transform: scale(1); border-color: #FF1744; }
+  100% { transform: scale(1.02); border-color: #FF5252; box-shadow: 0 0 35px rgba(255, 23, 68, 1); }
+}
+
+.bcard.near-win-2 {
+  border: 2px solid var(--gold) !important;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5) !important;
+}
+
+/* ═══ CHAT EXPLOSIVE EMOJI REACTIONS ═══ */
+.chat-reactions-row {
+  display: flex;
+  gap: 4px;
+  padding: 6px 0;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 6px;
+}
+.reaction-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.reaction-chip:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: var(--gold);
+  transform: scale(1.2);
+}
+
+/* Flying Emojis */
+.flying-emoji {
+  position: fixed;
+  font-size: 32px;
+  pointer-events: none;
+  z-index: 99999;
+  animation: flyEmojiUp 2.2s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+@keyframes flyEmojiUp {
+  0% { transform: translateY(0) scale(0.4) rotate(0deg); opacity: 1; }
+  50% { transform: translateY(-250px) scale(1.3) rotate(20deg); opacity: 0.9; }
+  100% { transform: translateY(-500px) scale(1.6) rotate(-20deg); opacity: 0; }
+}
+
+/* ═══ LASER DAUBER EFFECT ═══ */
+.bcard td.daub-laser {
+  animation: laserBurst 0.4s ease-out;
+}
+@keyframes laserBurst {
+  0% { transform: scale(0.5); box-shadow: 0 0 30px #00E5FF; }
+  50% { transform: scale(1.2); box-shadow: 0 0 45px #00FF6A; }
+  100% { transform: scale(1.04); }
+}
+
 

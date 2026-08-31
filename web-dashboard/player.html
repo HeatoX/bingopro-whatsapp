@@ -76,6 +76,16 @@
         </div>
     </div>
 
+    <!-- ═══ FUTURISTIC LIVE TICKER BAR ═══ -->
+    <div id="live-ticker-bar" class="live-ticker-bar">
+        <div class="ticker-content">
+            <span class="tc-item"><span class="tc-dot"></span> <strong>BINGOPRO 3D ROYALE</strong> — SISTEMA DE BINGO CERTIFICADO</span>
+            <span class="tc-item">🏆 <span id="ticker-last-winner">Último Ganador: ¡Esperando campeón de la ronda!</span></span>
+            <span class="tc-item">💎 <strong>POZO ACUMULADO 5%:</strong> <span id="ticker-seed-pot" class="gold">Bs 0.00</span></span>
+            <span class="tc-item">⚡ <strong>PROMO ACTIVA:</strong> Lleva 6 cartones y paga solo 4</span>
+        </div>
+    </div>
+
     <!-- ═══ MAIN APP SHELL ═══ -->
     <div id="app-shell" class="app-shell hidden">
         <!-- ═══ TOP NAVBAR (Estilo Apuestas Royal Superior) ═══ -->
@@ -84,6 +94,7 @@
                 <div class="crown-logo">👑</div>
                 <div class="tb-brand" id="brand-home-btn" style="cursor:pointer">BINGO<span class="gold">ROYAL</span> <span class="tag-live">EN VIVO</span></div>
                 <div class="topbar-online-pill"><span class="dot-live-green"></span> <span id="online-count-lbl">1 En Línea</span></div>
+                <div class="vip-level-pill" id="vip-badge-pill" title="Nivel VIP del Jugador">⭐ <span id="vip-tier-lbl">VIP ORO</span></div>
             </div>
             <div class="tb-center">
                 <div class="user-pill" id="nav-profile-btn" title="Ver mi Perfil y Billetera">
@@ -98,6 +109,7 @@
                 <button id="btn-topbar-deposit" class="btn-deposit-gold">+ RECARGAR</button>
                 <button id="btn-topbar-withdraw" class="btn-withdraw-neon" title="Retirar Saldo">💸 RETIRAR</button>
                 <button id="btn-topbar-profile" class="btn-icon-tb" title="Mi Perfil y Billetera">👤</button>
+                <button id="btn-auto-daub" class="btn-icon-tb active" title="Auto-Marcador Láser">⚡</button>
                 <button id="btn-voice" class="btn-icon-tb active" title="Voz Cantante">🗣️</button>
                 <button id="btn-sound" class="btn-icon-tb" title="Sonido">🔊</button>
             </div>
@@ -185,6 +197,15 @@
                         <button class="cfb-btn cfb-2tg" data-filter="2tg">⚡ A 2 Bolas (<span id="cnt-2tg">0</span>)</button>
                         <button class="cfb-btn cfb-win" data-filter="win">🏆 Ganadores (<span id="cnt-win">0</span>)</button>
                     </div>
+                    <!-- 1TG / 2TG Tension Radar HUD -->
+                    <div class="tension-radar-hud" id="tension-radar-hud">
+                        <div class="tr-left">
+                            <span class="tr-pulse"></span>
+                            <span id="tr-text">RADAR: BUSCANDO GANADORES...</span>
+                        </div>
+                        <span class="tr-count" id="tr-badge">0 en juego</span>
+                    </div>
+
                     <div id="cards-zone" class="cards-scroll-grid">
                         <div class="no-cards">Compra cartones a la derecha para comenzar a jugar 🎲</div>
                     </div>
@@ -315,6 +336,16 @@
                                 <span class="c-user">👑 Bot:</span> ¡Bienvenidos a BingoPro Royal! Suerte a todos.
                             </div>
                         </div>
+                        <!-- Chat Explosive Reactions Row -->
+                        <div class="chat-reactions-row">
+                            <button type="button" class="reaction-chip" data-emoji="🔥" title="Fuego">🔥</button>
+                            <button type="button" class="reaction-chip" data-emoji="👑" title="Corona">👑</button>
+                            <button type="button" class="reaction-chip" data-emoji="🎯" title="Cántala">🎯</button>
+                            <button type="button" class="reaction-chip" data-emoji="😱" title="Me falta 1">😱</button>
+                            <button type="button" class="reaction-chip" data-emoji="🍀" title="Suerte">🍀</button>
+                            <button type="button" class="reaction-chip" data-emoji="🎉" title="Celebración">🎉</button>
+                        </div>
+
                         <form id="chat-form" class="chat-input-bar">
                             <input type="text" id="chat-input" placeholder="Escribe un mensaje..." maxlength="120" />
                             <button type="submit" class="btn-chat-send">🚀</button>
