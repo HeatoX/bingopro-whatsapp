@@ -337,6 +337,23 @@ async function poll() {
       if ($id('room-active-players')) $id('room-active-players').textContent = '0';
       if ($id('room-total-cards')) $id('room-total-cards').textContent = '0';
       updateLivePrizes({ prizePool: d.prizePool || 0 });
+
+      // ═══ AUTO-RESET: Clean pizarra, drawn balls, cards for next round ═══
+      drawnSet = new Set();
+      lastBallNum = null;
+      currentWinner1Line = null;
+      currentWinner2Lines = null;
+      currentWinnerFullCard = null;
+      for (let i = 1; i <= 75; i++) { const el = $id(`pc-${i}`); if (el) el.classList.remove('lit'); }
+      renderHistory([]);
+      if ($id('current-ball-num')) $id('current-ball-num').textContent = '--';
+      if ($id('current-ball-col')) $id('current-ball-col').textContent = '';
+      if ($id('cards-zone')) $id('cards-zone').innerHTML = '<div class="no-cards">Compra cartones para la próxima ronda 🎲</div>';
+      if ($id('card-count')) $id('card-count').textContent = '0';
+      userCardsList = [];
+      // Close winner modal if still open
+      const wm = $id('winner-celebration-modal');
+      if (wm) wm.classList.add('hidden');
       return;
     }
     
