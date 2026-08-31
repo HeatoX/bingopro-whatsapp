@@ -1,4 +1,5 @@
 import { config } from './config/env';
+import { loadSystemSettings } from './config/settings';
 import { logger } from './utils/logger';
 import { GameEngine } from './game/engine';
 import { GameScheduler } from './game/scheduler';
@@ -14,6 +15,9 @@ import { prisma } from './wallet/ledger';
 // ============================================
 
 async function main() {
+  // Load persistent system settings from database
+  await loadSystemSettings();
+
   logger.info('═══════════════════════════════════════════');
   logger.info('  🎱 BINGOPRO — Sistema de Bingo Profesional');
   logger.info('═══════════════════════════════════════════');

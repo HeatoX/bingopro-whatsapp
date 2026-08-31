@@ -1487,4 +1487,73 @@ body {
   100% { transform: scale(1.04); }
 }
 
+/* ════ MULTI-ROOM THEMES (BRONCE, GOLD VIP, DIAMOND) ════ */
+.room-card.room-bronce {
+  border-color: rgba(205, 127, 50, 0.4);
+}
+.room-card.room-bronce:hover {
+  border-color: #CD7F32;
+  box-shadow: 0 15px 40px rgba(205, 127, 50, 0.35);
+}
+
+.room-card.room-gold-vip {
+  border-color: rgba(255, 215, 0, 0.5);
+  background: linear-gradient(180deg, rgba(42, 34, 8, 0.95), rgba(20, 18, 38, 0.95));
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.2);
+}
+.room-card.room-gold-vip:hover {
+  border-color: #FFD700;
+  box-shadow: 0 15px 45px rgba(255, 215, 0, 0.45);
+}
+
+.room-card.room-diamond {
+  border-color: rgba(0, 229, 255, 0.5);
+  background: linear-gradient(180deg, rgba(8, 35, 55, 0.95), rgba(10, 15, 38, 0.95));
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.2);
+}
+.room-card.room-diamond:hover {
+  border-color: #00E5FF;
+  box-shadow: 0 15px 45px rgba(0, 229, 255, 0.45);
+}
+
+.rc-title-badge.bronze { color: #FFA726; }
+.rc-title-badge.gold { color: var(--gold); text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+.rc-title-badge.cyan { color: var(--cyan); text-shadow: 0 0 10px rgba(0, 229, 255, 0.5); }
+
+.rc-live-pill.green { background: #00E676; color: #000; animation: none; }
+.rc-live-pill.gold { background: linear-gradient(135deg, var(--gold), #FFA500); color: #000; font-weight: 900; animation: pulseGold 1.5s infinite; }
+.rc-live-pill.cyan { background: linear-gradient(135deg, var(--cyan), #0091EA); color: #000; font-weight: 900; animation: pulseCyan 1.5s infinite; }
+
+@keyframes pulseGold { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes pulseCyan { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+.countdown-box.gold-border { border-color: var(--gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+.countdown-box.cyan-border { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); }
+
+.rmp-val.gold { color: var(--gold); text-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
+.rmp-val.cyan { color: var(--cyan); text-shadow: 0 0 15px rgba(0, 229, 255, 0.5); }
+
+.rc-offer-pill.gold { background: rgba(255, 215, 0, 0.12); border-color: var(--gold); color: var(--gold); }
+.rc-offer-pill.cyan { background: rgba(0, 229, 255, 0.12); border-color: var(--cyan); color: var(--cyan); }
+
+.rc-price-badge.gold { border: 1px solid var(--gold); color: var(--gold); background: rgba(255, 215, 0, 0.1); }
+.rc-price-badge.cyan { border: 1px solid var(--cyan); color: var(--cyan); background: rgba(0, 229, 255, 0.1); }
+
+.btn-play-now.gold {
+  background: linear-gradient(135deg, var(--gold), #FFA500);
+  box-shadow: 0 0 25px var(--gold-glow);
+}
+.btn-play-now.gold:hover {
+  box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+}
+
+.btn-play-now.cyan {
+  background: linear-gradient(135deg, var(--cyan), #00B0FF);
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+}
+.btn-play-now.cyan:hover {
+  box-shadow: 0 0 40px rgba(0, 229, 255, 0.8);
+}
+
+
 

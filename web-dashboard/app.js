@@ -161,7 +161,8 @@ function loadPageData(pageId) {
         'games': loadGames,
         'deposits': loadDeposits,
         'withdrawals': loadWithdrawals,
-        'finance': loadFinance
+        'finance': loadFinance,
+        'settings': loadSettings
     };
 
     if (loaders[pageId]) {
@@ -443,5 +444,122 @@ async function loadFinance() {
     } catch (e) { console.error(e); }
 }
 
+// --- Settings ---
+async function loadSettings() {
+    try {
+        const s = await apiCall('/settings');
+        
+        // Rooms
+        document.getElementById('cfg-room-bronce').value = s.roomBroncePriceBs ?? 50;
+        document.getElementById('cfg-room-clasica').value = s.roomClasicaPriceBs ?? 100;
+        document.getElementById('cfg-room-oro').value = s.roomOroPriceBs ?? 250;
+        document.getElementById('cfg-room-diamante').value = s.roomDiamantePriceBs ?? 500;
+
+        // Prizes (%)
+        document.getElementById('cfg-pct-1line').value = s.prize1LinePercentage ?? 9;
+        document.getElementById('cfg-pct-2lines').value = s.prize2LinesPercentage ?? 14;
+        document.getElementById('cfg-pct-full').value = s.prizeFullCardPercentage ?? 57;
+        document.getElementById('cfg-pct-seed').value = s.reserveSeedPercentage ?? 5;
+        document.getElementById('cfg-pct-house').value = s.housePercentage ?? 15;
+
+        // Times
+        document.getElementById('cfg-game-interval').value = s.gameIntervalMinutes ?? 3;
+        document.getElementById('cfg-selling-window').value = s.sellingWindowSeconds ?? 120;
+        document.getElementById('cfg-draw-interval').value = s.ballDrawIntervalSeconds ?? 4;
+        document.getElementById('cfg-max-cards').value = s.maxCardsPerPlayer ?? 50;
+
+        // Pago Movil
+        document.getElementById('cfg-pm-banco').value = s.pagoMovilBanco || '0102';
+        document.getElementById('cfg-pm-cedula').value = s.pagoMovilCedula || 'V-12345678';
+        document.getElementById('cfg-pm-telefono').value = s.pagoMovilTelefono || '0412-1234567';
+
+        updateTotalPercentageBadge();
+    } catch (e) {
+        console.error('Error loading settings:', e);
+    }
+}
+
+function updateTotalPercentageBadge() {
+    const l1 = parseFloat(document.getElementById('cfg-pct-1line')?.value) || 0;
+    const l2 = parseFloat(document.getElementById('cfg-pct-2lines')?.value) || 0;
+    const full = parseFloat(document.getElementById('cfg-pct-full')?.value) || 0;
+    const seed = parseFloat(document.getElementById('cfg-pct-seed')?.value) || 0;
+    const house = parseFloat(document.getElementById('cfg-pct-house')?.value) || 0;
+
+    const total = l1 + l2 + full + seed + house;
+    const badge = document.getElementById('cfg-total-pct-badge');
+    const val = document.getElementById('cfg-total-pct-val');
+
+    if (val) val.textContent = `${total.toFixed(1)}%`;
+    if (badge) {
+        if (Math.abs(total - 100) <= 0.01) {
+            badge.style.background = 'rgba(16, 185, 129, 0.2)';
+            badge.style.color = '#10B981';
+        } else {
+            badge.style.background = 'rgba(239, 68, 68, 0.2)';
+            badge.style.color = '#EF4444';
+        }
+    }
+}
+
+// Live calculation listeners
+['cfg-pct-1line', 'cfg-pct-2lines', 'cfg-pct-full', 'cfg-pct-seed', 'cfg-pct-house'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateTotalPercentageBadge);
+});
+
+// Settings Form Submit
+const settingsForm = document.getElementById('settings-form');
+if (settingsForm) {
+    settingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-save-settings');
+        btn.disabled = true;
+        btn.textContent = '⏳ Guardando...';
+
+        const payload = {
+            roomBroncePriceBs: parseFloat(document.getElementById('cfg-room-bronce').value),
+            roomClasicaPriceBs: parseFloat(document.getElementById('cfg-room-clasica').value),
+            roomOroPriceBs: parseFloat(document.getElementById('cfg-room-oro').value),
+            roomDiamantePriceBs: parseFloat(document.getElementById('cfg-room-diamante').value),
+
+            prize1LinePercentage: parseFloat(document.getElementById('cfg-pct-1line').value),
+            prize2LinesPercentage: parseFloat(document.getElementById('cfg-pct-2lines').value),
+            prizeFullCardPercentage: parseFloat(document.getElementById('cfg-pct-full').value),
+            reserveSeedPercentage: parseFloat(document.getElementById('cfg-pct-seed').value),
+            housePercentage: parseFloat(document.getElementById('cfg-pct-house').value),
+
+            gameIntervalMinutes: parseInt(document.getElementById('cfg-game-interval').value),
+            sellingWindowSeconds: parseInt(document.getElementById('cfg-selling-window').value),
+            ballDrawIntervalSeconds: parseInt(document.getElementById('cfg-draw-interval').value),
+            maxCardsPerPlayer: parseInt(document.getElementById('cfg-max-cards').value),
+
+            pagoMovilBanco: document.getElementById('cfg-pm-banco').value.trim(),
+            pagoMovilCedula: document.getElementById('cfg-pm-cedula').value.trim(),
+            pagoMovilTelefono: document.getElementById('cfg-pm-telefono').value.trim()
+        };
+
+        try {
+            await apiCall('/settings', 'POST', payload);
+            showToast('✅ Configuración guardada y actualizada en vivo', 'success');
+            loadSettings();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '💾 Guardar Configuración';
+        }
+    });
+}
+
+const btnResetSettings = document.getElementById('btn-reset-settings');
+if (btnResetSettings) {
+    btnResetSettings.addEventListener('click', () => {
+        loadSettings();
+        showToast('Valores restablecidos desde el servidor', 'info');
+    });
+}
+
 // Boot
 init();
+

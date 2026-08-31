@@ -67,6 +67,10 @@
                     <span class="icon">📈</span>
                     <span>Finanzas</span>
                 </a>
+                <a href="#settings" class="nav-item" data-page="settings">
+                    <span class="icon">⚙️</span>
+                    <span>Configuración</span>
+                </a>
             </nav>
             <div class="sidebar-footer">
                 <button id="btn-logout" class="btn btn-text">
@@ -232,6 +236,130 @@
                             <h3>Ganancia Neta Casa</h3>
                             <p id="fin-revenue" class="stat-value text-green">Bs 0.00</p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div id="page-settings" class="page hidden">
+                    <div class="glass-panel" style="padding: 24px; margin-bottom: 20px;">
+                        <div class="table-header" style="margin-bottom: 20px;">
+                            <div>
+                                <h2>⚙️ Configuración del Sistema y Parámetros del Bingo</h2>
+                                <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">Modifica precios de salas, porcentajes de ganancia, tiempos y datos de Pago Móvil en tiempo real.</p>
+                            </div>
+                        </div>
+
+                        <form id="settings-form">
+                            <!-- SECCIÓN 1: SALAS Y PRECIOS DE CARTONES -->
+                            <div class="settings-section">
+                                <h3 style="color: var(--accent-gold); font-size: 15px; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                                    🎰 Precios de Cartones por Sala
+                                </h3>
+                                <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                                    <div class="input-group">
+                                        <label for="cfg-room-bronce">🥉 Sala Bronce (Bs)</label>
+                                        <input type="number" id="cfg-room-bronce" min="1" step="5" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-room-clasica">👑 Sala Clásica Royale (Bs)</label>
+                                        <input type="number" id="cfg-room-clasica" min="1" step="5" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-room-oro">🥇 Sala Oro VIP (Bs)</label>
+                                        <input type="number" id="cfg-room-oro" min="1" step="5" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-room-diamante">💎 Sala Diamante Royale (Bs)</label>
+                                        <input type="number" id="cfg-room-diamante" min="1" step="5" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN 2: DISTRIBUCIÓN DE PREMIOS (%) -->
+                            <div class="settings-section">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 14px;">
+                                    <h3 style="color: var(--accent-green); font-size: 15px; margin: 0;">
+                                        🏆 Distribución de Ganancias y Premios (%)
+                                    </h3>
+                                    <span id="cfg-total-pct-badge" style="font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: rgba(16, 185, 129, 0.2); color: #10B981;">
+                                        Total: <strong id="cfg-total-pct-val">100%</strong>
+                                    </span>
+                                </div>
+                                <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                                    <div class="input-group">
+                                        <label for="cfg-pct-1line">🥇 1 Línea (%)</label>
+                                        <input type="number" id="cfg-pct-1line" min="0" max="100" step="0.5" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-pct-2lines">✌️ 2 Líneas (%)</label>
+                                        <input type="number" id="cfg-pct-2lines" min="0" max="100" step="0.5" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-pct-full">👑 Bingo Completo (%)</label>
+                                        <input type="number" id="cfg-pct-full" min="0" max="100" step="0.5" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-pct-seed">💎 Pozo Reserva 5% (%)</label>
+                                        <input type="number" id="cfg-pct-seed" min="0" max="100" step="0.5" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-pct-house">🏠 Ganancia Casa (%)</label>
+                                        <input type="number" id="cfg-pct-house" min="0" max="100" step="0.5" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN 3: TIEMPOS Y FLUJO -->
+                            <div class="settings-section">
+                                <h3 style="color: var(--accent-blue); font-size: 15px; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                                    ⏱️ Tiempos de Juego y Límites
+                                </h3>
+                                <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                                    <div class="input-group">
+                                        <label for="cfg-game-interval">Intervalo Entre Rondas (Minutos)</label>
+                                        <input type="number" id="cfg-game-interval" min="1" max="60" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-selling-window">Tiempo de Venta (Segundos)</label>
+                                        <input type="number" id="cfg-selling-window" min="15" max="600" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-draw-interval">Intervalo Entre Bolas (Segundos)</label>
+                                        <input type="number" id="cfg-draw-interval" min="2" max="20" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-max-cards">Máximo Cartones Por Jugador</label>
+                                        <input type="number" id="cfg-max-cards" min="1" max="100" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN 4: PAGO MÓVIL RECEPTOR -->
+                            <div class="settings-section">
+                                <h3 style="color: var(--accent-amber); font-size: 15px; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                                    📱 Datos de Pago Móvil Oficial de la Casa
+                                </h3>
+                                <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                                    <div class="input-group">
+                                        <label for="cfg-pm-banco">Código Banco Receptor</label>
+                                        <input type="text" id="cfg-pm-banco" placeholder="0102" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-pm-cedula">Cédula / RIF</label>
+                                        <input type="text" id="cfg-pm-cedula" placeholder="V-12345678" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfg-pm-telefono">Teléfono Pago Móvil</label>
+                                        <input type="text" id="cfg-pm-telefono" placeholder="0412-1234567" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                                <button type="button" id="btn-reset-settings" class="btn" style="background: rgba(255, 255, 255, 0.08); color: #FFF;">Restablecer</button>
+                                <button type="submit" id="btn-save-settings" class="btn btn-success" style="padding: 12px 30px; font-weight: 700;">💾 Guardar Configuración</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

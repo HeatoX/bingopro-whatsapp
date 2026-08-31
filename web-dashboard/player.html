@@ -124,12 +124,37 @@
             </div>
 
             <div class="lobby-content">
-                <!-- SALAS DE JUEGO GRID -->
+                <!-- SALAS DE JUEGO GRID (4 SALAS CONFIGURABLES) -->
                 <h3 class="section-title">🎮 SALAS DE BINGO DISPONIBLES</h3>
-                <div class="rooms-grid">
-                    <div class="room-card room-live" id="btn-enter-classic">
+                <div class="rooms-grid" id="lobby-rooms-grid">
+                    
+                    <!-- SALA 1: BRONCE (50 Bs) -->
+                    <div class="room-card room-bronce" data-room-id="sala-50" data-room-name="SALA BRONCE" data-room-price="50">
                         <div class="rc-top-bar">
-                            <span class="rc-title-badge">🎤 BINGO 75 EN VIVO</span>
+                            <span class="rc-title-badge bronze">🥉 SALA BRONCE</span>
+                            <div class="rc-live-pill green">🟢 DISPONIBLE</div>
+                        </div>
+                        <div class="countdown-box">
+                            <span class="cd-label">PRÓXIMO JUEGO</span>
+                            <span class="cd-timer room-timer-shared">--:--</span>
+                            <span class="cd-status room-status-shared">Cargando...</span>
+                        </div>
+                        <div class="rc-main-pozo">
+                            <span class="rmp-lbl">POZO ESTIMADO</span>
+                            <span class="rmp-val room-pot-shared" id="pot-sala-50">Bs 0.00</span>
+                        </div>
+                        <div class="rc-offer-pill">🎁 LLEVA 6 CARTONES Y PAGA SOLO 4</div>
+                        <div class="rc-footer">
+                            <span class="rc-players">👥 <strong class="room-players-shared">0</strong> Jugando</span>
+                            <span class="rc-price-badge" id="lbl-price-50">Bs 50.00 c/u</span>
+                        </div>
+                        <button class="btn-play-now btn-room-select" data-room-id="sala-50" data-room-name="SALA BRONCE" data-room-price="50">¡ENTRAR A JUGAR! 🎲</button>
+                    </div>
+
+                    <!-- SALA 2: CLÁSICA ROYALE (100 Bs - Principal) -->
+                    <div class="room-card room-live" data-room-id="sala-100" data-room-name="SALA CLÁSICA ROYALE" data-room-price="100" id="btn-enter-classic">
+                        <div class="rc-top-bar">
+                            <span class="rc-title-badge">👑 SALA CLÁSICA ROYALE</span>
                             <div class="rc-live-pill">🔴 EN VIVO</div>
                         </div>
                         <div class="countdown-box" id="lobby-countdown">
@@ -138,27 +163,74 @@
                             <span class="cd-status" id="lobby-status">Cargando...</span>
                         </div>
                         <div class="rc-main-pozo">
-                            <span class="rmp-lbl">POZO ACTUAL</span>
+                            <span class="rmp-lbl">POZO OFICIAL EN VIVO</span>
                             <span class="rmp-val" id="lobby-pot">Bs 0.00</span>
                         </div>
                         <div class="rc-offer-pill">🎁 LLEVA 6 CARTONES Y PAGA SOLO 4</div>
                         <div class="rc-footer">
                             <span class="rc-players">👥 <strong id="lobby-players">0</strong> Jugando (<strong id="lobby-cards-count">0</strong> cartones)</span>
-                            <span class="rc-price-badge">Bs 100.00 c/u</span>
+                            <span class="rc-price-badge" id="lbl-price-100">Bs 100.00 c/u</span>
                         </div>
-                        <button class="btn-play-now">¡ENTRAR A JUGAR AHORA! 🚀</button>
+                        <button class="btn-play-now btn-room-select" data-room-id="sala-100" data-room-name="SALA CLÁSICA ROYALE" data-room-price="100">¡ENTRAR A JUGAR AHORA! 🚀</button>
                     </div>
+
+                    <!-- SALA 3: ORO VIP (250 Bs) -->
+                    <div class="room-card room-gold-vip" data-room-id="sala-250" data-room-name="SALA ORO VIP" data-room-price="250">
+                        <div class="rc-top-bar">
+                            <span class="rc-title-badge gold">🥇 SALA ORO VIP</span>
+                            <div class="rc-live-pill gold">⭐ VIP ALTO</div>
+                        </div>
+                        <div class="countdown-box gold-border">
+                            <span class="cd-label">PRÓXIMO JUEGO</span>
+                            <span class="cd-timer room-timer-shared">--:--</span>
+                            <span class="cd-status room-status-shared">Cargando...</span>
+                        </div>
+                        <div class="rc-main-pozo">
+                            <span class="rmp-lbl">POZO VIP ESTIMADO</span>
+                            <span class="rmp-val gold room-pot-shared" id="pot-sala-250">Bs 0.00</span>
+                        </div>
+                        <div class="rc-offer-pill gold">🎁 LLEVA 6 CARTONES Y PAGA SOLO 4</div>
+                        <div class="rc-footer">
+                            <span class="rc-players">👥 <strong class="room-players-shared">0</strong> Jugando VIP</span>
+                            <span class="rc-price-badge gold" id="lbl-price-250">Bs 250.00 c/u</span>
+                        </div>
+                        <button class="btn-play-now gold btn-room-select" data-room-id="sala-250" data-room-name="SALA ORO VIP" data-room-price="250">¡ENTRAR A SALA VIP! 👑</button>
+                    </div>
+
+                    <!-- SALA 4: DIAMANTE ROYALE (500 Bs) -->
+                    <div class="room-card room-diamond" data-room-id="sala-500" data-room-name="SALA DIAMANTE ROYALE" data-room-price="500">
+                        <div class="rc-top-bar">
+                            <span class="rc-title-badge cyan">💎 SALA DIAMANTE ROYALE</span>
+                            <div class="rc-live-pill cyan">💎 HIGH ROLLER</div>
+                        </div>
+                        <div class="countdown-box cyan-border">
+                            <span class="cd-label">PRÓXIMO JUEGO</span>
+                            <span class="cd-timer room-timer-shared">--:--</span>
+                            <span class="cd-status room-status-shared">Cargando...</span>
+                        </div>
+                        <div class="rc-main-pozo">
+                            <span class="rmp-lbl">MEGA POZO DIAMANTE</span>
+                            <span class="rmp-val cyan room-pot-shared" id="pot-sala-500">Bs 0.00</span>
+                        </div>
+                        <div class="rc-offer-pill cyan">🎁 LLEVA 6 CARTONES Y PAGA SOLO 4</div>
+                        <div class="rc-footer">
+                            <span class="rc-players">👥 <strong class="room-players-shared">0</strong> High Rollers</span>
+                            <span class="rc-price-badge cyan" id="lbl-price-500">Bs 500.00 c/u</span>
+                        </div>
+                        <button class="btn-play-now cyan btn-room-select" data-room-id="sala-500" data-room-name="SALA DIAMANTE ROYALE" data-room-price="500">¡ENTRAR A MEGA POZO! 💎</button>
+                    </div>
+
                 </div>
 
                 <!-- TABLA DE PREMIOS OFICIAL -->
                 <div class="payout-rules-card">
                     <h4>🏆 REGLAS Y DISTRIBUCIÓN DE PREMIOS OFICIAL</h4>
                     <div class="payout-grid">
-                        <div class="pg-box"><span class="pg-pct">9%</span><span class="pg-lbl">1 Línea Horizontal</span></div>
-                        <div class="pg-box"><span class="pg-pct">14%</span><span class="pg-lbl">2 Líneas Horizontales</span></div>
-                        <div class="pg-box gold"><span class="pg-pct">57%</span><span class="pg-lbl">Bingo Cartón Lleno</span></div>
-                        <div class="pg-box reserve"><span class="pg-pct">5%</span><span class="pg-lbl">Pozo Próximo Bingo</span></div>
-                        <div class="pg-box dim"><span class="pg-pct">15%</span><span class="pg-lbl">Comisión de Casa</span></div>
+                        <div class="pg-box"><span class="pg-pct" id="rule-pct-1l">9%</span><span class="pg-lbl">1 Línea Horizontal</span></div>
+                        <div class="pg-box"><span class="pg-pct" id="rule-pct-2l">14%</span><span class="pg-lbl">2 Líneas Horizontales</span></div>
+                        <div class="pg-box gold"><span class="pg-pct" id="rule-pct-full">57%</span><span class="pg-lbl">Bingo Cartón Lleno</span></div>
+                        <div class="pg-box reserve"><span class="pg-pct" id="rule-pct-seed">5%</span><span class="pg-lbl">Pozo Próximo Bingo</span></div>
+                        <div class="pg-box dim"><span class="pg-pct" id="rule-pct-house">15%</span><span class="pg-lbl">Comisión de Casa</span></div>
                     </div>
                 </div>
             </div>

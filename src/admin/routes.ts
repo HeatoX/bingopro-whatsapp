@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma, deposit as creditDeposit } from '../wallet/ledger';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
+import { getSystemSettings, updateSystemSettings, getRoomList } from '../config/settings';
 
 // Auth
 export const login = async (req: Request, res: Response) => {
@@ -341,4 +342,36 @@ export const getFinanceStats = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+// Settings Management
+export const getSettings = async (req: Request, res: Response) => {
+  try {
+    const settings = getSystemSettings();
+    res.json(settings);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Error al obtener configuración' });
+  }
+};
+
+export const updateSettings = async (req: Request, res: Response) => {
+  try {
+    const result = await updateSystemSettings(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error || 'Configuración inválida' });
+    }
+    res.json({ success: true, settings: result.settings });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Error al guardar configuración' });
+  }
+};
+
+export const getRooms = async (req: Request, res: Response) => {
+  try {
+    const rooms = getRoomList();
+    res.json(rooms);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Error al obtener salas' });
+  }
+};
+
 

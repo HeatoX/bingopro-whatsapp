@@ -59,6 +59,7 @@ app.get('/api/player/my-cards', playerRoutes.getPlayerCards);
 app.post('/api/player/buy-cards', playerRoutes.playerBuyCards);
 app.post('/api/player/deposit', playerRoutes.playerDeposit);
 app.post('/api/player/withdraw', playerRoutes.playerWithdraw);
+app.get('/api/player/rooms', routes.getRooms);
 
 // Protected routes
 const api = express.Router();
@@ -89,6 +90,12 @@ api.post('/withdrawals/:id/reject', routes.rejectWithdrawal);
 
 // Finance
 api.get('/finance', routes.getFinanceStats);
+
+// Settings
+api.get('/settings', routes.getSettings);
+api.post('/settings', routes.updateSettings);
+api.put('/settings', routes.updateSettings);
+api.get('/rooms', routes.getRooms);
 
 app.use('/api/admin', api);
 

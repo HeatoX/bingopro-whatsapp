@@ -1,5 +1,6 @@
 import { prisma } from './ledger';
 import { config } from '../config/env';
+import { getSystemSettings } from '../config/settings';
 import { generateIdempotencyKey } from '../utils/crypto';
 import { logger } from '../utils/logger';
 
@@ -25,12 +26,14 @@ export async function distributePrizes(
     throw new Error('System accounts not initialized for payout');
   }
 
-  // Calculate allocations (9% 1-line, 14% 2-lines, 57% full-card, 5% next-round seed, 15% house)
-  const houseAmount = (totalPool * config.housePercentage) / 100;
-  const reserveSeedAmount = (totalPool * config.reserveSeedPercentage) / 100;
-  let line1Amount = (totalPool * config.prize1LinePercentage) / 100;
-  let line2Amount = (totalPool * config.prize2LinesPercentage) / 100;
-  let fullCardAmount = (totalPool * config.prizeFullCardPercentage) / 100;
+  const s = getSystemSettings();
+
+  // Calculate allocations using dynamic settings
+  const houseAmount = (totalPool * s.housePercentage) / 100;
+  const reserveSeedAmount = (totalPool * s.reserveSeedPercentage) / 100;
+  let line1Amount = (totalPool * s.prize1LinePercentage) / 100;
+  let line2Amount = (totalPool * s.prize2LinesPercentage) / 100;
+  let fullCardAmount = (totalPool * s.prizeFullCardPercentage) / 100;
 
   // Unclaimed prize roll-over logic into Full Card
   if (!winners.line1) {

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma, purchaseCard, purchaseCardsBatch, calculatePackagePrice } from '../wallet/ledger';
 import { config } from '../config/env';
+import { getSystemSettings } from '../config/settings';
 import { generateCard } from '../game/card-generator';
 import { GameScheduler } from '../game/scheduler';
 
@@ -200,6 +201,7 @@ export const getPlayerMe = async (req: Request, res: Response) => {
 
     const balance = user.accounts[0]?.balance?.availableBalance || 0;
     const lockedBalance = user.accounts[0]?.balance?.lockedBalance || 0;
+    const settings = getSystemSettings();
 
     res.json({
       id: user.id,
@@ -211,11 +213,11 @@ export const getPlayerMe = async (req: Request, res: Response) => {
       bankAccount: user.bankAccount,
       balance,
       lockedBalance,
-      cardPriceBs: config.cardPriceBs,
+      cardPriceBs: settings.roomClasicaPriceBs,
       pagoMovil: {
-        banco: config.pagoMovilBanco,
-        cedula: config.pagoMovilCedula,
-        telefono: config.pagoMovilTelefono
+        banco: settings.pagoMovilBanco,
+        cedula: settings.pagoMovilCedula,
+        telefono: settings.pagoMovilTelefono
       }
     });
   } catch (error: any) {
@@ -435,6 +437,8 @@ export const getPlayerGame = async (req: Request, res: Response) => {
       if (u) winnerFullCardName = u.name;
     }
 
+    const settings = getSystemSettings();
+
     res.json({
       hasActiveGame: true,
       roundId: activeRound.id,
@@ -444,7 +448,14 @@ export const getPlayerGame = async (req: Request, res: Response) => {
       activePlayersCount,
       onlineCount,
       prizePool: Number(activeRound.prizePool),
-      cardPriceBs: config.cardPriceBs,
+      cardPriceBs: settings.roomClasicaPriceBs,
+      payoutRules: {
+        housePercentage: settings.housePercentage,
+        prize1LinePercentage: settings.prize1LinePercentage,
+        prize2LinesPercentage: settings.prize2LinesPercentage,
+        prizeFullCardPercentage: settings.prizeFullCardPercentage,
+        reserveSeedPercentage: settings.reserveSeedPercentage
+      },
       drawnBalls: activeRound.drawnBalls.map(b => ({ number: b.number, column: b.column, sequence: b.sequence })),
       // Timing data for countdown clocks
       sellingStartedAt: activeRound.sellingStartedAt?.toISOString() || null,
@@ -452,8 +463,8 @@ export const getPlayerGame = async (req: Request, res: Response) => {
       scheduledAt: activeRound.scheduledAt?.toISOString() || null,
       nextRoundScheduledAt: GameScheduler.nextRoundAt?.toISOString() || null,
       createdAt: activeRound.createdAt.toISOString(),
-      sellingWindowSeconds: config.sellingWindowSeconds,
-      ballDrawIntervalSeconds: config.ballDrawIntervalSeconds,
+      sellingWindowSeconds: settings.sellingWindowSeconds,
+      ballDrawIntervalSeconds: settings.ballDrawIntervalSeconds,
       // Winner data
       winner1LineUserId: activeRound.winner1LineUserId,
       winner1LineName,
@@ -522,10 +533,10 @@ export const getPlayerCards = async (req: Request, res: Response) => {
   }
 };
 
-// Player card purchase (Supports "Lleva 6 Paga 4" Promos)
+// Player card purchase (Supports "Lleva 6 Paga 4" Promos and Dynamic Room Pricing)
 export const playerBuyCards = async (req: Request, res: Response) => {
   try {
-    const { phone, count } = req.body;
+    const { phone, count, roomPrice } = req.body;
     const numCount = parseInt(count);
     if (!phone || isNaN(numCount) || numCount < 1) return res.status(400).json({ error: 'Datos de compra inválidos' });
 
@@ -548,11 +559,13 @@ export const playerBuyCards = async (req: Request, res: Response) => {
       where: { userId: user.id, gameRoundId: activeRound.id }
     });
 
-    if (existingCount + numCount > config.maxCardsPerPlayer) {
-      return res.status(400).json({ error: `Máximo ${config.maxCardsPerPlayer} cartones por jugador. Ya tienes ${existingCount}.` });
+    const settings = getSystemSettings();
+    if (existingCount + numCount > settings.maxCardsPerPlayer) {
+      return res.status(400).json({ error: `Máximo ${settings.maxCardsPerPlayer} cartones por jugador. Ya tienes ${existingCount}.` });
     }
 
-    const totalCost = calculatePackagePrice(numCount, config.cardPriceBs);
+    const unitPrice = (typeof roomPrice === 'number' && roomPrice > 0) ? roomPrice : settings.roomClasicaPriceBs;
+    const totalCost = calculatePackagePrice(numCount, unitPrice);
     const balance = user.accounts[0]?.balance?.availableBalance || 0;
 
     if (balance < totalCost) {

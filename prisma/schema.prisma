@@ -203,3 +203,17 @@ model WithdrawalRequest {
   
   @@map("withdrawal_requests")
 }
+
+// ============================================
+// SYSTEM SETTINGS & ROOMS CONFIGURATION
+// ============================================
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("system_settings")
+}
+

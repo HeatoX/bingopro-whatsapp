@@ -80,6 +80,28 @@ function animFX() {
 }
 animFX();
 
+// ═══ MULTI-ROOM STATE ═══
+let activeRoomId = 'sala-100';
+let activeRoomName = 'SALA CLÁSICA ROYALE';
+let activeRoomPrice = 100;
+
+function selectRoom(roomId, roomName, roomPrice) {
+  activeRoomId = roomId || 'sala-100';
+  activeRoomName = roomName || 'SALA CLÁSICA ROYALE';
+  activeRoomPrice = parseFloat(roomPrice) || 100;
+  serverCardPrice = activeRoomPrice;
+
+  // Update room UI header
+  const titleEl = document.querySelector('.room-title-tag h2');
+  if (titleEl) titleEl.textContent = `${activeRoomName} (${activeRoomPrice} Bs)`;
+  
+  const jackpotSub = document.querySelector('.rtt-jackpot');
+  if (jackpotSub) jackpotSub.textContent = `Sala de 75 Bolas • Cartón: Bs ${activeRoomPrice.toFixed(2)} • Sorteo Certificado`;
+
+  snd();
+  showScreen('room');
+}
+
 // ═══ SPA ROUTER ═══
 function showScreen(name) {
   ['lobby', 'profile', 'room'].forEach(s => {
@@ -97,8 +119,23 @@ function showScreen(name) {
 $$('.bn-item').forEach(b => b.onclick = () => { snd(); showScreen(b.dataset.screen); });
 $$('.btn-back').forEach(b => b.onclick = () => showScreen(b.dataset.to));
 $$('.btn-change-room').forEach(b => b.onclick = () => showScreen(b.dataset.to));
-const btnClassic = $id('btn-enter-classic');
-if (btnClassic) btnClassic.onclick = () => { snd(); showScreen('room'); };
+
+// Multi-room click events
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn-room-select');
+  if (btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    selectRoom(btn.dataset.roomId, btn.dataset.roomName, btn.dataset.roomPrice);
+    return;
+  }
+  const card = e.target.closest('.room-card');
+  if (card && card.dataset.roomId) {
+    selectRoom(card.dataset.roomId, card.dataset.roomName, card.dataset.roomPrice);
+    return;
+  }
+});
+
 if ($id('nav-profile-btn')) $id('nav-profile-btn').onclick = () => showScreen('profile');
 if ($id('btn-topbar-profile')) $id('btn-topbar-profile').onclick = () => showScreen('profile');
 if ($id('brand-home-btn')) $id('brand-home-btn').onclick = () => showScreen('lobby');
@@ -600,10 +637,10 @@ async function openBuyConfirmation(count) {
   try {
     const me = await (await fetch(`/api/player/me?phone=${phone}`)).json();
     userBalance = me.balance || 0;
-    serverCardPrice = me.cardPriceBs || 100;
+    serverCardPrice = me.cardPriceBs || activeRoomPrice || 100;
   } catch { userBalance = 0; }
 
-  const unitPrice = serverCardPrice;
+  const unitPrice = activeRoomPrice || serverCardPrice || 100;
   const totalCost = calculatePurchaseTotal(count, unitPrice);
   const nextBal = userBalance - totalCost;
   const hasFunds = userBalance >= totalCost;
@@ -670,7 +707,7 @@ if ($id('buy-modal-confirm')) {
       const d = await (await fetch('/api/player/buy-cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, count: pendingBuyCount })
+        body: JSON.stringify({ phone, count: pendingBuyCount, roomPrice: activeRoomPrice, roomId: activeRoomId })
       })).json();
 
       if (d.success) {
@@ -859,13 +896,51 @@ async function poll() {
   } catch {}
 }
 
+async function fetchDynamicRooms() {
+  try {
+    const rooms = await (await fetch('/api/player/rooms')).json();
+    if (Array.isArray(rooms)) {
+      rooms.forEach(r => {
+        const lbl = $id(`lbl-price-${r.cardPriceBs}`) || (r.id === 'sala-50' ? $id('lbl-price-50') : r.id === 'sala-100' ? $id('lbl-price-100') : r.id === 'sala-250' ? $id('lbl-price-250') : $id('lbl-price-500'));
+        if (lbl) lbl.textContent = `Bs ${r.cardPriceBs.toFixed(2)} c/u`;
+        
+        $$(`[data-room-id="${r.id}"]`).forEach(el => {
+          el.dataset.roomPrice = r.cardPriceBs;
+        });
+      });
+    }
+  } catch {}
+}
+fetchDynamicRooms();
+setInterval(fetchDynamicRooms, 15000);
+
 function updateLivePrizes(d) {
   const pool = d.prizePool || 0;
-  const p9 = (pool * 0.09).toFixed(2);
-  const p14 = (pool * 0.14).toFixed(2);
-  const p57 = (pool * 0.57).toFixed(2);
+  const rules = d.payoutRules || {
+    prize1LinePercentage: 9,
+    prize2LinesPercentage: 14,
+    prizeFullCardPercentage: 57,
+    reserveSeedPercentage: 5,
+    housePercentage: 15
+  };
 
-  // 1 Line (9%)
+  const pct1 = rules.prize1LinePercentage ?? 9;
+  const pct2 = rules.prize2LinesPercentage ?? 14;
+  const pctF = rules.prizeFullCardPercentage ?? 57;
+  const pctS = rules.reserveSeedPercentage ?? 5;
+  const pctH = rules.housePercentage ?? 15;
+
+  if ($id('rule-pct-1l')) $id('rule-pct-1l').textContent = `${pct1}%`;
+  if ($id('rule-pct-2l')) $id('rule-pct-2l').textContent = `${pct2}%`;
+  if ($id('rule-pct-full')) $id('rule-pct-full').textContent = `${pctF}%`;
+  if ($id('rule-pct-seed')) $id('rule-pct-seed').textContent = `${pctS}%`;
+  if ($id('rule-pct-house')) $id('rule-pct-house').textContent = `${pctH}%`;
+
+  const p9 = (pool * (pct1 / 100)).toFixed(2);
+  const p14 = (pool * (pct2 / 100)).toFixed(2);
+  const p57 = (pool * (pctF / 100)).toFixed(2);
+
+  // 1 Line
   if ($id('prize-1line-val')) $id('prize-1line-val').textContent = `Bs ${p9}`;
   if ($id('card-prize-1line')) {
     if (d.winner1LineUserId) {
@@ -881,7 +956,7 @@ function updateLivePrizes(d) {
     }
   }
 
-  // 2 Lines (14%)
+  // 2 Lines
   if ($id('prize-2lines-val')) $id('prize-2lines-val').textContent = `Bs ${p14}`;
   if ($id('card-prize-2lines')) {
     if (d.winner2LinesUserId) {
@@ -897,7 +972,7 @@ function updateLivePrizes(d) {
     }
   }
 
-  // Full Card (57%)
+  // Full Card
   if ($id('prize-full-val')) $id('prize-full-val').textContent = `Bs ${p57}`;
   if ($id('card-prize-full')) {
     if (d.winnerFullCardUserId) {
@@ -923,6 +998,18 @@ function updateCountdowns(d) {
   const lt = $id('lobby-timer'), ls = $id('lobby-status');
   const rt = $id('room-timer'), rl = $id('room-timer-label');
   if (!lt || !rt) return;
+
+  // Update all shared timer and pot cards
+  setTimeout(() => {
+    $$('.room-timer-shared').forEach(el => el.textContent = lt.textContent);
+    $$('.room-status-shared').forEach(el => el.textContent = ls.textContent);
+    $$('.room-players-shared').forEach(el => el.textContent = d.activePlayersCount || 0);
+
+    const curPot = d.prizePool || 0;
+    if ($id('pot-sala-50')) $id('pot-sala-50').textContent = `Bs ${(curPot * 0.5 || 50).toFixed(2)}`;
+    if ($id('pot-sala-250')) $id('pot-sala-250').textContent = `Bs ${(curPot * 2.5 || 250).toFixed(2)}`;
+    if ($id('pot-sala-500')) $id('pot-sala-500').textContent = `Bs ${(curPot * 5.0 || 500).toFixed(2)}`;
+  }, 0);
 
   if (d.status === 'SELLING' && d.sellingStartedAt) {
     const elapsed = (Date.now() - new Date(d.sellingStartedAt).getTime()) / 1000;
