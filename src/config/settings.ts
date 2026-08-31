@@ -57,7 +57,7 @@ let cachedSettings: AppSettings = {
   gameIntervalMinutes: config.gameIntervalMinutes || 3,
   sellingWindowSeconds: config.sellingWindowSeconds || 120,
   ballDrawIntervalSeconds: config.ballDrawIntervalSeconds || 4,
-  minPlayersToStart: config.minPlayersToStart || 1,
+  minPlayersToStart: config.minPlayersToStart || 5,
   maxCardsPerPlayer: config.maxCardsPerPlayer || 50,
 
   pagoMovilBanco: config.pagoMovilBanco || '0102',

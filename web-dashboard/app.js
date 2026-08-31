@@ -467,6 +467,7 @@ async function loadSettings() {
         document.getElementById('cfg-game-interval').value = s.gameIntervalMinutes ?? 3;
         document.getElementById('cfg-selling-window').value = s.sellingWindowSeconds ?? 120;
         document.getElementById('cfg-draw-interval').value = s.ballDrawIntervalSeconds ?? 4;
+        if (document.getElementById('cfg-min-players')) document.getElementById('cfg-min-players').value = s.minPlayersToStart ?? 5;
         document.getElementById('cfg-max-cards').value = s.maxCardsPerPlayer ?? 50;
 
         // Pago Movil
@@ -533,6 +534,7 @@ if (settingsForm) {
             gameIntervalMinutes: parseInt(document.getElementById('cfg-game-interval').value),
             sellingWindowSeconds: parseInt(document.getElementById('cfg-selling-window').value),
             ballDrawIntervalSeconds: parseInt(document.getElementById('cfg-draw-interval').value),
+            minPlayersToStart: parseInt(document.getElementById('cfg-min-players')?.value) || 5,
             maxCardsPerPlayer: parseInt(document.getElementById('cfg-max-cards').value),
 
             pagoMovilBanco: document.getElementById('cfg-pm-banco').value.trim(),

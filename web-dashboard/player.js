@@ -1001,52 +1001,80 @@ function updateCountdowns(d) {
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const lt = $id('lobby-timer'), ls = $id('lobby-status');
-  const rt = $id('room-timer'), rl = $id('room-timer-label');
-  if (!lt || !rt) return;
+  const minPlayers = d.minPlayersToStart || 5;
+  const activePlayers = d.activePlayersCount || 0;
+  const totalCards = d.totalCards || 0;
 
-  // Update all shared timer and pot cards
-  setTimeout(() => {
-    $$('.room-timer-shared').forEach(el => el.textContent = lt.textContent);
-    $$('.room-status-shared').forEach(el => el.textContent = ls.textContent);
-    $$('.room-players-shared').forEach(el => el.textContent = d.activePlayersCount || 0);
-
-    const curPot = d.prizePool || 0;
-    if ($id('pot-sala-50')) $id('pot-sala-50').textContent = `Bs ${(curPot * 0.5 || 50).toFixed(2)}`;
-    if ($id('pot-sala-250')) $id('pot-sala-250').textContent = `Bs ${(curPot * 2.5 || 250).toFixed(2)}`;
-    if ($id('pot-sala-500')) $id('pot-sala-500').textContent = `Bs ${(curPot * 5.0 || 500).toFixed(2)}`;
-  }, 0);
+  let timerStr = '--:--';
+  let statusStr = 'Cargando...';
+  let badgeStatusStr = '🟢 DISPONIBLE';
 
   if (d.status === 'SELLING' && d.sellingStartedAt) {
     const elapsed = (Date.now() - new Date(d.sellingStartedAt).getTime()) / 1000;
-    const rem = Math.max(0, Math.floor(d.sellingWindowSeconds - elapsed));
-    if (rem > 0) {
-      lt.textContent = fmt(rem); if (ls) ls.textContent = '🛒 VENTAS ABIERTAS';
-      rt.textContent = fmt(rem); if (rl) rl.textContent = 'VENTAS ABIERTAS';
+    const windowSecs = d.sellingWindowSeconds || 120;
+    const rem = Math.max(0, Math.floor(windowSecs - elapsed));
+
+    if (activePlayers < minPlayers) {
+      const missing = minPlayers - activePlayers;
+      if (rem > 0) {
+        timerStr = fmt(rem);
+        statusStr = `🛒 ESPERANDO JUGADORES (${activePlayers}/${minPlayers})`;
+        badgeStatusStr = `⏳ FALTAN ${missing} JUGADORES`;
+      } else {
+        timerStr = '⏳ ESPERANDO';
+        statusStr = `FALTAN ${missing} JUGADOR(ES) PARA QUÓRUM`;
+        badgeStatusStr = `⏳ ESPERANDO 5 JUGADORES`;
+      }
     } else {
-      lt.textContent = '00:00'; if (ls) ls.textContent = '🔒 INICIANDO SORTEO...';
-      rt.textContent = '00:00'; if (rl) rl.textContent = 'INICIANDO BOMBO...';
+      if (rem > 0) {
+        timerStr = fmt(rem);
+        statusStr = `🟢 ¡QUÓRUM LISTO! INICIA EN ${timerStr}`;
+        badgeStatusStr = `🟢 QUÓRUM COMPLETO (${activePlayers}/${minPlayers})`;
+      } else {
+        timerStr = '00:00';
+        statusStr = '🔒 INICIANDO SORTEO...';
+        badgeStatusStr = `🔴 INICIANDO...`;
+      }
     }
   } else if (d.status === 'DRAWING') {
     const ballsCount = d.drawnBalls ? d.drawnBalls.length : 0;
-    if (d.nextRoundScheduledAt) {
-      const remNext = Math.max(0, Math.floor((new Date(d.nextRoundScheduledAt).getTime() - Date.now()) / 1000));
-      lt.textContent = fmt(remNext); if (ls) ls.textContent = '🎲 PRÓXIMO BINGO (EN VIVO)';
-    } else {
-      lt.textContent = `${ballsCount}/75`; if (ls) ls.textContent = '🔴 EN VIVO CANTANDO';
-    }
-    rt.textContent = `${ballsCount}/75`; if (rl) rl.textContent = '🔴 CANTANDO EN VIVO';
+    timerStr = `${ballsCount}/75`;
+    statusStr = '🔴 CANTANDO EN VIVO';
+    badgeStatusStr = '🔴 EN VIVO';
   } else {
     const target = d.nextRoundScheduledAt || d.scheduledAt;
     if (target) {
       const rem = Math.max(0, Math.floor((new Date(target).getTime() - Date.now()) / 1000));
-      lt.textContent = fmt(rem); if (ls) ls.textContent = '⏳ PRÓXIMO JUEGO';
-      rt.textContent = fmt(rem); if (rl) rl.textContent = 'INICIA PRONTO';
+      timerStr = fmt(rem);
+      statusStr = '⏳ PRÓXIMO JUEGO';
+      badgeStatusStr = '⏳ PRONTO';
     } else {
-      lt.textContent = '00:00'; if (ls) ls.textContent = '⏳ PREPARANDO';
-      rt.textContent = '00:00'; if (rl) rl.textContent = 'PREPARANDO';
+      timerStr = '00:00';
+      statusStr = '⏳ PREPARANDO';
+      badgeStatusStr = '🟢 DISPONIBLE';
     }
   }
+
+  // Update all shared timer and status elements across the lobby and screens
+  $$('.room-timer-shared').forEach(el => el.textContent = timerStr);
+  $$('.room-status-shared').forEach(el => el.textContent = statusStr);
+  $$('.room-players-shared').forEach(el => {
+    el.textContent = `${activePlayers}/${minPlayers}`;
+  });
+
+  // Update room screen elements
+  if ($id('room-timer')) $id('room-timer').textContent = timerStr;
+  if ($id('room-timer-label')) $id('room-timer-label').textContent = statusStr;
+  if ($id('status-text')) $id('status-text').textContent = statusStr;
+  if ($id('lobby-timer')) $id('lobby-timer').textContent = timerStr;
+  if ($id('lobby-status')) $id('lobby-status').textContent = statusStr;
+
+  // Update pots dynamically
+  const curPot = d.prizePool || 0;
+  if ($id('pot-sala-50')) $id('pot-sala-50').textContent = `Bs ${(curPot * 0.5 || 50).toFixed(2)}`;
+  if ($id('pot-sala-100')) $id('pot-sala-100').textContent = `Bs ${(curPot || 100).toFixed(2)}`;
+  if ($id('pot-sala-250')) $id('pot-sala-250').textContent = `Bs ${(curPot * 2.5 || 250).toFixed(2)}`;
+  if ($id('pot-sala-500')) $id('pot-sala-500').textContent = `Bs ${(curPot * 5.0 || 500).toFixed(2)}`;
 }
 
 function onNewBall(ball) {

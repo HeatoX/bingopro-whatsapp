@@ -2,6 +2,7 @@ import { config } from '../config/env';
 import { GameEngine } from './engine';
 import { logger } from '../utils/logger';
 import { getSystemSettings } from '../config/settings';
+import { prisma } from '../wallet/ledger';
 
 export class GameScheduler {
   public static nextRoundAt: Date | null = null;
@@ -24,7 +25,7 @@ export class GameScheduler {
     // Start first round immediately after 3 seconds
     this.scheduleNextRound(3000);
 
-    logger.info(`🎱 Game Scheduler active — continuous rounds with dynamic selling window`);
+    logger.info(`🎱 Game Scheduler active — continuous rounds with dynamic selling window and quorum check`);
   }
 
   async stop(): Promise<void> {
@@ -52,7 +53,6 @@ export class GameScheduler {
       const settings = getSystemSettings();
       const sellingWindow = settings.sellingWindowSeconds || 120;
       const ballInterval = settings.ballDrawIntervalSeconds || 4;
-      const minPlayers = settings.minPlayersToStart || 1;
 
       // 1. Create Round
       const round = await this.gameEngine.createRound();
@@ -63,22 +63,43 @@ export class GameScheduler {
       GameScheduler.nextRoundAt = new Date(Date.now() + sellingWindow * 1000);
       logger.info(`🛒 Selling started for round #${round.roundNumber} (${sellingWindow}s window)`);
 
-      // Wait selling window
+      // Wait initial selling window
       await new Promise(r => setTimeout(r, sellingWindow * 1000));
 
-      // 3. Close Selling
-      const closedRound = await this.gameEngine.closeSelling(round.id);
-      
-      if (closedRound.totalCards < minPlayers) {
-        logger.warn(`Round #${round.roundNumber} cancelled — not enough cards (${closedRound.totalCards} cards, min ${minPlayers})`);
-        await this.gameEngine.cancelRound(round.id);
-        this.scheduleNextRound(5000); // 5s before reopening next round
-        return;
+      // 3. Intelligent Quórum Check: Wait until at least minPlayers (default 5) are active
+      while (this.isRunning) {
+        // Check current settings dynamically in case admin changed minPlayers
+        const currentSettings = getSystemSettings();
+        const minPlayers = currentSettings.minPlayersToStart || 5;
+
+        const cardsInRound = await prisma.card.findMany({
+          where: { gameRoundId: round.id },
+          select: { userId: true }
+        });
+        const uniquePlayers = new Set(cardsInRound.map(c => c.userId)).size;
+
+        if (uniquePlayers >= minPlayers) {
+          logger.info(`🎉 Quórum reached for round #${round.roundNumber}: ${uniquePlayers}/${minPlayers} players ready with ${cardsInRound.length} cards!`);
+          break;
+        }
+
+        // Quorum not yet reached: DO NOT cancel. Keep selling open so more players can register and enter!
+        logger.info(`⏳ Round #${round.roundNumber} waiting for quórum: ${uniquePlayers}/${minPlayers} players ready (${cardsInRound.length} cards). Keeping sales open...`);
+        
+        // Extend timer so players in UI see active sales window
+        GameScheduler.nextRoundAt = new Date(Date.now() + 20000);
+
+        // Check again every 4 seconds
+        await new Promise(r => setTimeout(r, 4000));
       }
 
+      if (!this.isRunning) return;
+
+      // 4. Close Selling and finalize seeds
+      const closedRound = await this.gameEngine.closeSelling(round.id);
       logger.info(`🔒 Selling closed for round #${round.roundNumber} — ${closedRound.totalCards} cards, pool: ${closedRound.prizePool} Bs`);
 
-      // 4. Start Ball Drawing Loop (Sequential Loop - No setInterval Race Conditions)
+      // 5. Start Ball Drawing Loop (Sequential Loop - No setInterval Race Conditions)
       GameScheduler.nextRoundAt = new Date(Date.now() + 240000);
 
       await new Promise(r => setTimeout(r, 3000)); // 3s pause before first ball
